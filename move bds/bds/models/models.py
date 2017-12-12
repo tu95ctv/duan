@@ -4,8 +4,7 @@ from odoo import models, fields, api,sql_db
 from fetch import fetch
 from fetch import get_quan_list_in_big_page
 from fetch import update_phuong_or_quan_for_url_id,import_contact
-import logging
-_logger = logging.getLogger(__name__)
+
 
 import logging
 import threading
@@ -22,52 +21,6 @@ import datetime
 logging.basicConfig(level=logging.DEBUG,
                     format='[%(levelname)s] (%(threadName)-10s) %(message)s',
                     )
-
-
-class URL(models.Model):
-    _name = 'bds.url'
-    _sql_constraints = [
-        ('name_unique',
-         'UNIQUE(url)',
-         "The url must be unique"),
-    ]
-    name = fields.Char(compute='name_',store = True)
-    url = fields.Char()
-    description = fields.Char()    
-    siteleech_id = fields.Many2one('bds.siteleech',compute='siteleech_id_',store=True)
-    web_last_page_number = fields.Integer()
-    quan_id = fields.Many2one('bds.quan')
-    phuong_id = fields.Many2one('bds.phuong')
-    current_page = fields.Integer()
-    
-#     luong_ids = fields.One2many('bds.luong','url_id')
-    @api.depends('url')
-    def siteleech_id_(self):
-        for r in self:
-            if 'chotot' in r.url:
-                name = 'chotot'
-            elif 'batdongsan' in r.url:
-                name = 'batdongsan'
-                
-            chottot_site = get_or_create_object(self,'bds.siteleech', {'name':name})
-            r.siteleech_id = chottot_site.id
-            
-    @api.depends('url','quan_id','phuong_id')
-    def name_(self):
-        surfix =  self.phuong_id.name or  self.quan_id.name  
-        self.name = self.url + ((' ' +  surfix ) if surfix else '')
-    @api.multi
-    def name_get(self):
-        #return [(cat.id, " / ".join(reversed(get_names(cat)))) for cat in self]
-        res = []
-        for r in self:
-            surfix =  r.quan_id.name or r.phuong_id.name
-            new_name = r.url + ((' ' +  surfix ) if surfix else '' )+' current_page: %s'%r. current_page
-            res.append((r.id,new_name))
-        return res
-    
-    
-    
 
 def worker():
     print 'current_thread',current_thread().name
@@ -839,8 +792,8 @@ WHERE
                 
             
     @api.multi
-    def add_site_leech_to_url(self):
-        for r in self.env['bds.url'].search([]):
+    def add_site_leech_to_urlcate(self):
+        for r in self.env['bds.urlcate'].search([]):
             r.url = r.url
             
         
@@ -852,21 +805,61 @@ class Errors(models.Model):
 class Luong(models.Model):
     _name = 'bds.luong'
     threadname = fields.Char()
-    url_id = fields.Many2one('bds.url')
+    urlcate_id = fields.Many2one('bds.urlcate')
     current_page = fields.Integer()
-
+class UrlCate(models.Model):
+    _name = 'bds.urlcate'
+    _sql_constraints = [
+        ('name_unique',
+         'UNIQUE(url)',
+         "The url must be unique"),
+    ]
+    name = fields.Char(compute='name_',store = True)
+    url = fields.Char()
+    description = fields.Char()    
+    siteleech_id = fields.Many2one('bds.siteleech',compute='siteleech_id_',store=True)
+    web_last_page_number = fields.Integer()
+    quan_id = fields.Many2one('bds.quan')
+    phuong_id = fields.Many2one('bds.phuong')
+    current_page = fields.Integer()
+    so_luong_luong = fields.Integer()
+    luong_ids = fields.One2many('bds.luong','urlcate_id')
+    @api.depends('url')
+    def siteleech_id_(self):
+        for r in self:
+            if 'chotot' in r.url:
+                name = 'chotot'
+            elif 'batdongsan' in r.url:
+                name = 'batdongsan'
+                
+            chottot_site = get_or_create_object(self,'bds.siteleech', {'name':name})
+            r.siteleech_id = chottot_site.id
+            
+    @api.depends('url','quan_id','phuong_id')
+    def name_(self):
+        surfix =  self.phuong_id.name or  self.quan_id.name  
+        self.name = self.url + ((' ' +  surfix ) if surfix else '')
+    @api.multi
+    def name_get(self):
+        #return [(cat.id, " / ".join(reversed(get_names(cat)))) for cat in self]
+        res = []
+        for r in self:
+            surfix =  r.quan_id.name or r.phuong_id.name
+            new_name = r.url + ((' ' +  surfix ) if surfix else '' )+' current_page: %s'%r. current_page
+            res.append((r.id,new_name))
+        return res
     
 class Cron(models.Model):
  
     _inherit = "ir.cron"
     _logger = logging.getLogger(_inherit)
     @api.model
-    def worker(self,thread_index,url_id,thread_number):
+    def worker(self,thread_index,urlcate_id,thread_number):
         new_cr = sql_db.db_connect(self.env.cr.dbname).cursor()
         uid, context = self.env.uid, self.env.context
         with api.Environment.manage():
             self.env = api.Environment(new_cr, uid, context)
-            luong = get_or_create_object(self,'bds.luong', {'threadname':str(1),'url_id':url_id})
+            luong = get_or_create_object(self,'bds.luong', {'threadname':str(1),'urlcate_id':urlcate_id})
             if luong[0].current_page==0:
                 current_page = thread_index
             else:
@@ -878,10 +871,10 @@ class Cron(models.Model):
 class Fetch(models.Model):
     _name = 'bds.fetch'
 #     url = fields.Char(default = 'https://batdongsan.com.vn/ban-nha-rieng-quan-10/-1/2500-3500/-1/-1')
-    url_id = fields.Many2one('bds.url')
-    url_ids = fields.Many2many('bds.url')
+    url_id = fields.Many2one('bds.urlcate')
+    url_ids = fields.Many2many('bds.urlcate')
 #     is_fetch_circle = fields.Boolean(string=u'vòng tròn link',default=True)
-    last_fetched_url_id = fields.Integer()#>0
+    current_url_id_circle_fetch = fields.Integer()#>0
     name = fields.Char()
     link = fields.Char()
     web_last_page_number = fields.Integer()
@@ -903,33 +896,14 @@ class Fetch(models.Model):
     note = fields.Char()
     update_field_of_existing_recorder = fields.Selection([(u'giá',u'giá'),(u'all',u'all')],default = u'all')
     
-    
-    @api.multi
-    def fetch(self):
-#         _logger.warning(u'waring nguyến Đức tứ dep trai')
-#         print 'anh con no em'
-#         _logger.info(u'info nguyến Đức tứ dep trai')
-#         
-#         return False
-        fetch(self)
-#         self.create_link_number=create_link_number
-#         self.update_link_number =update_link_number
-#         self.link_number = link_number
-        
-#         phuong_list = get_quan_list_in_big_page(self)
-#         quan_list = get_quan_list_in_big_page(self,column_name='bds_bds.quan_id')
-#         self.write({'phuong_ids':[(6,0,phuong_list)],'quan_ids':[(6,0,quan_list)]})#'quan_ids':[(6,0,quan_list)]
-#         update_phuong_or_quan_for_url_id(self)
-
-
     @api.multi
     def thread(self):
         thread_number = 5
         url_imput = self.url_id.url
         fetch_object = self
         for i in range(1,6):
-            url_id = self.url_id.id
-            w2 = threading.Thread(target=self.env['ir.cron'].worker,kwargs={'thread_index':i,'url_id':url_id,
+            urlcate_id = self.url_id.id
+            w2 = threading.Thread(target=self.env['ir.cron'].worker,kwargs={'thread_index':i,'urlcate_id':urlcate_id,
                                                                             "thread_number" : thread_number,
                                                                             'url_imput':url_imput,
                                                                             "fetch_object":fetch_object
@@ -968,8 +942,22 @@ class Fetch(models.Model):
         self.write({'phuong_ids':[(6,0,phuong_list)],'quan_ids':[(6,0,quan_list)]})#'quan_ids':[(6,0,quan_list)]
         update_phuong_or_quan_for_url_id(self)
 #         raise ValueError ('aaaa',product_category)
-  
-
+    @api.multi
+    def fetch(self):
+        fetch(self)
+#         self.create_link_number=create_link_number
+#         self.update_link_number =update_link_number
+#         self.link_number = link_number
+        
+#         phuong_list = get_quan_list_in_big_page(self)
+#         quan_list = get_quan_list_in_big_page(self,column_name='bds_bds.quan_id')
+#         self.write({'phuong_ids':[(6,0,phuong_list)],'quan_ids':[(6,0,quan_list)]})#'quan_ids':[(6,0,quan_list)]
+#         update_phuong_or_quan_for_url_id(self)
+        
+#
+#     @api.depends('value')
+#     def _value_pc(self):
+#         self.value2 = float(self.value) / 100
 class Mycontact(models.Model):
     _name = 'bds.mycontact'
     name = fields.Char()

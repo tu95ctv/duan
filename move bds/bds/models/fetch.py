@@ -384,11 +384,11 @@ def get_last_page_from_bdsvn_website(url_imput):
     return last_page_from_website
 
 
-def get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_once_fetch,is_fetch_in_cron):
-    if url_id_site_leech_name ==  'batdongsan':
+def get_page_lists(self,url_id,is_fetch_in_cron):
+    if url_id.siteleech_id.name ==  'batdongsan':
         last_page_from_website =  get_last_page_from_bdsvn_website(url_id.url)
         self.web_last_page_number = last_page_from_website
-    elif url_id_site_leech_name=='chotot':
+    elif url_id.siteleech_id.name=='chotot':
         last_page_from_website =6000
     if is_fetch_in_cron:
         set_page_end = False
@@ -399,15 +399,40 @@ def get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_
         end_page = last_page_from_website
     else:
         end_page = set_page_end if set_page_end <= last_page_from_website else last_page_from_website
-    begin = url_id.current_page + 1
-    if begin > end_page:
-        begin  = 1
-    end = begin   + set_number_of_page_once_fetch - 1
-    if end > end_page:
-        end = end_page
-    end_page_number_in_once_fetch = end
-    page_lists = range(begin, end+1)
-    return end_page_number_in_once_fetch,page_lists
+    if is_fetch_in_cron:
+        current_page = url_id.current_page
+        if  self.set_set_number_of_page_once_fetch ==0 or self.set_number_of_page_once_fetch==1:
+            if end_page <2:
+                page_lists = [1]
+                last_page_in_once_fetch=1
+            else:
+                last_page_in_once_fetch = current_page +  1
+                if last_page_in_once_fetch > end_page:
+                    last_page_in_once_fetch = 2
+                page_lists = [1,last_page_in_once_fetch]
+        else:
+            begin = current_page + 1
+            end = current_page   + self.set_number_of_page_once_fetch
+            if begin>end_page:
+                begin  = 1
+                end = self.set_number_of_page_once_fetch
+            else:
+                if end > end_page:
+                    end =  end_page
+            last_page_in_once_fetch =end
+            page_lists = range(begin,end+1)
+    else:
+        begin = url_id.current_page + 1
+        end = url_id.current_page   + self.set_number_of_page_once_fetch
+        if begin>end_page:
+            begin  = 1
+            end = self.set_number_of_page_once_fetch
+        else:
+            if end > end_page:
+                end =  end_page
+        last_page_in_once_fetch =end
+        page_lists = range(begin,end+1)
+    return last_page_in_once_fetch,page_lists
 
 def fetch(self,note=False,is_fetch_in_cron = False):
     fetch1(self,note,is_fetch_in_cron)
@@ -429,35 +454,36 @@ def fetch(self,note=False,is_fetch_in_cron = False):
 #             sleep(5)
                 
 def fetch1(self,note=False,is_fetch_in_cron = False):
-
-#     url_ids = self.url_ids.sorted(lambda l:l.id).ids
-    url_ids = self.url_ids.ids
-    
-#     _logger.warning('self.url_ids %s'%self.url_ids)
-#     _logger.info('self.url_ids %s'%self.url_ids)
-#     return True
-#     url_ids_id_lists = url_ids.mapped('id')
-    if not self.last_fetched_url_id:
+#     if not self.is_fetch_circle:
+#         url_imput = get_url(self)
+#     
+#     if not self.is_fetch_circle:
+#         url_id = self.url_id
+#         current_url_id_circle_fetch = None
+#     else:
+    url_ids = self.url_ids.sorted(lambda l:l.id)
+    url_ids_id_lists = url_ids.mapped('id')
+    if not self.current_url_id_circle_fetch:
         new_index = 0
     else:
-        index_of_last_fetched_url_id = url_ids.index(self.last_fetched_url_id)
-        new_index =  index_of_last_fetched_url_id+1
-        if new_index > len(url_ids)-1:
+        index_of_current_url_id_circle_fetch = url_ids_id_lists.index(self.current_url_id_circle_fetch)
+        new_index =  index_of_current_url_id_circle_fetch+1
+        if new_index > len(url_ids_id_lists)-1:
             new_index = 0
-    url_id = self.url_ids[new_index]
-    url_id_site_leech_name = url_id.siteleech_id.name
-    set_number_of_page_once_fetch = self.set_number_of_page_once_fetch
-    end_page_number_in_once_fetch, page_number_lists =  get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_once_fetch,is_fetch_in_cron) 
+    url_id = url_ids[new_index]
+    current_url_id_circle_fetch = url_ids_id_lists[new_index]
+  
+    last_page_in_once_fetch, int_page_lists = get_page_lists (self, url_id, is_fetch_in_cron)
     number_notice_dict = {
     'link_number' : 0,
     'update_link_number' : 0,
     'create_link_number' : 0,
     'existing_link_number' : 0
     }
-    for page_int in page_number_lists:
+    for page_int in int_page_lists:
         page_handle(self, page_int, url_id, number_notice_dict)
-    url_id.write({'current_page':end_page_number_in_once_fetch})
-    self.last_fetched_url_id = url_id.id
+    url_id.write({'current_page':last_page_in_once_fetch})
+    self.current_url_id_circle_fetch = current_url_id_circle_fetch
         
     self.create_link_number=number_notice_dict['create_link_number']
     self.update_link_number =number_notice_dict["update_link_number"]

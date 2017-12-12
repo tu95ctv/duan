@@ -24,7 +24,7 @@
             <field name="view_mode">form</field>
             <field name="target">new</field>
         </record>  
-  	<menuitem name="import quan huyen,muc gia" id="import_quan_huyen_menu" parent="bds_icon"
+  	<menuitem name="import quan huyen,muc gia" id="import_quan_huyen_menu" parent="bds.menu_1"
               action="bds.import_quan_huyen_action"/>
     </data>
 </openerp>
