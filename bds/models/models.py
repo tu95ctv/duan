@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api,sql_db
-from fetch import fetch
+from fetch import fetch,fetch_lazada
 from fetch import get_quan_list_in_big_page
 from fetch import update_phuong_or_quan_for_url_id,import_contact
 import logging
@@ -44,18 +44,21 @@ class URL(models.Model):
     @api.depends('url')
     def siteleech_id_(self):
         for r in self:
-            if 'chotot' in r.url:
-                name = 'chotot'
-            elif 'batdongsan' in r.url:
-                name = 'batdongsan'
-                
-            chottot_site = get_or_create_object(self,'bds.siteleech', {'name':name})
-            r.siteleech_id = chottot_site.id
+            if r.url:
+                if 'chotot' in r.url:
+                    name = 'chotot'
+                elif 'batdongsan' in r.url:
+                    name = 'batdongsan'
+                else:
+                    name = re.search('\.(.*?)\.', r.url).group(1)
+                chottot_site = get_or_create_object(self,'bds.siteleech', {'name':name})
+                r.siteleech_id = chottot_site.id
             
     @api.depends('url','quan_id','phuong_id')
     def name_(self):
         surfix =  self.phuong_id.name or  self.quan_id.name  
-        self.name = self.url + ((' ' +  surfix ) if surfix else '')
+        url = self.url
+        self.name = (url if url else '') + ((' ' +  surfix ) if surfix else '')
     @api.multi
     def name_get(self):
         #return [(cat.id, " / ".join(reversed(get_names(cat)))) for cat in self]
@@ -225,7 +228,6 @@ class SMS(models.Model):
     name=  fields.Char()
     noi_dung = fields.Text()
     getphoneposter_ids = fields.One2many('bds.getphoneposter','sms_id')
-#     poster_ids = fields.Many2many('res.users','sms_poster_relate','sms_id','poster_id',compute='poster_ids_',store=True)
     poster_ids = fields.Many2many('res.users','sms_poster_relate','sms_id','poster_id',related="getphoneposter_ids.poster_ids",store=True)#compute='poster_ids_',store=True#,related="getphoneposter_ids.poster_ids",store=True
     test_depend_through = fields.Char(compute='last_name_of_that_model_',store=True)#
     
@@ -256,16 +258,19 @@ class GetPhonePoster(models.Model):
     len_posters_of_sms = fields.Integer()
     test1 = fields.Char()
     kq = fields.Char(compute="kq_")
-    danh_sach_doi_tac = fields.Html()
-#     min_loc_less = fields.Float(digits=(32,1))
     avg_loc_less = fields.Float(digits=(32,1))
     phuong_loc_ids = fields.Many2many('bds.phuong')
 
-    @api.onchange('poster_ids')
-    def danh_sach_doi_tac_(self):
-        for r in self:
-            x = r.poster_ids.mapped('name')
-            r.danh_sach_doi_tac = '\r\n'.join(x)
+    quan_id = fields.Many2one('bds.quan',default = lambda self:self.default_quan())
+    phone_list = fields.Text(compute='phone_list_',store=True)
+    danh_sach_doi_tac = fields.Html(compute='phone_list_',store=True)
+    poster_ids = fields.Many2many('res.users','getphone_poster_relate','getphone_id','poster_id')#,compute='poster_ids_',store=True)
+    
+#     @api.onchange('poster_ids')
+#     def danh_sach_doi_tac_(self):
+#         for r in self:
+#             r.danh_sach_doi_tac = '\r\n'.join(r.poster_ids.mapped('name'))
+            
     @api.depends('test1')
     def kq_(self):
         for r in self:
@@ -273,76 +278,23 @@ class GetPhonePoster(models.Model):
             if r.test1:
                 int_list = map(int,r.test1.split(','))
                 rs = self.search([('exclude_poster_ids','=',int_list[0])])
-                print "self.search([('exclude_poster_ids','=',int_list[0])])",rs
                 kq.append(True if rs else False)
                 rs = self.search([('exclude_poster_ids','in',int_list)])
                 kq.append(True if rs else False)
                 r.kq = kq
-                print "self.search([('exclude_poster_ids','=',int_list[0])])",rs
 
-#     
-#     @api.onchange()
-#     def  oc_for_exclude_poster(self):
-        
-#     @api.multi
-#     def write(self,vals):
-#         self.poster_ids.write({'sms_ids':[(4,self.sms_id.id)]})
-#         res = super(GetPhonePoster, self).write(vals)
-#         return res
-#      
-#     @api.model
-#     def create(self,vals):
-#         self.poster_ids.write({'sms_ids':[(4,self.sms_id.id)]})
-#         res = super(GetPhonePoster, self).create(vals)
-#         return res
     
     def default_quan(self):
         quan_10 = self.env['bds.quan'].search([('name','=',u'Quận 10')])
         return quan_10.id
-    quan_id = fields.Many2one('bds.quan',default=default_quan)
-    phone_list = fields.Text(compute='phone_list_',store=True)
-    poster_ids = fields.Many2many('res.users','getphone_poster_relate','getphone_id','poster_id')#,compute='poster_ids_',store=True)
     
-#     @api.multi
-#     def exclude_poster_inverse_(self):
-#         for r in self:
-#             r.poster_ids = r.poster_ids.filtered(lambda l:l.id not in r.exclude_poster_ids.ids ).mapped('id')
+ 
     @api.depends('poster_ids')
     def phone_list_(self):
         for r in self:
             phone_lists = filter(lambda l: not isinstance(l,bool),r.poster_ids.mapped('phone'))
             r.phone_list = ','.join(phone_lists)
-    @api.depends('quan_id','post_count_min','nha_mang','sms_id')
-    def poster_ids1_(self):
-        for r in self:
-            if not r.sms_id:
-                pass
-            else:
-                verbose_quan = r.quan_id.name_unidecode.replace('-','_')
-                verbose_quan = 'count_' + verbose_quan
-                product_category_query =\
-                 '''select distinct u.id,c.sms_id from res_users as u
-    left join getphone_poster_relate as r
-    on u.id  = r.poster_id
-    left  join bds_getphoneposter as c
-    on  r.getphone_id= c.id
-    where  u.%(verbose_quan)s > %(post_count_min)s
-    and u.nha_mang like '%(nha_mang)s'
-    and (c.sms_id is null or c.sms_id <>%(sms_id)s)
-    '''%{'verbose_quan':verbose_quan,
-         "nha_mang":  r.nha_mang,
-         'post_count_min':r.post_count_min,
-         'sms_id':r.sms_id.id
-         }
-                print product_category_query
-                self.env.cr.execute(product_category_query)
-                product_category = self.env.cr.fetchall()
-                print product_category  
-                product_category = map(lambda x:x[0], product_category)
-                r.poster_ids = product_category
-                r.len_poster = len(product_category)
-                
-                #raise ValueError(product_category)         
+   
     @api.onchange('quan_id','post_count_min','nha_mang','sms_id','exclude_poster_ids','poster_ids.exclude_sms_ids','phuong_loc_ids','is_report_for_poster')
     def poster_ids_(self):
         def filter_for_poster(l):
@@ -370,35 +322,20 @@ class GetPhonePoster(models.Model):
                     return False
                 else:
                     return True  
+                
         for r in self:
             if not r.sms_id:
                 pass
             else:
-            #quan_10 = self.env['bds.quan'].search([('name','=',u'Quận 10')])
                 domain_tong = []
                 if r.nha_mang:
                     nha_mang_domain = ('nha_mang','=',r.nha_mang)
                     domain_tong.append(nha_mang_domain)
-               
-#                 if r.quan_id and r.post_count_min:
-#                     verbose_quan = r.quan_id.name_unidecode.replace('-','_')
-#                     count_quan_domain = ( 'count_' + verbose_quan,'>=',r.post_count_min)
-#                     domain_tong.append(count_quan_domain)
-#                     if r.avg_loc_less:
-#                         count_quan_domain = ('avg_' + verbose_quan,'<',r.avg_loc_less)
-#                         domain_tong.append(count_quan_domain)
-                
-                
+
                 if r.quan_id and r.post_count_min:
                     count_quan_domain = ( 'quanofposter_ids.quan_id','=',r.quan_id.id)
                     domain_tong.append(count_quan_domain)
                     domain_tong.append(('quanofposter_ids.quantity','>=',r.post_count_min))
-                        
-#                     if r.avg_loc_less:
-#                         count_quan_domain = ('avg_' + verbose_quan,'<',r.avg_loc_less)
-#                         domain_tong.append(count_quan_domain)
-
-
                 if r.phuong_loc_ids:
                     count_quan_domain = ('phuong_id' ,'in',r.phuong_loc_ids.mapped('id'))
                     domain_tong.append(count_quan_domain)
@@ -406,21 +343,10 @@ class GetPhonePoster(models.Model):
                 if r.filter_sms_or_filter_sql =='sms_ids' and not r.is_report_for_poster:
                     domain_tong.append(('sms_ids','!=',r.sms_id.id))
                 poster_quan10_greater_10 = self.env['res.users'].search(domain_tong)
-#                 if r.is_report_for_poster:
-#                     pass
-#                 else:
                 poster_quan10_greater_10 = poster_quan10_greater_10.filtered(filter_for_poster )
-                #alist= poster_quan10_greater_10.mapped('id')
-                
                 r.poster_ids =poster_quan10_greater_10
                 r.len_poster = len(poster_quan10_greater_10)
-    
-    
-    
                 
-    
-#                 r.len_posters_of_sms = len(r.sms_id.getphoneposter_ids.poster_ids)
-              
 class Poster(models.Model):
     _inherit = 'res.users'
     getphoneposter_ids = fields.Many2many('bds.getphoneposter','getphone_poster_relate','poster_id','getphone_id')
@@ -874,6 +800,16 @@ class Cron(models.Model):
             luong[0].write({'current_page':current_page})
             new_cr.commit()
             self.env.cr.close()
+            
+class DienThoai(models.Model):
+    _name = 'dienthoai'
+    link = fields.Char()
+    gia = fields.Float(digit=(6,2))
+    so_luong = fields.Char()
+    duoc_ban_boi = fields.Char()
+    is_bien_dong_item = fields.Boolean()
+    original_itself_id = fields.Many2one('dienthoai')
+    bien_dong_ids = fields.One2many('dienthoai','original_itself_id')
 
 class Fetch(models.Model):
     _name = 'bds.fetch'
@@ -902,8 +838,15 @@ class Fetch(models.Model):
     per_page = fields.Integer()
     note = fields.Char()
     update_field_of_existing_recorder = fields.Selection([(u'giá',u'giá'),(u'all',u'all')],default = u'all')
+    lazada_url = fields.Char()
+    test_lazada = fields.Text()
+    html_lazada = fields.Text()
+    html_lazada_thread = fields.Text()
+    html_lazada_thread_gia = fields.Text()
     
-    
+    @api.multi
+    def fetch_lazada(self):
+        fetch_lazada(self)
     @api.multi
     def fetch(self):
 #         _logger.warning(u'waring nguyến Đức tứ dep trai')
@@ -937,10 +880,10 @@ class Fetch(models.Model):
             w2.start()
 
     
-    @api.multi
-    def fetch_cron1(self):
-        fetch_id2 = self.browse(2)
-        fetch_id2.fetch_cronfield +=1
+#     @api.multi
+#     def fetch_cron1(self):
+#         fetch_id2 = self.browse(2)
+#         fetch_id2.fetch_cronfield +=1
     @api.multi
     def fetch_cron(self,id_fetch):
         fetch_id2 = self.browse(id_fetch)

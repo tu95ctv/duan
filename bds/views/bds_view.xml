@@ -1,5 +1,73 @@
 <openerp>
     <data>
+    
+      <!-- DIEN Thoai -->
+    
+    
+    <record id="dienthoai_search" model="ir.ui.view">
+            <field name="name">sale.order.list.select</field>
+            <field name="model">dienthoai</field>
+            <field name="arch" type="xml">
+                <search string="bds search">
+                   <field name="link"></field>
+                    
+                </search>
+            </field>
+        </record>
+        
+        
+        
+     <record id="dienthoai_form" model="ir.ui.view">
+            <field name="name">dien thoai</field>
+            <field name="model">dienthoai</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                        	<group>
+                            <field name="link"></field>
+                            <field name="gia"></field>
+                            <field name="so_luong"></field>
+                     		<field name="duoc_ban_boi"></field>
+                     		
+                     		<field name="is_bien_dong_item"></field>
+                     		<field name="original_itself_id"></field>
+                     		<field name="bien_dong_ids"></field>
+                            </group>
+                            <group>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+      
+          <record id="dienthoai_list" model="ir.ui.view">
+            <field name="name">dien thoai</field>
+            <field name="model">dienthoai</field>
+            <field name="arch" type="xml">
+                <tree>
+                     <field name="link"></field>
+                     <field name="gia"></field>
+                     <field name="so_luong"></field>
+                     <field name="duoc_ban_boi"></field>
+                     
+                     <field name="is_bien_dong_item"></field>
+                     <field name="original_itself_id"></field>
+                     <field name="bien_dong_ids"></field>
+                     
+                </tree>
+            </field>
+        </record>
+        <record model="ir.actions.act_window" id="dienthoai_action">
+            <field name="name">dien thoai</field>
+            <field name="res_model">dienthoai</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+    <!-- !dien thoai -->
+    
+    
+    
     <!-- URL -->
     
      <record id="url_form" model="ir.ui.view">
@@ -60,6 +128,7 @@
                 <form>
                     <header>
                         <button name="fetch" string="fetch ahaha" type="object" class="btn-primary" />
+                        <button name="fetch_lazada" string="fetch lazada" type="object" class="btn-primary" />
                         <button name="group_quan" string="group" type="object" class="btn-primary" />
                         <button name="thread" string="thread" type="object" class="btn-primary" />
                     </header>
@@ -67,6 +136,11 @@
                     <group>
                         <group>
                            <group>
+                            <field name="lazada_url"></field>
+                            <field name="html_lazada_thread_gia"></field>
+                            <field name="test_lazada"></field>
+                            <field name="html_lazada_thread"></field>
+                        <!--    <field name="html_lazada"></field> --> 
                             <field name="url_ids"></field>
                             <field name="last_fetched_url_id"></field>
                             <field name="name"></field>
@@ -604,6 +678,7 @@
       
    
         <menuitem name="BDS" id="bds_icon" web_icon="bds,static/src/image/bds.png" />
+        <menuitem name="dien thoai" id="dienthoai_menu" parent="bds_icon" action="dienthoai_action" sequence="1"/>
         <menuitem name="bds_menu" id="bds_menu" parent="bds_icon" action="bds.action_window" />
         <menuitem name="poster menu" id="poster_menu" parent="bds_icon" action="bds.poster_action" />
         <menuitem name="fetch_menu" id="fetch_menu" parent="bds_icon" action="bds.fetch_action" />

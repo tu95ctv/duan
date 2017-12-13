@@ -10,7 +10,9 @@ import json
 from time import sleep
 import pytz
 import logging
+from odoo import  fields
 _logger = logging.getLogger(__name__)
+from odoo.osv import expression
 
 create_number_dict = {}
 update_number_dict ={}
@@ -73,7 +75,68 @@ def get_or_create_object(self,class_name,search_dict,create_write_dict ={},is_mu
             return searched_object,'get'
         else:
             return searched_object
+def get_or_create_object_sosanh(self,class_name,search_dict,
+                                create_write_dict ={},is_must_update=False,noti_dict=None,
+                                not_active_include_search = False,model_effect_noti_dict=False,create_or_write_info = False):
+    #print 'in get_or create fnc','search_dict',search_dict,'create_write_dict',create_write_dict
+    if not_active_include_search:
+        domain_not_active = ['|',('active','=',True),('active','=',False)]
+    else:
+        domain_not_active = []
+#     domain_list =  domain_not_active
+    domain = []
+    if noti_dict =={}:
+        noti_dict['create'] = 0
+        noti_dict['update'] = 0
+        noti_dict['skipupdate'] = 0
+    for i in search_dict:
+        tuple_in = (i,'=',search_dict[i])
+        domain.append(tuple_in)
+    domain = expression.AND([domain_not_active, domain])
+    searched_object  = self.env[class_name].search(domain)
+    if not searched_object:
+        search_dict.update(create_write_dict)
+        created_object = self.env[class_name].create(search_dict)
+        if noti_dict !=None and ( model_effect_noti_dict==False or model_effect_noti_dict==class_name):
+            noti_dict['create'] = noti_dict['create'] + 1
+        create_or_write = 'create'
+        return_obj =  created_object
+    else:
+        if not is_must_update:
+            is_write = False
+            for attr in create_write_dict:
+                domain_val = create_write_dict[attr]
+                exit_val = getattr(searched_object,attr)
+                try:
+                    exit_val = getattr(exit_val,'id',exit_val)
+                    if exit_val ==None: #recorderset.id ==None when recorder sset = ()
+                        exit_val=False
+                except:#singelton
+                    pass
+                if isinstance(domain_val, datetime.date):
+                    exit_val = fields.Date.from_string(exit_val)
+                if exit_val !=domain_val:
+                    #print 'exit_val','domain_val',exit_val,domain_val
+                    is_write = True
+                    break
+            
+        else:
+            is_write = True
+        if is_write:
+            create_or_write = 'write'
+            searched_object.sudo().write(create_write_dict)
+            if noti_dict !=None and ( model_effect_noti_dict==False or model_effect_noti_dict==class_name):
+                noti_dict['update'] = noti_dict['update'] + 1
+            #print 'searched_object 2'
 
+        else:#'update'
+            create_or_write = 'skip write'
+            if noti_dict !=None and ( model_effect_noti_dict==False or model_effect_noti_dict==class_name):
+                noti_dict['skipupdate'] = noti_dict['skipupdate'] + 1
+        return_obj = searched_object
+    if create_or_write_info:
+        return return_obj,create_or_write
+    return return_obj
 def request_html(url):
     headers = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36' }
     req = urllib2.Request(url, None, headers)
@@ -286,8 +349,8 @@ def deal_a_link(self,link,number_notice_dict,siteleech_id):
         price = get_update_dict_in_topic(self,update_dict,html,siteleech_id,only_return_price=True)
     elif siteleech_id.name =='chotot':
         price = get_update_dict_in_topic_cho_tot(self,update_dict,html,siteleech_id,only_return_price=True)
-    
     search_link_existing= self.env['bds.bds'].search([('link','=',link)])
+    
     if search_link_existing:
         number_notice_dict["existing_link_number"] = number_notice_dict["existing_link_number"] + 1
         if self.update_field_of_existing_recorder ==u'giá':
@@ -334,10 +397,10 @@ def deal_a_link(self,link,number_notice_dict,siteleech_id):
 
 def page_handle(self, page_int, url_id, number_notice_dict):
     links_per_page = []
-    url_imput = url_id.url
+    url_input = url_id.url
     siteleech_id = url_id.siteleech_id
     if siteleech_id.name=='batdongsan':
-        url = url_imput + '/' + 'p' +str(page_int)
+        url = url_input + '/' + 'p' +str(page_int)
         html = request_html(url)
         soup = BeautifulSoup(html, 'html.parser')
         title_soups = soup.select("div.p-title  a")
@@ -347,15 +410,17 @@ def page_handle(self, page_int, url_id, number_notice_dict):
             links_per_page.append(link)
     elif siteleech_id.name =='chotot':
         repl = 'o=%s'%(20*(page_int-1))
-        url_imput = re.sub('o=\d+',repl,url_imput)
-        url = url_imput +  '&page=' +str(page_int)
-        print 'handling....page',url
+        url_input = re.sub('o=\d+',repl,url_input)
+        url = url_input +  '&page=' +str(page_int)
         html = request_html(url)
         html = json.loads(html)
         html = html['ads']
         for i in html:
             url = 'https://gateway.chotot.com/v1/public/ad-listing/' + str(i['list_id'])
             links_per_page.append(url)
+    elif siteleech_id.name =='lazada':
+        url = url_input +'?page=' +int(page_int)
+    
     for link in links_per_page:
         number_notice_dict["link_number"] = number_notice_dict["link_number"] + 1
         #deal_a_link(self,link,type_site,number_notice_dict)
@@ -369,9 +434,9 @@ def page_handle(self, page_int, url_id, number_notice_dict):
                 print 'url','sleep....because error'
                 sleep(5)
                  
-def get_last_page_from_bdsvn_website(url_imput):
+def get_last_page_from_bdsvn_website(url_input):
     
-    html = request_html(url_imput)
+    html = request_html(url_input)
     soup = BeautifulSoup(html, 'html.parser')
     range_pages = soup.select('div.background-pager-right-controls > a')
     if range_pages:
@@ -390,6 +455,10 @@ def get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_
         self.web_last_page_number = last_page_from_website
     elif url_id_site_leech_name=='chotot':
         last_page_from_website =6000
+    elif url_id_site_leech_name=='lazada':
+        last_page_from_website =5
+        
+        
     if is_fetch_in_cron:
         set_page_end = False
     else:
@@ -408,31 +477,81 @@ def get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_
     end_page_number_in_once_fetch = end
     page_lists = range(begin, end+1)
     return end_page_number_in_once_fetch,page_lists
+def get_link_on_one_page_laz(page_url):
+    html = request_html(page_url)
+    soup = BeautifulSoup(html, 'html.parser')
+    links_per_page = []
+    title_soups = soup.select("div.c-product-card__description  a")
+    for a in title_soups:
+        print 'link hehe',a
+        l =a['href']
+        links_per_page.append(l)
+    return links_per_page
+def fetch_lazada(self):
+    page_url = self.lazada_url
+#     html = request_html(page_url)
+#     soup = BeautifulSoup(html, 'html.parser')
+#     links_per_page = []
+#     title_soups = soup.select("div.c-product-card__description  a")
+#     for a in title_soups:
+#         print 'link hehe',a
+#         l =a['href']
+#         links_per_page.append(l)
 
+    links_per_page = get_link_on_one_page_laz(page_url)
+    test_page = []
+    noti_dict = {}
+    for thread_link in links_per_page[:5]:
+#     for thread_link in links_per_page:
+        test_ones = []
+        link = 'https://www.lazada.vn' +  thread_link
+        html = request_html(link)
+        soup = BeautifulSoup(html, 'html.parser')
+        gia = soup.select("span#special_price_box")[0].get_text()
+        gia = gia.replace('.','')
+        gia = float(gia)
+        print 'gia',gia
+        test_ones.append(unicode(gia))
+        so_luong = soup.select("span#product-option-stock-number")[0].get_text().strip()
+        duoc_ban_boi = soup.select("a.basic-info__name")[0].get_text().strip()
+        
+        rs = re.search('(\d+)\.html',link)
+        topic_id = rs.group(1)
+        original_item = self.env['dienthoai'].search([('link','ilike',topic_id)])
+        test_ones.append('original_item ' + str(original_item))
+        if original_item:
+            original_item = original_item[0].id
+            test_ones.append('original_item_id ' + str(original_item))
+        #object = get_or_create_object_sosanh(self,'dienthoai', {'link':link}, {'gia':gia,'so_luong':so_luong,'duoc_ban_boi':duoc_ban_boi},noti_dict= noti_dict)
+        object,create_or_write = get_or_create_object_sosanh(self,'dienthoai',
+                 {'link':link,'gia':gia,'so_luong':so_luong,'duoc_ban_boi':duoc_ban_boi},
+                # {'original_itself_id':original_item},
+                 noti_dict= noti_dict,create_or_write_info = True)
+        if not original_item:
+            test_ones.append('not ori,link:' + link)
+            pass
+        else:
+            if create_or_write == 'create':
+                test_ones.append('origin but bien dong' + link)
+                bien_dong_object = object
+                bien_dong_object.write({'original_itself_id':original_item,'is_bien_dong_item':True})
+            else:
+                test_ones.append('origin but bien dong,create_or_write ' + create_or_write)
+
+#         test_ones.append(so_luong)
+        test_one =  u'|'.join(test_ones)
+        test_page.append(test_one)
+    self.html_lazada_thread_gia = u'\n'.join(test_page)
+    self.test_lazada = noti_dict
+
+    
 def fetch(self,note=False,is_fetch_in_cron = False):
     fetch1(self,note,is_fetch_in_cron)
-#     count_fault =0
-#     while 1:
-#         
-#         try:
-#             
-#             fetch1(self,note,is_fetch_in_cron)
-#             count_fault=0
-#             break
-#         except Exception as e:
-#             count_fault +=1
-#             if count_fault==1:
-#                 break
-#             self.env['bds.error'].create({'code':str(e),'url':'fech page not link'})
-#             _logger.debug('loi ban oi',str(e))
-#             print 'url','sleep....because on page'
-#             sleep(5)
+   
                 
 def fetch1(self,note=False,is_fetch_in_cron = False):
 
-#     url_ids = self.url_ids.sorted(lambda l:l.id).ids
     url_ids = self.url_ids.ids
-    
 #     _logger.warning('self.url_ids %s'%self.url_ids)
 #     _logger.info('self.url_ids %s'%self.url_ids)
 #     return True
@@ -447,6 +566,7 @@ def fetch1(self,note=False,is_fetch_in_cron = False):
     url_id = self.url_ids[new_index]
     url_id_site_leech_name = url_id.siteleech_id.name
     set_number_of_page_once_fetch = self.set_number_of_page_once_fetch
+    
     end_page_number_in_once_fetch, page_number_lists =  get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_once_fetch,is_fetch_in_cron) 
     number_notice_dict = {
     'link_number' : 0,
@@ -463,15 +583,15 @@ def fetch1(self,note=False,is_fetch_in_cron = False):
     self.update_link_number =number_notice_dict["update_link_number"]
     self.link_number = number_notice_dict["link_number"]
     self.existing_link_number = number_notice_dict["existing_link_number"]
-    if url_id.siteleech_id.name ==  'batdongsan':
-        phuong_list = get_quan_list_in_big_page(self)
-        quan_list = get_quan_list_in_big_page(self,column_name='bds_bds.quan_id')
-        self.write({'phuong_ids':[(6,0,phuong_list)],'quan_ids':[(6,0,quan_list)]})#'quan_ids':[(6,0,quan_list)]
-        url_id.web_last_page_number= self.web_last_page_number
-        update_phuong_or_quan_for_url_id(self,quan_list,phuong_list,url_id)
-    else:
-        quan_list = get_quan_list_in_big_page(self,column_name='bds_bds.quan_id')
-        self.write({'quan_ids':[(6,0,quan_list)]})#'quan_ids':[(6,0,quan_list)]
+#     if url_id.siteleech_id.name ==  'batdongsan':
+#         phuong_list = get_quan_list_in_big_page(self)
+#         quan_list = get_quan_list_in_big_page(self,column_name='bds_bds.quan_id')
+#         self.write({'phuong_ids':[(6,0,phuong_list)],'quan_ids':[(6,0,quan_list)]})#'quan_ids':[(6,0,quan_list)]
+#         url_id.web_last_page_number= self.web_last_page_number
+#         update_phuong_or_quan_for_url_id(self,quan_list,phuong_list,url_id)
+#     else:
+#         quan_list = get_quan_list_in_big_page(self,column_name='bds_bds.quan_id')
+#         self.write({'quan_ids':[(6,0,quan_list)]})#'quan_ids':[(6,0,quan_list)]
     self.note = note
     return None
     
@@ -588,11 +708,11 @@ def import_contact(self):
         
 if __name__== '__main__':
 #     get_quan_from_topic(get_soup_from_file())
-    url_imput = 'https://nha.chotot.com/tp-ho-chi-minh/quan-10/mua-ban-nha-dat'
-    url_imput = 'https://nha.chotot.com/quan-10/mua-ban-nha-dat/nha-hxh-duong-ly-thuong-kiet-quan-10-38471382.htm'
-    #url_imput = 'https://gateway.chotot.com/v1/public/ad-listing/38471382'
-    url_imput = 'https://gateway.chotot.com/v1/public/ad-listing/38483113'
-    html = request_html(url_imput)
+    url_input = 'https://nha.chotot.com/tp-ho-chi-minh/quan-10/mua-ban-nha-dat'
+    url_input = 'https://nha.chotot.com/quan-10/mua-ban-nha-dat/nha-hxh-duong-ly-thuong-kiet-quan-10-38471382.htm'
+    #url_input = 'https://gateway.chotot.com/v1/public/ad-listing/38471382'
+    url_input = 'https://gateway.chotot.com/v1/public/ad-listing/38483113'
+    html = request_html(url_input)
     print html
 
     

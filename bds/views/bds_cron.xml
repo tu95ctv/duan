@@ -10,9 +10,9 @@
             <field name="numbercall">-1</field>
             <field eval="False" name="doall"/>
             <field eval="'bds.fetch'" name="model"/>
-            <field eval="'test_cron'" name="function"/>
-            <field name="args" eval="(37,)" />
+            <field eval="'fetch_cron'" name="function"/>
+            <field name="args" eval="(1,)" />
             </record>
-               -->
+           -->     
    </data>
 </openerp>
