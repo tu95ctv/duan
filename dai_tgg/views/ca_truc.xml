@@ -97,21 +97,21 @@
                                 <field name="cty_id"></field>
                                 <field name="ngay_bat_dau"></field>
                                 <field name="cam_sua" invisible="1"></field>
-                                <field name="gio_bat_dau" attrs="{'readonly':[('cam_sua','=',True)]}" ></field>
+                                <field name="gio_bat_dau" attrs="{'readonly':[('cam_sua','=',True)]}"></field>
                                 <field name="gio_ket_thuc"></field>
                                 <field name="duration"></field>
-                            <field name="file_ids"></field>
+                                <field name="file_ids"></field>
                             </group>
                             <group>
                                 <field name="loai_su_co_id" attrs="{'readonly':[('cam_sua','=',True)]}"></field>
-                                <field name="noi_dung" attrs="{'readonly':[('cam_sua','=',True)]}" ></field>
-                               <field name="cty_ids"></field> 
-                               <field name="doitac_ids"></field> 
+                                <field name="noi_dung" attrs="{'readonly':[('cam_sua','=',True)]}"></field>
+                                <field name="cty_ids"></field>
+                                <field name="doitac_ids"></field>
                             </group>
                         </group>
                         <group>
                             <field name="comment_ids"></field>
-                            <field name="ctr_ids" required = "not context.get('you_at_suco_form')"  invisible="context.get('you_at_suco_form')"></field>
+                            <field name="ctr_ids" required="not context.get('you_at_suco_form')" invisible="context.get('you_at_suco_form')"></field>
                         </group>
                     </sheet>
                 </form>
@@ -169,9 +169,7 @@
             <field name="mode">primary</field>
             <field name="arch" type="xml">
                 <field name="loai_su_co_id" position="replace">
-                    <field name="loai_su_vu_id"
-                   attrs="{'readonly':[('cam_sua','=',True)]}"
-                    ></field>
+                    <field name="loai_su_vu_id" attrs="{'readonly':[('cam_sua','=',True)]}"></field>
                     <!-- 
                     <field name="field_1"></field>
                		 <field name="field_2"></field>
@@ -185,7 +183,6 @@
             	 -->
             </field>
         </record>
-        
         <record model="ir.ui.view" id="suvu_list">
             <field name="name">Sự Vụ Tree</field>
             <field name="priority" eval="1"></field>
@@ -199,7 +196,6 @@
                 </field>
             </field>
         </record>
-        
         <record id="suvu_list_with_no_create" model="ir.ui.view">
             <field name="name">sự vụ Form 2</field>
             <field name="priority" eval="2"></field>
@@ -213,21 +209,17 @@
                 </xpath>
             </field>
         </record>
-        
-        
         <record model="ir.actions.act_window" id="suvu_action">
             <field name="name">Sự Vụ</field>
             <field name="res_model">suvu</field>
             <field name="view_mode">tree,form</field>
         </record>
-        
         <record id="suvu_action_nocreate_act_view" model="ir.actions.act_window.view">
             <field eval="1" name="sequence" />
             <field name="view_mode">tree</field>
             <field name="view_id" ref="dai_tgg.suvu_list_with_no_create" />
             <field name="act_window_id" ref="dai_tgg.suvu_action" />
         </record>
-        
         <!-- END SU VU -->
         <!-- USER -->
         <record id="user_search" model="ir.ui.view">
@@ -266,11 +258,11 @@
                             </group>
                         </group>
                         <group>
-                          <!--   <field name="is_admin"></field> 
+                            <!--   <field name="is_admin"></field> 
                             <field name="cac_sep_ids" attrs="{'readonly':[('is_admin','=',False)]}"></field>
                             <field name="cac_linh_ids"  attrs="{'readonly':[('is_admin','=',False)]}"></field>-->
                             <field name="cac_sep_ids"></field>
-                            <field name="cac_linh_ids"  ></field>
+                            <field name="cac_linh_ids"></field>
                         </group>
                     </sheet>
                 </form>
@@ -413,17 +405,9 @@
                                 <field name="name"></field>
                                 <field name="user_id" readonly="1"></field>
                                 <field name="cty_id"></field>
-                                <field name="cty_ids" ></field>
-                              
+                                <field name="cd_parent_id" attrs="{'invisible':[('gd_parent_id','=',False)]}"></field>
+                                <field name="gd_parent_id" attrs="{'invisible':[('gd_parent_id','=',False)]}"></field>
                             </group>
-                            <group>
-                                <field name="doitac_ids"></field>
-                                <field name="file_ids"></field>
-                                  <field name="cd_parent_id" readonly="1" invisible="context.get('you_at_gd_form')"></field>
-                                <field name="gd_parent_id"></field>
-                            </group>
-                        </group>
-                        <group>
                             <group>
                                 <field name="ngay_bat_dau"></field>
                                 <field name="gio_bat_dau" readonly="context.get('you_at_gd_form') or context.get('you_at_cd_form')" attrs="{'readonly':[('cd_parent_id','!=',False)]}"></field>
@@ -431,59 +415,56 @@
                                 <field name="duration"></field>
                                 <field name="slncl"></field>
                             </group>
-                            <group>
-                                <field name="loai_cvi"></field>
-                                <field name="tvcv_id" 
-                                attrs="{'readonly':['|',('cam_sua','=',True),'&amp;',('id','>',0),'|',('gd_parent_id','!=',False),('cd_parent_id','!=',False)]}"
-                                required="not context.get('you_at_cd_form')" 
-                                context="{'you_search_at_gd_form':context.get('you_at_gd_form'),'thu_vien_da_chon_list':context.get('xxx'),'thu_vien_id_of_gd_parent_id':context.get('thu_vien_id_of_gd_parent_id')}" />
-                              <field name="diem_tvi"></field>
-                               <field name="don_vi"></field>
-                                <field name="so_luong" 
-                                attrs="{'readonly':['|',('cam_sua','=',True),'&amp;',('id','>',0),'|',('gd_parent_id','!=',False),('cd_parent_id','!=',False)]}"
-                               readonly="context.get('you_at_gd_form')"></field><!--  readonly="context.get('you_at_gd_form')" -->
-                               <field name="so_lan" readonly="context.get('you_at_gd_form')"
-                                attrs="{'readonly':['|',('cam_sua','=',True),'&amp;',('id','>',0),'|',('gd_parent_id','!=',False),('cd_parent_id','!=',False)]}"
-                               ></field>
-                            </group>
-                           
                         </group>
                         <group>
                             <group>
+                                <field name="loai_cvi"></field>
+                                <field name="tvcv_id" attrs="{'readonly':['|',('cam_sua','=',True),'&amp;',('id','&gt;',0),'|',('gd_parent_id','!=',False),('cd_parent_id','!=',False)]}" required="not context.get('you_at_cd_form')" context="{'you_search_at_gd_form':context.get('you_at_gd_form'),'thu_vien_da_chon_list':context.get('xxx'),'thu_vien_id_of_gd_parent_id':context.get('thu_vien_id_of_gd_parent_id')}" />
+                                <field name="diem_tvi"></field>
+                                <field name="don_vi"></field>
+                                <field name="so_luong" attrs="{'readonly':['|',('cam_sua','=',True),'&amp;',('id','&gt;',0),'|',('gd_parent_id','!=',False),('cd_parent_id','!=',False)]}" readonly="context.get('you_at_gd_form')"></field>
+                                <!--  readonly="context.get('you_at_gd_form')" -->
+                                <field name="so_lan" readonly="context.get('you_at_gd_form')" attrs="{'readonly':['|',('cam_sua','=',True),'&amp;',('id','&gt;',0),'|',('gd_parent_id','!=',False),('cd_parent_id','!=',False)]}"></field>
+                            </group>
+                            <group>
                                 <field name="diem_goc"></field>
                                 <field name="diemtt"></field>
-                                <field name="percent_diemtt"
-                                 attrs="{'readonly':['|',('cam_sua_do_chot','=',True),('cam_sua','=',True)],'invisible':[('cd_parent_id','=',False),('cd_children_ids','=',[])]}"></field>
+                                <field name="percent_diemtt" attrs="{'readonly':['|',('cam_sua_do_chot','=',True),('cam_sua','=',True)],'invisible':[('cd_parent_id','=',False),('cd_children_ids','=',[])]}"></field>
                                 <field name="diemtc"></field>
                                 <field name="valid_diemtc_conclusion"></field>
                             </group>
+                        </group>
+                        <group>
                             <group>
                                 <field name="noi_dung"></field>
                                 <field name="percent_diemtc" attrs="{'readonly' : [('is_sep', '=', False)],'invisible' : [('is_sep', '=', False)]}"></field>
                                 <field name="diemld" attrs="{'invisible' : [('is_sep', '=', False)]}"></field>
+                                <field name="cty_ids"></field>
                             </group>
-                            	
+                            <group>
+                                <field name="doitac_ids"></field>
+                                <field name="file_ids"></field>
+                            </group>
                             <group name="admin1" attrs="{'invisible':[('is_admin','=',False)]}">
                                 <field name="valid_diemtc"></field>
-                                <field name="diem_remain_gd" ></field>
-                               	<field name="sum_cd_con"></field>
+                                <field name="diem_remain_gd"></field>
+                                <field name="sum_cd_con"></field>
                                 <field name="sum_gd_con"></field>
-                                <field name="valid_cd" ></field>
-                                <field name="valid_gd" ></field>
-                            </group>	
-                             <!-- <group name="admin" invisible="not context.get('is_admin')">-->
-                             <group name="admin2" attrs="{'invisible':[('is_admin','=',False)]}">
-                             	<field name="is_has_tvcv_con" ></field>
-                                <field name="thu_vien_da_chon_list" ></field>
-                            	<field name="is_admin" ></field>
-                            	<field name="cam_sua" ></field>
-                                <field name="cam_sua_do_time" ></field>
-                             <!--   <field name="ly_do_cam_sua_do_time" ></field> --> 
-                                <field name="cam_sua_do_diff_user" ></field>
-                                <field name="cam_sua_do_chot" ></field>
+                                <field name="valid_cd"></field>
+                                <field name="valid_gd"></field>
+                            </group>
+                            <!-- <group name="admin" invisible="not context.get('is_admin')">-->
+                            <group name="admin2" attrs="{'invisible':[('is_admin','=',False)]}">
+                                <field name="is_has_tvcv_con"></field>
+                                <field name="thu_vien_da_chon_list"></field>
+                                <field name="is_admin"></field>
+                                <field name="cam_sua"></field>
+                                <field name="cam_sua_do_time"></field>
+                                <!--   <field name="ly_do_cam_sua_do_time" ></field> -->
+                                <field name="cam_sua_do_diff_user"></field>
+                                <field name="cam_sua_do_chot"></field>
                                 <field name="is_sep"></field>
                             </group>
-                            
                         </group>
                         <notebook attrs="{'invisible':[('cd_parent_id','!=',False)]}" invisible="context.get('you_at_cd_form')">
                             <page string="CHIA ĐIỂM CHO NHIỀU NGƯỜI" attrs="{'invisible':['|',('gd_children_ids','!=',[]),('tvcv_id','=',False)]}">
@@ -492,7 +473,7 @@
                                         <!--  editable="bottom"  -->
                                         <field name="cd_parent_id" invisible="1"></field>
                                         <field name="cam_sua" invisible="1"></field>
-                                        <field name="user_id"  attrs="{'readonly':[('cam_sua','=',True)]}" domain="['|','|',('cty_id','=',parent.cty_id),('cty_id','child_of',parent.cty_id),('cty_id','parent_of',parent.cty_id)]"></field>
+                                        <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)]}" domain="['|','|',('cty_id','=',parent.cty_id),('cty_id','child_of',parent.cty_id),('cty_id','parent_of',parent.cty_id)]"></field>
                                         <field name="gio_bat_dau"></field>
                                         <field name="gio_ket_thuc" invisible="1"></field>
                                         <field name="slncl"></field>
@@ -504,7 +485,7 @@
                                         <field name="so_luong"></field>
                                         <field name="so_lan"></field>
                                         <field name="diemtt"></field>
-                                        <field name="percent_diemtt" attrs="{'readonly':[('cam_sua','=',True)]}" ></field>
+                                        <field name="percent_diemtt" attrs="{'readonly':[('cam_sua','=',True)]}"></field>
                                         <field name="diemtc"></field>
                                         <field name="percent_diemtc"></field>
                                         <field name="diemld"></field>
@@ -564,13 +545,12 @@
                     <field name="noi_dung"></field>
                     <field name="user_id"></field>
                     <field name="cty_id"></field>
-                    <field name="cty_ids" ></field>
+                    <field name="cty_ids"></field>
                     <field name="tvcv_id"></field>
                     <field name="loai_cvi"></field>
-                    
                     <!--<field name="cd_children_ids" widget="many2many_tags" invisible="context.get('you_at_cd_form')"></field> -->
                     <field name="ctr_ids"></field>
-                    <field name="slncl" ></field>
+                    <field name="slncl"></field>
                     <field name="diem_tvi"></field>
                     <field name="don_vi"></field>
                     <field name="so_luong"></field>
@@ -584,11 +564,11 @@
                     <field name="is_sep" invisible="1"></field>
                     <field name="percent_diemtc" attrs="{'invisible' : [('is_sep', '=', False)]}"></field>
                     <field name="diemld" attrs="{'invisible' : [('is_sep', '=', False)]}" />
-                    <field name="cd_parent_id" ></field>
-                    <field name="cd_children_ids" ></field>
+                    <field name="cd_parent_id"></field>
+                    <field name="cd_children_ids"></field>
                     <field name="file_ids"></field>
-                    <field name="gd_parent_id" ></field>
-                    <field name="gd_children_ids" ></field>
+                    <field name="gd_parent_id"></field>
+                    <field name="gd_children_ids"></field>
                     <field name="write_date"></field>
                 </tree>
             </field>
@@ -618,7 +598,7 @@
                     <field name="user_id" type="row" />
                     <field name="ngay_bat_dau" type="row" interval="day" />
                     <field name="name" type="row" />
-              <!--      <field name="tvcv_id.name" type="measure" />-->
+                    <!--      <field name="tvcv_id.name" type="measure" />-->
                     <field name="diem_tvi" type="measure" />
                     <field name="so_luong" type="measure" />
                     <field name="so_lan" type="measure" />
@@ -752,7 +732,7 @@
                         <group>
                             <group>
                                 <field name="id"></field>
-                                <field name="name"></field> 
+                                <field name="name"></field>
                                 <!-- 	<field name="is_active"></field> -->
                                 <field name="code"></field>
                                 <field name="cong_viec_cate_id"></field>
@@ -850,9 +830,6 @@
                                 <field name="write_date"></field>
                                 <field name="thong_bao_khac"></field>
                                 <field name="trigger_model"></field>
-                                
-                              
-                                
                             </group>
                         </group>
                     </sheet>
@@ -886,20 +863,18 @@
                 <form string="Comment Form">
                     <sheet>
                         <group>
-                        <group>
-                            <field name="noi_dung"></field>
-                            <field name="file_ids"></field>
+                            <group>
+                                <field name="noi_dung"></field>
+                                <field name="file_ids"></field>
                             </group>
-                        <group>
-                         <field name="doitac_ids"></field> 
-                        
-                        </group>
+                            <group>
+                                <field name="doitac_ids"></field>
+                            </group>
                         </group>
                     </sheet>
                 </form>
             </field>
         </record>
-        
         <record model="ir.ui.view" id="comment_list">
             <field name="name">Comment list</field>
             <field name="model">comment</field>
@@ -912,7 +887,6 @@
                 </tree>
             </field>
         </record>
-        
         <!--END COMMENT -->
         <!-- GHI CHÚ CÔNG VIỆC -->
         <record id="gccv_search" model="ir.ui.view">
@@ -1431,119 +1405,36 @@
         </record>
         <!-- kknoc -->
         <!--  Sale config -->
-        
         <record id="ltk_config_settings_view" model="ir.ui.view">
-        <field name="name">ltk.config.settings</field>
-        <field name="model">ltk.config.settings</field>
-        <field name="arch" type="xml">
-            <form string="Configure Sales" class="oe_form_configuration" name="sale_config_form">
-                <header>
-                    <button string="Apply" type="object" name="execute" class="oe_highlight"/>
-                    <button string="Cancel" type="object" name="cancel" class="oe_link"/>
-                </header>
-                <sheet>
-                <group>
-                 <field name="group_time_allow_field_edit_group" widget="radio"></field>
-                 <field name="is_cam_sua_do_time"></field>
-                 <field name="allow_edit_time"></field>
-                 <field name="is_cam_sua_truoc_ngay"></field>
-				 <field name="cam_sua_truoc_ngay"></field>
-                 
-                 </group>
-                </sheet>
-            </form>
-        </field>
-    </record>
-
-    <record id="ltk_config_settings_action" model="ir.actions.act_window">
-        <field name="name">Configure Sales</field>
-        <field name="type">ir.actions.act_window</field>
-        <field name="res_model">ltk.config.settings</field>
-      <!--   <field name="view_id" ref="view_sale_config_settings"/> -->
-        <field name="view_mode">form</field>
-        <field name="target">inline</field>
-    </record>
-    
-    
-        <!--  end sale config -->
-        
-         <!--  doi tac --> -->
-        <record id="doitac_search" model="ir.ui.view">
-            <field name="name">doitac  search</field>
-            <field name="model">doitac</field>
+            <field name="name">ltk.config.settings</field>
+            <field name="model">ltk.config.settings</field>
             <field name="arch" type="xml">
-                <search>
-                   <field name="name"></field>
-<field name="cty_id"></field>
-<field name="chuc_vu"></field>
-
-                </search>
-            </field>
-        </record>
-        <record model="ir.ui.view" id="doitacc_form">
-            <field name="name">doitac Form</field>
-            <field name="model">doitac</field>
-            <field name="arch" type="xml">
-                <form string="kk ">
+                <form string="Configure Sales" class="oe_form_configuration" name="sale_config_form">
+                    <header>
+                        <button string="Apply" type="object" name="execute" class="oe_highlight" />
+                        <button string="Cancel" type="object" name="cancel" class="oe_link" />
+                    </header>
                     <sheet>
                         <group>
-                              <field name="name"></field>
-<field name="cty_id"></field>
-<field name="chuc_vu"></field>
-
-            
+                            <field name="group_time_allow_field_edit_group" widget="radio"></field>
+                            <field name="is_cam_sua_do_time"></field>
+                            <field name="allow_edit_time"></field>
+                            <field name="is_cam_sua_truoc_ngay"></field>
+                            <field name="cam_sua_truoc_ngay"></field>
                         </group>
                     </sheet>
                 </form>
             </field>
         </record>
-        <record model="ir.ui.view" id="doitac_list">
-            <field name="name">doi tac list</field>
-            <field name="model">doitac</field>
-            <field name="arch" type="xml">
-                <tree string="kk">
-                  <field name="name"></field>
-<field name="cty_id"></field>
-<field name="chuc_vu"></field>
-
-
-                </tree>
-            </field>
+        <record id="ltk_config_settings_action" model="ir.actions.act_window">
+            <field name="name">Configure Sales</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ltk.config.settings</field>
+            <!--   <field name="view_id" ref="view_sale_config_settings"/> -->
+            <field name="view_mode">form</field>
+            <field name="target">inline</field>
         </record>
-        <record model="ir.actions.act_window" id="doitac_action">
-            <field name="name"> Đối Tác</field>
-            <field name="res_model">doitac</field>
-            <field name="view_mode">tree,form</field>
-        </record>
-       
-        <!-- end doi tac-->
-        
-        <menuitem name="Kiểm Kê" id="kiemke_icon" sequence="1" />
-        <menuitem name="Vật Tư LTK" id="vattu_menu" parent="kiemke_icon" sequence="1" action="vattu_action" />
-        <menuitem name="kế toán kiểm kê" id="kiemke_menu" parent="kiemke_icon" sequence="1" action="kiemke_action" />
-        <menuitem name="KKNOC" id="kknoc_menu" parent="kiemke_icon" sequence="1" action="kknoc_action" />
-        <menuitem name="PN" id="pn_menu" parent="kiemke_icon" sequence="1" action="pn_action" />
-        <!-- Ghi chu cong viec -->
-        <menuitem name="Ghi chú công việc menu" id="ghichucongviec_icon" sequence="1" />
-        <menuitem name="Ghi chú công việc" id="ghichucongviec_menu" parent="ghichucongviec_icon" sequence="1" action="ghichucongviec_action" />
-        <menuitem name="Loại ghi chú" id="ghichucongviec_type_menu" parent="ghichucongviec_icon" sequence="2" action="gccvtype_action" />
-        <!-- import icon -->
-        <menuitem name="Import" id="import_icon" sequence="1" groups="base.group_erp_manager" />
-        <menuitem id="import_tvcv_menu" parent="import_icon" action="importthuvien_action" sequence="1"></menuitem>
-        <!-- Công việc/ Ca Trực -->
-        <menuitem name="Công Việc/Trực" id="ctrtvcv_icon" web_icon="dai_tgg,static/src/image/customers-icon-18.png" />
-        <menuitem name="Ca trực Menu" id="ctrmenu_menu" parent="ctrtvcv_icon" action="ctr_action" sequence="1"></menuitem>
-        <menuitem name="Ca trực" id="ctr_menu" parent="ctrmenu_menu" action="ctr_action" sequence="1"></menuitem>
-        <menuitem id="suco_menu" parent="ctrmenu_menu" action="suco_action" sequence="2"></menuitem>
-        <menuitem id="suvu_ke_thua_menu" parent="ctrmenu_menu" action="suvu_action" sequence="4"></menuitem>
-        <menuitem name=" Công Việc menu" id="menu_menu" parent="ctrtvcv_icon" sequence="2"></menuitem>
-        <menuitem name=" Công Việc" id="cvi_menu" parent="menu_menu" action="action_dynamic_domain" sequence="1"></menuitem>
-        <menuitem id="tvcv_menu" parent="menu_menu" action="thuvientvcv_action" sequence="2"></menuitem>
-        <menuitem name="Cấu hình" id="config_menu" parent="ctrtvcv_icon" action="ltk_config_settings_action" sequence="3"></menuitem>
-        <menuitem name="Users(Nhân viên)" id="users_menu" parent="ctrtvcv_icon" action="users_action" sequence="3"></menuitem>
-        <menuitem id="congty_menu" parent="ctrtvcv_icon" action="congty_action" sequence="4"></menuitem>
-        <menuitem name="Đối Tác" id="doitac_menu" parent="ctrtvcv_icon" action="doitac_action" sequence="3"></menuitem>
-        <menuitem id="file_menu" parent="ctrtvcv_icon" action="file_action" sequence="6"></menuitem>
-        <menuitem id="comment_menu" parent="ctrtvcv_icon" action="comment_action" sequence="6"></menuitem>
-    </data>
+        <!--  end sale config -->
+        <!--  doi tac --> --&gt;
+        <record id="doitac_search" model="ir.ui.view"><field name="name">doitac  search</field><field name="model">doitac</field><field name="arch" type="xml"><search><field name="name"></field><field name="cty_id"></field><field name="chuc_vu"></field></search></field></record><record model="ir.ui.view" id="doitacc_form"><field name="name">doitac Form</field><field name="model">doitac</field><field name="arch" type="xml"><form string="kk "><sheet><group><field name="name"></field><field name="cty_id"></field><field name="chuc_vu"></field></group></sheet></form></field></record><record model="ir.ui.view" id="doitac_list"><field name="name">doi tac list</field><field name="model">doitac</field><field name="arch" type="xml"><tree string="kk"><field name="name"></field><field name="cty_id"></field><field name="chuc_vu"></field></tree></field></record><record model="ir.actions.act_window" id="doitac_action"><field name="name"> Đối Tác</field><field name="res_model">doitac</field><field name="view_mode">tree,form</field></record><!-- end doi tac--><menuitem name="Kiểm Kê" id="kiemke_icon" sequence="1" /><menuitem name="Vật Tư LTK" id="vattu_menu" parent="kiemke_icon" sequence="1" action="vattu_action" /><menuitem name="kế toán kiểm kê" id="kiemke_menu" parent="kiemke_icon" sequence="1" action="kiemke_action" /><menuitem name="KKNOC" id="kknoc_menu" parent="kiemke_icon" sequence="1" action="kknoc_action" /><menuitem name="PN" id="pn_menu" parent="kiemke_icon" sequence="1" action="pn_action" /><!-- Ghi chu cong viec --><menuitem name="Ghi chú công việc menu" id="ghichucongviec_icon" sequence="1" /><menuitem name="Ghi chú công việc" id="ghichucongviec_menu" parent="ghichucongviec_icon" sequence="1" action="ghichucongviec_action" /><menuitem name="Loại ghi chú" id="ghichucongviec_type_menu" parent="ghichucongviec_icon" sequence="2" action="gccvtype_action" /><!-- import icon --><menuitem name="Import" id="import_icon" sequence="1" groups="base.group_erp_manager" /><menuitem id="import_tvcv_menu" parent="import_icon" action="importthuvien_action" sequence="1"></menuitem><!-- Công việc/ Ca Trực --><menuitem name="Công Việc/Trực" id="ctrtvcv_icon" web_icon="dai_tgg,static/src/image/customers-icon-18.png" /><menuitem name="Ca trực Menu" id="ctrmenu_menu" parent="ctrtvcv_icon" action="ctr_action" sequence="1"></menuitem><menuitem name="Ca trực" id="ctr_menu" parent="ctrmenu_menu" action="ctr_action" sequence="1"></menuitem><menuitem id="suco_menu" parent="ctrmenu_menu" action="suco_action" sequence="2"></menuitem><menuitem id="suvu_ke_thua_menu" parent="ctrmenu_menu" action="suvu_action" sequence="4"></menuitem><menuitem name=" Công Việc menu" id="menu_menu" parent="ctrtvcv_icon" sequence="2"></menuitem><menuitem name=" Công Việc" id="cvi_menu" parent="menu_menu" action="action_dynamic_domain" sequence="1"></menuitem><menuitem id="tvcv_menu" parent="menu_menu" action="thuvientvcv_action" sequence="2"></menuitem><menuitem name="Cấu hình" id="config_menu" parent="ctrtvcv_icon" action="ltk_config_settings_action" sequence="3"></menuitem><menuitem name="Users(Nhân viên)" id="users_menu" parent="ctrtvcv_icon" action="users_action" sequence="3"></menuitem><menuitem id="congty_menu" parent="ctrtvcv_icon" action="congty_action" sequence="4"></menuitem><menuitem name="Đối Tác" id="doitac_menu" parent="ctrtvcv_icon" action="doitac_action" sequence="3"></menuitem><menuitem id="file_menu" parent="ctrtvcv_icon" action="file_action" sequence="6"></menuitem><menuitem id="comment_menu" parent="ctrtvcv_icon" action="comment_action" sequence="6"></menuitem></data>
 </openerp>
