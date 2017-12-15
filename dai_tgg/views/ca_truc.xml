@@ -5,6 +5,24 @@
       <!-- Đài HCM -->
       <!-- Đài HCM -->
       <!-- CA TRỰC -->
+      <record id="ctr_search" model="ir.ui.view">
+         <field name="name">ca truc search</field>
+         <field name="priority" eval="1" />
+         <field name="model">ctr</field>
+         <field name="arch" type="xml">
+            <search string="Search user">
+            	<field name="member_ids"></field>
+				<field name="cvi_ids"></field>
+				<field name="su_co_ids"></field>
+				<field name="su_vu_ids"></field>
+               <group string="Group By Đơn vị">
+                  <filter string="Đơn Vị" context="{'group_by' : 'cty_id'}" />
+               </group>
+            </search>
+         </field>
+      </record>
+      
+      
       <record model="ir.ui.view" id="ctr_form">
          <field name="name">ctr.form</field>
          <field name="model">ctr</field>
