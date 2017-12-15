@@ -17,3 +17,4 @@ access_dai_tgg_suco,dai_tgg.suco,model_suco,base.group_user,1,1,1,1
 access_dai_tgg_suvu,dai_tgg.suvu,model_suvu,base.group_user,1,1,1,1
 access_dai_tgg_file,dai_tgg.file,model_dai_tgg_file,base.group_user,1,1,1,1
 access_dai_tgg_doitac,dai_tgg.doitac,model_doitac,base.group_user,1,1,1,1
+access_dai_tgg_loaisuvu,dai_tgg.loaisuvu,model_loaisuvu,base.group_user,1,1,1,1
