@@ -16,16 +16,16 @@ from lxml import etree
 ############### BEGIN DAI HCM ##################
 def name_compute(r,adict=None,join_char = u' - '):
     names = []
-#     adict = [('cate_cvi',{'pr':''}),('noi_dung',{'pr':'','fnc':lambda r: r.name}),('id',{'pr':''})]
+#     adict = [('cate_cvi',{'pr':''}),('noi_dung',{'pr':'','func':lambda r: r.name }),('id',{'pr':''})]
     for fname,attr_dict in adict:
-#         print r , fname
         val = getattr(r,fname)
-        fnc = attr_dict.get('fnc',None)
-        if fnc:
-            val = fnc(val)
+        func = attr_dict.get('func',None)
+        pr_more = attr_dict.get('pr_more','')
+        sf_more = attr_dict.get('sf_more','')
+        if func:
+            val = func(val)
         if  not val:# Cho có trường hợp New ID
-#         if val ==False:
-            if attr_dict.get('skip_if_False',True):
+            if attr_dict.get('skip_if_False',True) and  (pr_more=='' and sf_more==''):
                 continue
             if  fname=='id' :
                 val ='New'
@@ -35,12 +35,65 @@ def name_compute(r,adict=None,join_char = u' - '):
             item =  attr_dict['pr'] + u': ' + unicode(val)
         else:
             item = unicode (val)
+            
+        if pr_more:
+            item =  pr_more +  val
+        if sf_more:
+            item =  val + sf_more
+            
         names.append(item)
     if names:
         name = join_char.join(names)
     else:
         name = False
     return name
+
+def name_compute_char_join_rieng(r,adict=None,join_char = u' - '):
+    names = []
+#     adict = [('cate_cvi',{'pr':''}),('noi_dung',{'pr':'','func':lambda r: r.name }),('id',{'pr':''})]
+    sum_txt = ''
+    for c,fname_and_attr_dict in enumerate(adict):
+        fname,attr_dict = fname_and_attr_dict
+        val = getattr(r,fname)
+        func = attr_dict.get('func',None)
+        pr_more = attr_dict.get('pr_more','')
+        sf_more = attr_dict.get('sf_more','')
+        join_char_of_one_field = attr_dict.get('join_char',join_char)
+        if func:
+            val = func(val)
+        if  not val:# Cho có trường hợp New ID
+            if attr_dict.get('skip_if_False',True) and  (pr_more=='' and sf_more==''):
+                continue
+            if  fname=='id' :
+                val ='New'
+            else:
+                val ='_'
+        if attr_dict.get('pr',None) != None:
+            item =  attr_dict['pr'] + u': ' + unicode(val)
+        else:
+            item = unicode (val)
+            
+        if pr_more:
+            item =  pr_more +  val
+        if sf_more:
+            item =  val + sf_more
+        if c ==0:
+            pass
+        else:
+            item =join_char_of_one_field + item
+        sum_txt = sum_txt + item
+#         names.append(item)
+#     if names:
+#         name = join_char.join(names)
+#     else:
+#         name = False
+    if sum_txt:
+        pass
+    else:
+        sum_txt = False
+    return sum_txt
+
+
 def convert_memebers_to_str(member_ids):
     return u','.join(member_ids.mapped('name'))
 def Convert_date_orm_to_str(date_orm_str):
@@ -49,6 +102,15 @@ def Convert_date_orm_to_str(date_orm_str):
         return date_obj.strftime('%d/%m/%y')
     else:
         return False
+    
+def Convert_datetime_orm_to_str(date_orm_str):
+    if date_orm_str:
+        date_obj = fields.Datetime.from_string(date_orm_str)
+        return date_obj.strftime('%d/%m/%y %H:%M')
+    else:
+        return False
+    
+    
 def convert_utc_to_gmt_7(utc_datetime_inputs):
     local = pytz.timezone('Etc/GMT-7')
     utc_tz =pytz.utc
@@ -87,9 +149,10 @@ class CaTruc(models.Model):
     gio_ket_thuc = fields.Datetime(u'Giờ Kết Thúc ca',default=lambda self: self.gio_bat_dau_defaut_or_ket_thuc_(is_tinh_gio_bat_dau_or_ket_thuc = 'gio_ket_thuc'))#
     cty_id = fields.Many2one('congty',string=u'Đơn vị',default=lambda self:self.env.user.cty_id, readonly=True,required=True)
     member_ids = fields.Many2many('res.users', string=u'Những thành viên trực')
-    cvi_ids = fields.Many2many('cvi','ctr_cvi_relate','ctr_id','cvi_id',string=u'Công Việc')
-    su_co_ids = fields.Many2many('suco','ctr_suco_rel','ctr_id','suco_id',string=u'Sự Cố')
-    su_vu_ids = fields.Many2many('suvu','ctr_suvu_rel','ctr_id','suvu_id',string=u'Sự Vụ')
+    cvi_ids = fields.Many2many('cvi','ctr_cvi_relate','ctr_id','cvi_id',string=u'Công Việc/Sự Cố/Sự Vụ')
+#     su_co_ids = fields.Many2many('suco','ctr_suco_rel','ctr_id','suco_id',string=u'Sự Cố')
+#     su_vu_ids = fields.Many2many('suvu','ctr_suvu_rel','ctr_id','suvu_id',string=u'Sự Vụ')
+#     ctr_lines_ids = fields.One2many('ctrlines','ctr_id')
     @api.multi
     def name_get(self):
         def get_names(r):
@@ -112,7 +175,7 @@ class CaTruc(models.Model):
     @api.depends('date','ca','member_ids')
     def _name_truc_ca_compute(self):
         for r in self:
-            adict=[('id',{'pr':u'Ca Trực, id'}),('ca',{'pr':u'Buổi'}),('date',{'pr':u'Ngày','fnc':Convert_date_orm_to_str}),('member_ids',{'pr':u'Người Trực','fnc':convert_memebers_to_str})]
+            adict=[('id',{'pr':u'Ca Trực, id'}),('ca',{'pr':u'Buổi'}),('date',{'pr':u'Ngày','func':Convert_date_orm_to_str}),('member_ids',{'pr':u'Người Trực','func':convert_memebers_to_str})]
             ret =  name_compute(r, adict)
             r.name = ret
     @api.depends('gio_bat_dau')
@@ -156,8 +219,8 @@ class CaTruc(models.Model):
     def default_get(self, fields):
         res = super(CaTruc, self).default_get(fields)
         adict = {'cvi_ids':{'model':'cvi','add_domain':[('ctr_ids','!=',False)]},
-                 'su_co_ids':{'model':'suco','add_domain':[('ctr_ids','!=',False)]},
-                 'su_vu_ids':{'model':'suvu','add_domain':[('ctr_ids','!=',False)]}
+#                  'su_co_ids':{'model':'suco','add_domain':[('ctr_ids','!=',False)]},
+#                  'su_vu_ids':{'model':'suvu','add_domain':[('ctr_ids','!=',False)]}
               
                  }
         #def afunc(atuple):
@@ -176,6 +239,34 @@ class CaTruc(models.Model):
 #         for r in self:
 #             r.cty_id = r.create_uid.cty_id
             
+            
+# class CTRLines(models.Model):
+#     _name='ctrlines'
+#     name = fields.Char()
+#     cvi_id = fields.Many2one('cvi')
+#     suco_id = fields.Many2one('suco')
+#     ctr_id = fields.Many2one('ctr')
+#     
+#     @api.multi
+#     def write(self,vals):
+#         suco_id = vals.get('suco_id',None)
+#         for r in self:
+#             if suco_id != None:
+#                 print 'r.suco_id',r.suco_id
+#                 if r.suco_id != suco_id:
+#                     raise UserError(' khong duoc thay doi suco_id')
+#         res = super(CTRLines,self).write(vals)
+#         return res
+#     
+#     
+#     @api.multi
+#     def unlink(self):
+#         for r in self:
+#             if r.suco_id:
+#                 r.suco_id.unlink()
+#         res = super(CTRLines, self).unlink()
+#         return res
+    
 ########################SỰ CỐ####################
 #SUCO_SUVU_LIST = ('su_co',u'Sự Cố'),('su_vu',u'Sự Vụ')
 SUCO_SUVU_DICT = {'su_co':u'Sự Cố','su_vu':u'Sự Vụ'}
@@ -284,138 +375,140 @@ class CamSua(models.Model):
         res = super(CamSua, self).unlink()
         return res
 
-class SuCoSuVu(models.Model):
-    _name = 'sucosuvu'   
-    _auto = False
-    name = fields.Char(compute='name_',store=True)
-    ngay_bat_dau =  fields.Date(compute='ngay_bat_dau_',store=True,string=u'Ngày')
-    gio_bat_dau = fields.Datetime(u'Giờ bắt đầu ', default=fields.Datetime.now)
-    gio_ket_thuc = fields.Datetime(u'Giờ Kết Thúc')
-    duration = fields.Float(digits=(6, 1), help='Duration in Hours',compute = '_get_duration', store = True,string=u'Thời lượng (giờ)')
-    noi_dung = fields.Text(string=u'Nội dung') 
-    noi_dung_trich_dan = fields.Char(compute='noi_dung_trich_dan_',store=True)
-    ctr_ids  = fields.Many2many('ctr',string=u'Ca Trực',required=True)
-    file_ids = fields.Many2many('dai_tgg.file',string=u'Files đính kèm')
-    cty_id = fields.Many2one('congty',string=u'Đơn vị',default=lambda self:self.env.user.cty_id.id, readonly=True,required=True)
-    cty_ids = fields.Many2many('congty',string=u'Đơn vị Liên quan', default=lambda self: [self.env.user.cty_id.id],required=True)
-    doitac_ids = fields.Many2many('doitac',string=u'Đối Tác')
-    
-    @api.depends('noi_dung')
-    def noi_dung_trich_dan_(self):
-        for r in self:
-            if r.noi_dung and len(r.noi_dung) > 30:
-                r.noi_dung_trich_dan = r.noi_dung[:30] + u'...'
-        
-    @api.depends('gio_bat_dau')
-    def ngay_bat_dau_(self):#trong su kien
-        for r in self:
-            if r.gio_bat_dau:
-                gio_bat_dau_vn = convert_odoo_datetime_to_vn_datetime(r.gio_bat_dau)
-                r.ngay_bat_dau = gio_bat_dau_vn.date()
-    @api.depends('noi_dung')
-    def name_(self,su_co_hay_su_vu=u'Sự Cố'):
-        for r in self:
-            name  = name_compute(r,adict=[
-                                            #('type_su_co_or_su_vu',{'fnc':lambda su_co:SUCO_SUVU_DICT[su_co]}),
-                                            ('id',{'pr':u'%s  id'%su_co_hay_su_vu}),
-                                           # ('loai_su_co_id',{'pr':u'Loại','fnc':lambda r: r.name,'skip_if_False':True}),
-                                          #('noi_dung',{'pr':u'Nội dung'}),
-                                          ])
-            r.name = name
-    @api.depends('gio_ket_thuc','gio_bat_dau')
-    def _get_duration(self):
-        for r in self:
-            if r.gio_bat_dau == False or r.gio_ket_thuc==False:
-                r.duration = False
-            else:
-                start_date = fields.Datetime.from_string(r.gio_bat_dau)
-                end_date = fields.Datetime.from_string(r.gio_ket_thuc)
-                duration = (end_date - start_date)
-                secs = duration.total_seconds()
-                hour = secs / 3600
-                r.duration = hour    
-class LoaiSuCo(models.Model):
-    _name= 'loaisuco'
-    name = fields.Char()
-
-
-                
-class SuCo(models.Model):
-    _name = 'suco'   
-    _auto = True
-    _inherit = ['sucosuvu','camsua']
-    loai_su_co_id = fields.Many2one('loaisuco',string=u'Loại Sự Cố')
-    comment_ids = fields.One2many('comment','su_co_id',string=u'Comments/Ghi Chú')
-    
-    @api.multi
-    def name_get(self):
-        def get_names(r):
-            name = name_compute(r,adict=[
-                                            ('id',{'pr':u'Sự Cố  id'}),
-                                          ('loai_su_co_id',{'fnc':lambda r: r.name}),
-                                          ('noi_dung_trich_dan',{'pr':None}),
-                                          ]
-                                 )
-            return name
-             
-        return [(r.id, get_names(r)) for r in self]
-    
- 
-    @api.multi
-    def write(self, vals):
-        res = super(SuCo,self).write(vals)
-        return res
-    @api.model
-    def search(self, args, offset=0, limit=None, order=None, count=False):
-        context = self._context or {}
-        active_ctr_id = context.get('active_ctr_id',False)
-        if active_ctr_id != False:
-            new_args = ['|',('ctr_ids','=',active_ctr_id)]
-            new_args.extend(args)
-            args = new_args
-        return super(SuCo, self).search(args, offset, limit, order, count=count)
-   
-class LoaiSuVu(models.Model):
-    _name= 'loaisuvu'
-    name = fields.Char()
-class SuVu(models.Model):
-    _name='suvu'
-    _auto = True
-    _inherit = ['sucosuvu','camsua']
-    loai_su_vu_id = fields.Many2one('loaisuvu',string=u'Loại Sự Vụ')
-    comment_ids = fields.One2many('comment','su_vu_id',string=u'Comments/Ghi Chú')
-    noi_dung = fields.Char()
-    
-    @api.multi
-    def name_get(self):
-        def get_names(r):
-            name = name_compute(r,adict=[
-                                            ('id',{'pr':u'Sự Vụ id'}),
-                                          ('loai_su_vu_id',{'fnc':lambda r: r.name}),
-                                          ('noi_dung_trich_dan',{'pr':None}),
-                                          ]
-                                 )
-            return name
-             
-        return [(r.id, get_names(r)) for r in self]
-    
-    
-    @api.model
-    def search(self, args, offset=0, limit=None, order=None, count=False):
-        context = self._context or {}
-        active_ctr_id = context.get('active_ctr_id',False)
-        if active_ctr_id != False:
-            new_args = ['|',('ctr_ids','=',active_ctr_id)]
-            new_args.extend(args)
-            args = new_args
-        return super(SuVu, self).search(args, offset, limit, order, count=count)
-    
-    @api.multi
-    def write(self,vals):
-        res = super(SuVu,self).write(vals)
-        return res
-    def name_(self):
-        super(SuVu, self).name_(su_co_hay_su_vu=u'Sự Vụ')
+# class SuCoSuVu(models.Model):
+#     _name = 'sucosuvu'   
+#     _auto = False
+#     name = fields.Char(compute='name_',store=True)
+#     ngay_bat_dau =  fields.Date(compute='ngay_bat_dau_',store=True,string=u'Ngày')
+#     gio_bat_dau = fields.Datetime(u'Giờ bắt đầu ', default=fields.Datetime.now)
+#     gio_ket_thuc = fields.Datetime(u'Giờ Kết Thúc')
+#     duration = fields.Float(digits=(6, 1), help='Duration in Hours',compute = '_get_duration', store = True,string=u'Thời lượng (giờ)')
+#     noi_dung = fields.Text(string=u'Nội dung') 
+#     noi_dung_trich_dan = fields.Char(compute='noi_dung_trich_dan_',store=True)
+#     ctr_ids  = fields.Many2many('ctr',string=u'Ca Trực')
+#     file_ids = fields.Many2many('dai_tgg.file',string=u'Files đính kèm')
+#     cty_id = fields.Many2one('congty',string=u'Đơn vị',default=lambda self:self.env.user.cty_id.id, readonly=True)
+#     cty_ids = fields.Many2many('congty',string=u'Đơn vị Liên quan', default=lambda self: [self.env.user.cty_id.id])
+#     doitac_ids = fields.Many2many('doitac',string=u'Đối Tác')
+#     
+#     @api.depends('noi_dung')
+#     def noi_dung_trich_dan_(self):
+#         for r in self:
+#             if r.noi_dung and len(r.noi_dung) > 30:
+#                 r.noi_dung_trich_dan = r.noi_dung[:30] + u'...'
+#         
+#     @api.depends('gio_bat_dau')
+#     def ngay_bat_dau_(self):#trong su kien
+#         for r in self:
+#             if r.gio_bat_dau:
+#                 gio_bat_dau_vn = convert_odoo_datetime_to_vn_datetime(r.gio_bat_dau)
+#                 r.ngay_bat_dau = gio_bat_dau_vn.date()
+#     @api.depends('noi_dung')
+#     def name_(self,su_co_hay_su_vu=u'Sự Cố'):
+#         for r in self:
+#             name  = name_compute(r,adict=[
+#                                             #('type_su_co_or_su_vu',{'func':lambda su_co:SUCO_SUVU_DICT[su_co]}),
+#                                             ('id',{'pr':u'%s  id'%su_co_hay_su_vu}),
+#                                            # ('loai_su_co_id',{'pr':u'Loại','func':lambda r: r.name,'skip_if_False':True}),
+#                                           #('noi_dung',{'pr':u'Nội dung'}),
+#                                           ])
+#             r.name = name
+#     @api.depends('gio_ket_thuc','gio_bat_dau')
+#     def _get_duration(self):
+#         for r in self:
+#             if r.gio_bat_dau == False or r.gio_ket_thuc==False:
+#                 r.duration = False
+#             else:
+#                 start_date = fields.Datetime.from_string(r.gio_bat_dau)
+#                 end_date = fields.Datetime.from_string(r.gio_ket_thuc)
+#                 duration = (end_date - start_date)
+#                 secs = duration.total_seconds()
+#                 hour = secs / 3600
+#                 r.duration = hour    
+# class LoaiSuCo(models.Model):
+#     _name= 'loaisuco'
+#     name = fields.Char()
+# class LoaiSuCoSuVu(models.Model):
+#     _name= 'loaisucosuvu'
+#     name = fields.Char()
+#     type_suco_or_suvu = fields.Selection([(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')])
+#                 
+# class SuCo(models.Model):
+#     _name = 'suco'   
+#     _auto = True
+#     _inherit = ['sucosuvu','camsua']
+#     loai_su_co_id = fields.Many2one('loaisuco',string=u'Loại Sự Cố')
+#     comment_ids = fields.One2many('comment','su_co_id',string=u'Comments/Ghi Chú')
+#     
+#     @api.multi
+#     def name_get(self):
+#         def get_names(r):
+#             name = name_compute(r,adict=[
+#                                             ('id',{'pr':u'Sự Cố  id'}),
+#                                           ('loai_su_co_id',{'func':lambda r: r.name}),
+#                                           ('noi_dung_trich_dan',{'pr':None}),
+#                                           ]
+#                                  )
+#             return name
+#              
+#         return [(r.id, get_names(r)) for r in self]
+#     
+#  
+#     @api.multi
+#     def write(self, vals):
+#         res = super(SuCo,self).write(vals)
+#         return res
+#     @api.model
+#     def search(self, args, offset=0, limit=None, order=None, count=False):
+#         context = self._context or {}
+#         active_ctr_id = context.get('active_ctr_id',False)
+#         if active_ctr_id != False:
+#             new_args = ['|',('ctr_ids','=',active_ctr_id)]
+#             new_args.extend(args)
+#             args = new_args
+#         return super(SuCo, self).search(args, offset, limit, order, count=count)
+#    
+# class LoaiSuVu(models.Model):
+#     _name= 'loaisuvu'
+#     name = fields.Char()
+# class SuVu(models.Model):
+#     _name='suvu'
+#     _auto = True
+#     _inherit = ['sucosuvu','camsua']
+#     loai_su_vu_id = fields.Many2one('loaisuvu',string=u'Loại Sự Vụ')
+#     comment_ids = fields.One2many('comment','su_vu_id',string=u'Comments/Ghi Chú')
+#     noi_dung = fields.Char()
+#     
+#     @api.multi
+#     def name_get(self):
+#         def get_names(r):
+#             name = name_compute(r,adict=[
+#                                             ('id',{'pr':u'Sự Vụ id'}),
+#                                           ('loai_su_vu_id',{'func':lambda r: r.name}),
+#                                           ('noi_dung_trich_dan',{'pr':None}),
+#                                           ]
+#                                  )
+#             return name
+#              
+#         return [(r.id, get_names(r)) for r in self]
+#     
+#     
+#     @api.model
+#     def search(self, args, offset=0, limit=None, order=None, count=False):
+#         context = self._context or {}
+#         active_ctr_id = context.get('active_ctr_id',False)
+#         if active_ctr_id != False:
+#             new_args = ['|',('ctr_ids','=',active_ctr_id)]
+#             new_args.extend(args)
+#             args = new_args
+#         return super(SuVu, self).search(args, offset, limit, order, count=count)
+#     
+#     @api.multi
+#     def write(self,vals):
+#         res = super(SuVu,self).write(vals)
+#         return res
+#     def name_(self):
+#         super(SuVu, self).name_(su_co_hay_su_vu=u'Sự Vụ')
 
 class Comment(models.Model):
     _name = 'comment'
@@ -438,9 +531,9 @@ class Comment(models.Model):
         
         for r in self:
             name = name_compute(r, adict=[
-                ('noi_dung',{'fnc':noi_dung_trim,'skip_if_False':True}),
-                ('create_uid',{'pr':u'Người comment','skip_if_False':True,'fnc': lambda u:u.name}),
-                ('create_date',{'fnc':convert_odoo_datetime_to_vn_str,'skip_if_False':True}),
+                ('noi_dung',{'func':noi_dung_trim,'skip_if_False':True}),
+                ('create_uid',{'pr':u'Người comment','skip_if_False':True,'func': lambda u:u.name}),
+                ('create_date',{'func':convert_odoo_datetime_to_vn_str,'skip_if_False':True}),
                 ] )
             r.name = name
             
@@ -545,16 +638,39 @@ def het_time(r,TIME_ALLOW_SECONDS):
     delta_time =  datetime.datetime.now() - create_date
     return  delta_time>TIME_ALLOW
 
+def skip_depends_if_not_congviec_decorator(depend_func):
+    def wrapper(*args,**kargs):
+        self = args[0]
+        for r in self:
+            if r.loai_record ==u'Công Việc':
+                depend_func(r)
+    return wrapper
+
+def skip_depends_if_not_congviec_decorator_valid_diemtc(depend_func):
+    def wrapper(*args,**kargs):
+        self = args[0]
+        for r in self:
+            if not r.id:
+                pass
+            elif r.loai_record !=u'Công Việc':
+                r.valid_diemtc =True
+            else:
+                depend_func(r)
+    return wrapper
+
 
 class Cvi(models.Model):
     _name = 'cvi'
     _parent_name = 'gd_parent_id'
     _inherit = ['camsua']
     _auto = True
+    _order = "id desc"
     ALLOW_WRITE_FIELDS_TIME = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids','percent_diemtt']
     ALLOW_WRITE_FIELDS_CHOT = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids',]
     ALLOW_WRITE_FIELDS_DIFF_USER = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids','percent_diemtc']
     IS_CAM_SUA_DO_CHOT = True
+    loai_record = fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')], string = u'Loại Record')
+    loai_suco_suvu_id = fields.Many2one('loaisucosuvu')
     name = fields.Char(compute='name_',store=True)
     ngay_bat_dau =  fields.Date(compute='ngay_bat_dau_',store=True,string=u'Ngày',translate=True)
     gio_bat_dau = fields.Datetime(string=u'Giờ bắt đầu ', default=fields.Datetime.now)
@@ -563,7 +679,7 @@ class Cvi(models.Model):
     user_id = fields.Many2one('res.users',default =  lambda self: self.env.uid, string=u'Nhân viên tạo')   
 #     cty_id = fields.Many2one('congty',string=u'Đơn vị tạo',default=lambda self:self.env.user.cty_id, readonly=True,required=True)
     cty_id = fields.Many2one('congty',string=u'Đơn vị tạo',compute='cty_id_',store=True)
-    tvcv_id = fields.Many2one('tvcv', string=u'Thư Viện Công việc')
+    tvcv_id = fields.Many2one('tvcv', string=u'Thư Viện Công việc/ Loại Sự Cố, Sự Vụ')
     
     diem_tvi = fields.Float(digits=(6,2),string=u'Điểm Thư Viện',related='tvcv_id.diem',store=True,readonly=True)# 
 #     don_vi = fields.Many2one('donvi',related='tvcv_id.don_vi',string=u'Đơn vị tính',readonly=True)
@@ -574,7 +690,7 @@ class Cvi(models.Model):
     so_lan = fields.Integer(string=u'Số Lần',default = 1,required=True)
     noi_dung = fields.Text(string=u'Nội dung') 
     noi_dung_trich_dan = fields.Char(compute='noi_dung_trich_dan_',store=True)
-    comment_ids = fields.One2many('comment','cvi_id',string=u'Comments/Ghi Chú')
+    comment_ids = fields.One2many('comment','cvi_id',string=u'Comments/Ghi Chú/Tiến Độ')
     gd_parent_id = fields.Many2one('cvi',string=u'Công Việc Giai Đoạn Cha',ondelete='cascade')
     gd_children_ids = fields.One2many('cvi','gd_parent_id',string=u'Các CV Giai Đoạn Con')
     cd_parent_id = fields.Many2one('cvi',string=u'Công Việc Chia Điểm Cha',ondelete='cascade')# ondelete='restrict' #ondelete='cascade', ondelete='set null'
@@ -584,13 +700,13 @@ class Cvi(models.Model):
     
     diem_goc = fields.Float(digits=(6,2),string=u'Điểm Góc',compute='diem_goc_',store=True)# 
     diemtt = fields.Float(digits=(6,2),store=True,compute = 'diemtt_',string=u'Điểm Tự Tính')
-    percent_diemtt = fields.Integer(default=100,string=u'Điểm Tự Chấm/Điểm Tự Tính(%)')
-    diemtc = fields.Float(digits=(6,2),compute='diemtc_',string=u'Điểm Tự Chấm',store=True)
+    percent_diemtt = fields.Integer(default=100,string=u'Điểm Nhân Viên/Điểm Tự Tính(%)')
+    diemtc = fields.Float(digits=(6,2),compute='diemtc_',string=u'Điểm Nhân Viên',store=True)
     diem_remain_gd = fields.Float(compute='diem_remain_gd_',string=u'Điểm còn lại của giai đoạn con',store=True)
     slncl = fields.Integer(compute='slncl_',store=True,string=u'Số lượng người chia điểm')
-    percent_diemtc = fields.Integer(default=100,string=u'Điểm LĐ/Điểm Tự Chấm (%)')
+    percent_diemtc = fields.Integer(default=100,string=u'Điểm LĐ/Điểm Nhân Viên (%)')
     diemld = fields.Float(digits=(6,2),compute='diemld_',string=u'Điểm Lãnh Đạo Chấm',store=True)
-    valid_diemtc = fields.Boolean(compute='valid_diemtc_', string=u'Valid Điểm Tự Chấm',store=True)#
+    valid_diemtc = fields.Boolean(compute='valid_diemtc_', string=u'Valid Điểm Nhân Viên',store=True)#
     loai_cvi = fields.Selection([(u'Single',u'Công Việc Đơn'),
                                  (u'Chia Điểm Cha',u'Chia Điểm Cha'),(u'Chia Điểm Con',u'Chia Điểm Con'),
                                  (u'Chung Điểm Cha',u'Chung Điểm Cha'),(u'Chung Điểm Con',u'Chung Điểm Con'),
@@ -618,19 +734,46 @@ class Cvi(models.Model):
     is_sep = fields.Boolean(compute='is_sep_')
     is_has_tvcv_con = fields.Boolean(compute='is_has_tvcv_con_')
     thu_vien_da_chon_list = fields.Char(compute='thu_vien_da_chon_list_')   
-    @api.multi
-    def name_get(self):
-        def get_names(r):
-            name = name_compute(r,adict=[
-                                          ('id',{'pr':u'CV id'}),
-                                          ('tvcv_id',{'fnc':lambda r: r.name}),
-                                          ('noi_dung_trich_dan',{}),
-                                          
-                                          ]
-                                 )
-            return name
-             
-        return [(r.id, get_names(r)) for r in self]
+    
+    comments_show = fields.Char(compute='comments_show_',string=u'Comments/Ghi Chú/Tiến Độ')
+    loai_record_show =  fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')], string = u'Loại Record',compute='loai_record_show_')
+
+    @api.depends('loai_record')
+    def loai_record_show_(self):
+        for r in self:
+            r.loai_record_show = r.loai_record
+    @api.depends('comment_ids')
+    def comments_show_(self):
+        for r in self:
+            comment_ids_text_lists = []
+            for i in r.comment_ids:
+                
+#                 i_text =( (Convert_datetime_orm_to_str(i.create_date) + ' ' ) if i.create_date else '') +( (i.create_uid.name + ' ' ) if r.create_uid else '') +  i.noi_dung
+                i_text = name_compute_char_join_rieng(i, [
+                    ('create_date',{'func':Convert_datetime_orm_to_str}),#,'pr_more':u'('
+                    ('create_uid',{'func': lambda r: r.name ,'join_char':u' - '}),#'sf_more':u')' 
+                    ('noi_dung',{'pr':u''}),
+                                          ],
+                                       join_char = ' ')
+                print 'i_text',i_text
+                comment_ids_text_lists.append(i_text)
+            print 'comment_ids_text_lists',comment_ids_text_lists
+            r.comments_show = '|'.join(comment_ids_text_lists)
+                
+        
+#     @api.multi
+#     def name_get(self):
+#         def get_names(r):
+#             name = name_compute(r,adict=[
+#                                           ('id',{'pr':u'Công id'}),
+#                                           ('tvcv_id',{'func':lambda r: r.name}),
+#                                           ('noi_dung_trich_dan',{}),
+#                                           
+#                                           ]
+#                                  )
+#             return name
+#              
+#         return [(r.id, get_names(r)) for r in self]
     @api.depends('user_id','create_uid')
     def cty_id_(self):
         for r in self:
@@ -733,7 +876,8 @@ class Cvi(models.Model):
                     diem_remain_gd = 0
                 r.diem_remain_gd = diem_remain_gd
  
-    @api.depends('so_luong','so_lan', 'tvcv_id.diem','gd_parent_id.diem_remain_gd')
+    @api.depends('so_luong','so_lan', 'tvcv_id.diem','gd_parent_id.diem_remain_gd','loai_record')
+    @skip_depends_if_not_congviec_decorator
     def diem_goc_(self):
         for r in self:
             if r.gd_parent_id: #GD CON
@@ -747,7 +891,8 @@ class Cvi(models.Model):
             else:
                 r.diem_goc = r.so_luong * r.so_lan * r.tvcv_id.diem
      
-    @api.depends( 'slncl', 'diem_goc','cd_parent_id.diem_goc','len_gd_child')
+    @api.depends( 'slncl', 'diem_goc','cd_parent_id.diem_goc','len_gd_child','loai_record')
+    @skip_depends_if_not_congviec_decorator
     def diemtt_(self):
         for r in self:
                 if r.cd_parent_id:#cv chia diem con
@@ -759,12 +904,14 @@ class Cvi(models.Model):
                     r.user_id = False
                 else: 
                     r.diemtt = r.diem_goc           
-    @api.depends('diemtt','percent_diemtt')           
+    @api.depends('diemtt','percent_diemtt')    
+    @skip_depends_if_not_congviec_decorator
     def diemtc_(self):
         for r in self:
             r.diemtc = r.diemtt * r.percent_diemtt/100
     
     @api.depends('percent_diemtt','slncl','cd_children_ids.percent_diemtt')
+    @skip_depends_if_not_congviec_decorator
     def sum_cd_con_(self):
         for r in self:
             if r.slncl > 1:
@@ -818,7 +965,8 @@ class Cvi(models.Model):
                 #print '11-11 GD_Cha %s - r.valid giai doan %s ' %(r.id,r.valid_gd )
             #print '11-11 After  valid_cd %s' %r.id
 
-    @api.depends('valid_gd','valid_cd','hd_children_ids')
+    @api.depends('valid_gd','valid_cd','hd_children_ids','loai_record')
+    @skip_depends_if_not_congviec_decorator_valid_diemtc
     def valid_diemtc_(self):
         for r in self:
             #Chia điểm con
@@ -868,27 +1016,33 @@ class Cvi(models.Model):
                     r.valid_diemtc_conclusion = u'Kiểm tra điểm OK'
     @api.depends('percent_diemtc',
                  'diemtc')
+    @skip_depends_if_not_congviec_decorator
     def diemld_(self):
         for r in self:
             r.diemld = r.diemtc * r.percent_diemtc /100
             
-    @api.depends('tvcv_id','noi_dung_trich_dan')
+            
+            
+    @api.depends('tvcv_id','noi_dung_trich_dan','loai_record')
     def name_(self):
         for r in self:
-            def tvcv_name(r):
-                if r:
-                    return name_compute(r,adict=[
-                                        ('name',{'skip_if_False':False}),
-                                        ('code',{'skip_if_False':True,'fnc':lambda name: (u'(%s)'%name) if name else False}),
-                                           ],join_char=u' ')
-                else:
-                    return False
-            name  = name_compute(r,adict=[('id',{'pr':u'CV id'}),
-                                          ('tvcv_id',{'pr':u'TVCV','fnc':tvcv_name}),
-                                          ('noi_dung_trich_dan',{'pr':u'Nội Dung'}),
-                                          ]
-                                 )
-            r.name = name
+            adict = {u'Công Việc':u'TVCV',u'Sự Cố':u'Loại',u'Sự Vụ':u'Loại'}
+            if r.loai_record :
+#                 def tvcv_name(r):
+#                     if r:
+#                         return name_compute(r,adict=[
+#                                             ('name',{'skip_if_False':False}),
+#                                             ('code',{'skip_if_False':True,'func':lambda name: (u'(%s)'%name) if name else False}),
+#                                                ],join_char=u' ')
+#                     else:
+#                         return False
+                name  = name_compute(r,adict=[('id',{'pr':u'%s id'%r.loai_record}),
+                                              ('tvcv_id',{'pr':adict[r.loai_record],'func':lambda val:val.name}),
+                                              ('noi_dung_trich_dan',{'pr':u'Nội Dung','skip_if_False':False}),
+                                              ]
+                                     )
+                
+                r.name = name
             
     @api.depends('gio_bat_dau')
     def ngay_bat_dau_(self):#trong su kien
@@ -954,7 +1108,7 @@ class Cvi(models.Model):
                 update_field_list = ['so_luong','so_lan', 'cty_ids']
                 update_dict = self.get_parent_value_for_child(r,update_field_list,'gd_parent_id')
                 r.write(update_dict)
-                
+#                 
     ## CONSTRAINS của chia điểm
     @api.constrains('tvcv_id','so_luong','so_lan','gio_ket_thuc','gio_bat_dau','cty_ids')
     def cd_parent_constrains(self):
@@ -964,7 +1118,7 @@ class Cvi(models.Model):
                 update_dict_of_child = self.update_dict_for_child_when_update_parent(r,update_field_list)
                 for cd_child in r.cd_children_ids:
                     cd_child.write(update_dict_of_child)
-
+ 
     @api.constrains('cd_parent_id')
     def cd_children_constrains(self):
         for r in self:
@@ -978,22 +1132,31 @@ class Cvi(models.Model):
     @api.constrains('tvcv_id','so_luong','so_lan','gio_ket_thuc','gio_bat_dau','cty_ids')
     def chd_parent_constrains(self):
         for r in self:
-            print '111111111111***'
-            if r.hd_children_ids:
-                update_field_list = ['tvcv_id','so_luong','gio_ket_thuc','gio_bat_dau','so_lan','cty_ids']
-                update_dict_of_child = self.update_dict_for_child_when_update_parent(r,update_field_list)
-                for cd_child in r.hd_children_ids:
-                    cd_child.write(update_dict_of_child)
-
+            try:
+                print 'chd_parent_constrains***'
+                if r.hd_children_ids:
+                    update_field_list = ['tvcv_id','so_luong','gio_ket_thuc','gio_bat_dau','so_lan','cty_ids']
+                    update_dict_of_child = self.update_dict_for_child_when_update_parent(r,update_field_list)
+                    for cd_child in r.hd_children_ids:
+                        cd_child.write(update_dict_of_child)
+            except exceptions as e:
+                print ' error chd_parent_constrains***'
+                raise ValueError(e)
+ 
     @api.constrains('hd_parent_id')
     def chd_children_constrains(self):
-        print '22222***'
-        for r in self:
-            if r.hd_parent_id:
-                update_field_list = ['tvcv_id','so_luong','gio_ket_thuc','gio_bat_dau','so_lan', 'cty_ids']
-                update_dict = self.get_parent_value_for_child(r,update_field_list,'hd_parent_id')
-                r.write(update_dict)
-                
+        try:
+            print 'chd_children_constrains***'
+            for r in self:
+                if r.hd_parent_id:
+                    update_field_list = ['tvcv_id','so_luong','gio_ket_thuc','gio_bat_dau','so_lan', 'cty_ids']
+                    update_dict = self.get_parent_value_for_child(r,update_field_list,'hd_parent_id')
+                    r.write(update_dict)
+        except exceptions as e:
+            print ' error chd_parent_constrains***'
+            raise ValueError(e)
+            
+                    
                 
                 
     def constrains_cha_con(self,r):    # r là cha, check coi thư viện công việc của những thằng con có phải là con của thư viện cv của thằng cha
@@ -1004,7 +1167,7 @@ class Cvi(models.Model):
         tvcv_ids = [i.tvcv_id.id for i in  r.gd_children_ids]
         if len(tvcv_ids) != len(set(tvcv_ids)):
             raise ValidationError(u'Giai Đoạn con có duplicate ')
-    
+     
 #     @api.constrains('tvcv_id')
     @api.constrains('gd_children_ids')# khi con của thằng cha thay đổi
     def check_thu_vien_con_in_gd_childs(self):
@@ -1013,6 +1176,8 @@ class Cvi(models.Model):
                 self.constrains_cha_con(r)
             elif r.gd_parent_id:
                 self.constrains_cha_con(r.gd_parent_id)
+                
+                
     @api.model
     def search(self, args, offset=0, limit=None, order=None, count=False):
         context = self._context or {}
@@ -1057,26 +1222,36 @@ class Cvi(models.Model):
 #         return res
     ######################SERVER###############
     
-    @api.model
-    def action_dynamic_domain(self):
-        action = self.env.ref('dai_tgg.cvi_action').read()[0]
-        domain = ['|',('cty_id','child_of',self.env.user.cty_id.id),('cty_ids','child_of',[self.env.user.cty_id.id])]
-        action['domain'] = domain
-      
-        return action
+#     @api.model
+#     def action_dynamic_domain(self):
+#         action = self.env.ref('dai_tgg.cvi_action').read()[0]
+# #         print "action['domain']",action['domain']
+#      
+#         domain = ['|',('cty_id','child_of',self.env.user.cty_id.id),('cty_ids','child_of',[self.env.user.cty_id.id])]
+#         action['domain'] = domain
+#         return action
 #    
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
         # TDE NOTE: WHAAAAT ??? is this because inventory_value is not stored ?
         # TDE FIXME: why not storing the inventory_value field ? company_id is required, stored, and should not create issues
         res = super(Cvi, self).read_group(domain, fields, groupby, offset=offset, limit=limit, orderby=orderby, lazy=lazy)
+#         print 'res...',res
+#         print 'len(res)',len(res)
+        test_rt = []
         for c,r in enumerate(res):
+#             print 'r..',r
+#             print 'c',c
+            if c in range(0,3):
+                test_rt.append(r)
+                print  'c%s/len%s...'%(c,len(res)),'r....',r
+#                 return test_rt
             try:
                 user_id_int = r['user_id'][0]
             except KeyError:
                 continue
             user_id = self.env['res.users'].browse(user_id_int)
-            if self.env.uid not in (user_id.cac_sep_ids.mapped('id') +  user_id.cac_sep_ids.cac_sep_ids.mapped('id')):
+            if self.env.uid not in user_id.cac_sep_ids.mapped('id'):# +  user_id.cac_sep_ids.cac_sep_ids.mapped('id')):
                 r['diemld']=0
                  
 #             #print r
@@ -1088,7 +1263,7 @@ class Cvi(models.Model):
 #                     for line2 in lines:
 #                         inv_value += line2.inventory_value
 #                     line['inventory_value'] = inv_value
-        return res   
+        return test_rt   
 
 
 
@@ -1103,6 +1278,7 @@ class ThuVienCvi(models.Model):
     _parent_name = 'parent_id'
     name = fields.Char(string=u'Tên công việc')
 #     len_name = fields.Integer(compute='compute')
+    loai_record = fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')], string = u'Loại Record')
     code = fields.Char(string=u'Mã công việc')
     don_vi = fields.Many2one('donvi',string=u'Đơn vị tính')
     do_phuc_tap = fields.Integer(string=u'Độ Phức Tạp')
@@ -1112,7 +1288,7 @@ class ThuVienCvi(models.Model):
     cong_viec_cate_id = fields.Many2one('tvcvcate',string=u'Phân loại TVCV')
 #     diem_percent = fields.Float(digits=(6,2),string=u'Phần trăm điểm so với tvcv cha')
     diem_percent = fields.Integer(string=u'Phần trăm điểm so với TVCV cha')
-    is_has_children = fields.Boolean(string=u'Có TVCV Giai Đoạn Cha',compute='is_has_children_',store=True)
+    is_has_children = fields.Boolean(string=u'Có TVCV Giai Đoạn Con',compute='is_has_children_',store=True)
     children_ids = fields.One2many('tvcv','parent_id',string=u'Các TVCV Giai Đoạn Con')
     parent_id = fields.Many2one('tvcv',string=u'TVCV Giai Đoạn Cha')
     co_cong_viec_cha = fields.Boolean(string=u'Có TVCV Giai Đoạn Cha',compute='co_cong_viec_cha_',store=True)
@@ -1120,7 +1296,10 @@ class ThuVienCvi(models.Model):
     valid_thu_vien = fields.Boolean(compute='valid_thu_vien_',store=True,string=u'Valid thư viện')
 #     is_active = fields.Boolean(default=True)
     active = fields.Boolean(default=True)
+    
+    
     @api.constrains('diem')
+    @skip_depends_if_not_congviec_decorator
     def parent_diem_change_children_diem(self):
         for r in self:
             if r.children_ids:
@@ -1129,6 +1308,7 @@ class ThuVienCvi(models.Model):
                     child.diem =  child.diem_percent * r.diem/100
                 r.children_ids = r.children_ids.ids
     @api.constrains('diem_percent','parent_id')
+    @skip_depends_if_not_congviec_decorator
     def children_diem_depend_on_diem_percent(self):
         for r in self:
             if r.parent_id:
@@ -1161,6 +1341,7 @@ class ThuVienCvi(models.Model):
                         'children_ids',#for parent, thay đổi bất cứ gì trong children_ids
                         'parent_id.diem',
                  )     
+    @skip_depends_if_not_congviec_decorator
     def valid_thu_vien_(self):
         for r in self:
             if r.children_ids:
@@ -1172,13 +1353,16 @@ class ThuVienCvi(models.Model):
                 r.valid_thu_vien = True
             #print 'valid tv ',r.id
     @api.depends('parent_id')
+    @skip_depends_if_not_congviec_decorator
     def co_cong_viec_cha_(self):
         for r in self:
             if r.parent_id:
                 r.co_cong_viec_cha = True
             else:
                 r.co_cong_viec_cha = False
+                
     @api.constrains('name','parent_id')
+    @skip_depends_if_not_congviec_decorator
     def _check_unique_name_per_prid(self):
         for r in self:
             if r.parent_id.id:
@@ -1187,10 +1371,14 @@ class ThuVienCvi(models.Model):
                     raise ValidationError(u'không được trùng tên trên mỗi parent_id')
     
     @api.depends('children_ids')
+    @skip_depends_if_not_congviec_decorator
+    
+    
     def is_has_children_(self):
         for r in self:
             r.is_has_children = bool(r.children_ids)
     @api.constrains('parent_id')
+    @skip_depends_if_not_congviec_decorator
     def _check_category_recursion_check_category_recursion(self):
         if not self._check_recursion():
             raise ValidationError(_('Error ! You cannot create recursive categories.'))
@@ -1212,9 +1400,9 @@ class ThuVienCvi(models.Model):
             name = name_compute(r,adict=[
 #                                                                 ('id',{'pr':u'TVCV id'}),
                                                                 ('code',{}),#'pr':u'Mã'
-                                                                ('name',{'fnc': lambda x:name_field}),
+                                                                ('name',{'func': lambda x:name_field}),
                                                                 ('diem',{'pr':u'Điểm'}),
-                                                                ('don_vi',{'pr':u'Đơn Vị','fnc':lambda r: r.name}),
+                                                                ('don_vi',{'pr':u'Đơn Vị','func':lambda r: r.name}),
                                                                #('do_phuc_tap',{'pr':u'Độ Phức Tạp'})
                                                                ])
             res.append((r.id,name))
@@ -1228,12 +1416,9 @@ class ThuVienCvi(models.Model):
 #         return res
     @api.model
     def name_search(self, name, args=None, operator='ilike', limit=100):
-        limit =50
         try:
             id_int = int(name)
-            #print 'id_int',id_int
             ma_tvcv_domain = ['|',('code','ilike',name),('id','=',id_int)]
-            
         except:
             ma_tvcv_domain = [('code','ilike',name)]
         if self._context.get('you_search_at_gd_form'):

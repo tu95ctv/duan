@@ -10,19 +10,20 @@
          <field name="priority" eval="1" />
          <field name="model">ctr</field>
          <field name="arch" type="xml">
-            <search string="Search user">
-            	<field name="member_ids"></field>
-				<field name="cvi_ids"></field>
-				<field name="su_co_ids"></field>
-				<field name="su_vu_ids"></field>
+            <search string="Search ca truc">
+               <field name="member_ids" />
+               <field name="cvi_ids"  string="search theo loại hoặc nội dung "  filter_domain="['|',('cvi_ids.tvcv_id.name','ilike',self),('cvi_ids.noi_dung','ilike',self)]" />
+               
+               <!-- 
+               <field name="su_co_ids" filter_domain="['|',('su_co_ids.loai_su_co_id.name','ilike',self),('su_co_ids.noi_dung','ilike',self)]" />
+               <field name="su_vu_ids" filter_domain="['|',('su_vu_ids.loai_su_vu_id.name','ilike',self),('su_vu_ids.noi_dung','ilike',self)]" />
+                -->
                <group string="Group By Đơn vị">
                   <filter string="Đơn Vị" context="{'group_by' : 'cty_id'}" />
                </group>
             </search>
          </field>
       </record>
-      
-      
       <record model="ir.ui.view" id="ctr_form">
          <field name="name">ctr.form</field>
          <field name="model">ctr</field>
@@ -35,8 +36,8 @@
                         <field name="cty_id" />
                         <field name="date" />
                         <field name="ca" />
-                        <field name="gio_bat_dau" />
-                        <field name="gio_ket_thuc" />
+                        <field name="gio_bat_dau" invisible="1" />
+                        <field name="gio_ket_thuc" invisible="1" />
                      </group>
                      <group>
                         <field name="member_ids">
@@ -47,20 +48,30 @@
                         </field>
                      </group>
                   </group>
+                  <!-- 
+                        <group>
+                            <field name="ctr_lines_ids">
+                                <tree editable="bottom">
+                                    <field name="id" />
+                                    <field name="cvi_id" />
+                                    <field name="suco_id" />
+                                </tree>
+                            </field>
+                        </group>
+                         -->
                   <notebook>
-                     <page string="Sự Cố">
-                        <!--  <field name="su_co_ids" domain="['|',('ctr_ids','=',active_id),'&amp;',('ctr_ids','!=',False),('gio_ket_thuc','=',False)]"  context="{'active_id_4':active_id}"></field> -->
-                        <field name="su_co_ids" context="{'active_ctr_id':active_id,'you_at_suco_form':True}" domain="[('ctr_ids','!=',False),('gio_ket_thuc','=',False),('cty_id','=',cty_id)]" />
-                        <!--  <field name="su_co_ids" domain="[('ctr_ids','=',active_id)]"></field> -->
-                        <!--  <field name="su_co_ids" domain="[('gio_ket_thuc','=',False)]"  context="{'active_id_4':active_id}"></field>-->
-                        <!--    <field name="su_co_ids"   context="{'active_id_4':active_id}"></field> -->
-                     </page>
-                     <page string="Công Việc">
+                     <page string="Công Việc/Sự Cố/Sự Vụ">
                         <field name="cvi_ids" context="{'active_ctr_id':active_id}" domain="[('ctr_ids','!=',False),('gio_ket_thuc','=',False),('cty_id','=',cty_id)]" />
                      </page>
-                     <page string="Sự Vụ">
-                        <field name="su_vu_ids" context="{'active_ctr_id':active_id, 'you_at_suco_form':True}" domain="[('ctr_ids','!=',False),('gio_ket_thuc','=',False),('cty_id','=',cty_id)]" />
-                     </page>
+                     <!--
+                            <page string="Sự Cố">
+                                <field name="su_co_ids" context="{'active_ctr_id':active_id,'you_at_suco_form':True}" domain="[('ctr_ids','!=',False),('gio_ket_thuc','=',False),('cty_id','=',cty_id)]" />
+                            </page>
+                         
+                            <page string="Sự Vụ">
+                                <field name="su_vu_ids" context="{'active_ctr_id':active_id, 'you_at_suco_form':True}" domain="[('ctr_ids','!=',False),('gio_ket_thuc','=',False),('cty_id','=',cty_id)]" />
+                            </page>
+                             -->
                   </notebook>
                </sheet>
             </form>
@@ -82,16 +93,20 @@
             <tree>
                <!--    <field name="name" />
               <field name="su_co_ids"></field> -->
-              <field name="id"/>
-              <field name="ca"/>
-                <field name="gio_bat_dau" />
-               <field name="gio_ket_thuc" />
-               <field name="cvi_ids"  widget='one2many_list' />
+               <field name="id" />
+               <field name="date" />
+               <field name="ca" />
+               <!-- 
+               <field name="gio_bat_dau" invisbile="1" />
+               <field name="gio_ket_thuc" invisbile="1" />
+                -->
+               <field name="cvi_ids" widget="one2many_list" />
+               <!-- 
                <field name="su_co_ids" />
                <field name="su_vu_ids" />
-               <field name="member_ids"  />
+                -->
+               <field name="member_ids" />
                <field name="cty_id" />
-             
                <!-- 
                     <field name="create_uid" string="Người tạo"></field>
                     <field name="write_uid" string="Người sửa"></field>
@@ -108,7 +123,9 @@
          <field name="view_mode">tree,form,calendar</field>
       </record>
       <!-- END CA TRUC -->
-      <!-- SỰ CỐ -->
+      
+      
+      <!-- SỰ CỐ  OLD
       <record model="ir.ui.view" id="suco_form">
          <field name="name">Sự cố Form</field>
          <field name="model">suco</field>
@@ -135,7 +152,7 @@
                   </group>
                   <group>
                      <field name="comment_ids" />
-                     <field name="ctr_ids" required="not context.get('you_at_suco_form')" invisible="context.get('you_at_suco_form')" />
+                     <field name="ctr_ids" invisible="context.get('you_at_suco_form')" />
                   </group>
                </sheet>
             </form>
@@ -172,6 +189,8 @@
             </xpath>
          </field>
       </record>
+      
+      
       <record model="ir.actions.act_window" id="suco_action">
          <field name="name">Sự Cố</field>
          <field name="res_model">suco</field>
@@ -183,65 +202,82 @@
          <field name="view_id" ref="dai_tgg.suco_list_and_create_eq_false" />
          <field name="act_window_id" ref="dai_tgg.suco_action" />
       </record>
+      
+      -->
       <!-- END SỰ CỐ-->
+      
+      
+      
+      
+       <!-- SỰ CỐ -->
+       <!-- 
+      <record model="ir.ui.view" id="suco_form">
+         <field name="name">Sự cố Form</field>
+         <field name="model">suco</field>
+         <field name="arch" type="xml">
+            <form string="Sự Cố Form">
+               <sheet>
+                  <group>
+                     <group>
+                        <field name="name" />
+                        <field name="cty_id" />
+                        <field name="ngay_bat_dau" invisible="1" />
+                        <field name="cam_sua" invisible="1" />
+                        <field name="gio_bat_dau" attrs="{'readonly':[('cam_sua','=',True)]}" />
+                        <field name="gio_ket_thuc" />
+                        <field name="duration" />
+                        <field name="file_ids" />
+                     </group>
+                     <group>
+                        <field name="loai_su_co_id" attrs="{'readonly':[('cam_sua','=',True)]}" />
+                        <field name="noi_dung" attrs="{'readonly':[('cam_sua','=',True)]}" />
+                        <field name="cty_ids" />
+                        <field name="doitac_ids" />
+                     </group>
+                  </group>
+                  <group>
+                     <field name="comment_ids" />
+                     <field name="ctr_ids" invisible="context.get('you_at_suco_form')" />
+                  </group>
+               </sheet>
+            </form>
+         </field>
+      </record>
+       -->
+       
+    
+      <record model="ir.actions.act_window" id="suco_action">
+         <field name="name">Sự Cố</field>
+         <field name="res_model">cvi</field>
+         <field name="domain">[('loai_record','=','Sự Cố')]</field>
+         <field name="context">{'default_loai_record':'Sự Cố'}</field>
+         <field name="view_mode">tree,form</field>
+      </record>
+      <record id="su_co_no_create_act_view" model="ir.actions.act_window.view">
+         <field eval="1" name="sequence" />
+         <field name="view_mode">tree</field>
+         <field name="view_id" ref="cvi_list_sample" />
+         <field name="act_window_id" ref="dai_tgg.suco_action" />
+      </record>
+      <!-- END SỰ CỐ-->
+      
+      
       <!-- SU VU -->
-      <record model="ir.ui.view" id="suvu_form">
-         <field name="name">Sự vụ Form</field>
-         <field name="model">suvu</field>
-         <field name="inherit_id" ref="dai_tgg.suco_form" />
-         <field name="mode">primary</field>
-         <field name="arch" type="xml">
-            <field name="loai_su_co_id" position="replace">
-               <field name="loai_su_vu_id" attrs="{'readonly':[('cam_sua','=',True)]}" />
-               <!-- 
-                    <field name="field_1"></field>
-               		 <field name="field_2"></field>
-                	<field name="field_3"></field>
-                	 -->
-            </field>
-            <!-- 
-            	<xpath expr="//field[@name='gio_bat_dau']" position="replace">
-            		<field name = "test_field"> </field>
-            	</xpath>
-            	 -->
-         </field>
-      </record>
-      <record model="ir.ui.view" id="suvu_list">
-         <field name="name">Sự Vụ Tree</field>
-         <field name="priority" eval="1" />
-         <field name="model">suvu</field>
-         <field name="type">tree</field>
-         <field name="inherit_id" ref="suco_list" />
-         <field name="mode">primary</field>
-         <field name="arch" type="xml">
-            <field name="loai_su_co_id" position="replace">
-               <field name="loai_su_vu_id" />
-            </field>
-         </field>
-      </record>
-      <record id="suvu_list_with_no_create" model="ir.ui.view">
-         <field name="name">sự vụ Form 2</field>
-         <field name="priority" eval="2" />
-         <field name="model">suvu</field>
-         <field name="inherit_id" ref="suvu_list" />
-         <field name="mode">primary</field>
-         <field name="arch" type="xml">
-            <xpath expr="//tree[@name='sucotree1']" position="attributes">
-               <attribute name="create">false</attribute>
-            </xpath>
-         </field>
-      </record>
+      
       <record model="ir.actions.act_window" id="suvu_action">
          <field name="name">Sự Vụ</field>
-         <field name="res_model">suvu</field>
+         <field name="res_model">cvi</field>
+         <field name="domain">[('loai_record','=','Sự Vụ')]</field>
+         <field name="context">{'default_loai_record':'Sự Vụ'}</field>
          <field name="view_mode">tree,form</field>
       </record>
       <record id="suvu_action_nocreate_act_view" model="ir.actions.act_window.view">
          <field eval="1" name="sequence" />
          <field name="view_mode">tree</field>
-         <field name="view_id" ref="dai_tgg.suvu_list_with_no_create" />
+         <field name="view_id" ref="cvi_list_sample" />
          <field name="act_window_id" ref="dai_tgg.suvu_action" />
       </record>
+      
       <!-- END SU VU -->
       <!-- USER -->
       <record id="user_search" model="ir.ui.view">
@@ -405,21 +441,19 @@
                <filter name="Có CV Chia điểm Con" domain="[('cd_children_ids','!=',False)]" />
                <filter name="this month" string="CV Tháng này" domain="[('ngay_bat_dau','&lt;',(context_today()+relativedelta(months=1)).strftime('%Y-%m-01')), ('ngay_bat_dau','&gt;=',time.strftime('%Y-%m-01'))]" help="Chọn tháng này" />
                <filter name="last month" string="CV Tháng Trước" domain="[('ngay_bat_dau','&gt;=',(context_today()+relativedelta(months=-1)).strftime('%Y-%m-01')), ('ngay_bat_dau','&lt;',time.strftime('%Y-%m-01'))]" help="Chọn tháng này" />
-                    <filter string="sự cố" name="su_co" domain="[('cate_','=','Sự cố đứt quang')]" />
-                    <group expand="0" string="Group By">
-                        <filter string="group theo Nhân viên tạo"  context="{'group_by':'user_id'}" />
-						<filter string="group theo Đơn vị tạo"  context="{'group_by':'cty_id'}" />
-						<filter string="group theo Thư Viện Công việc"  context="{'group_by':'tvcv_id'}" />
-						<filter string="group theo Loại Công việc"  context="{'group_by':'loai_cvi'}" />
-
-                    </group>
-                    
+               <filter string="sự cố" name="su_co" domain="[('cate_','=','Sự cố đứt quang')]" />
+               <group expand="0" string="Group By">
+                  <filter string="group theo Nhân viên tạo" context="{'group_by':'user_id'}" />
+                  <filter string="group theo Đơn vị tạo" context="{'group_by':'cty_id'}" />
+                  <filter string="group theo Thư Viện Công việc" context="{'group_by':'tvcv_id'}" />
+                  <filter string="group theo Loại Công việc" context="{'group_by':'loai_cvi'}" />
+               </group>
             </search>
          </field>
       </record>
       <!-- Cong viec Form -->
       <record model="ir.ui.view" id="cvi_form">
-         <field name="name">su kien form</field>
+         <field name="name">cv form</field>
          <field name="model">cvi</field>
          <field name="arch" type="xml">
             <form string=" Form">
@@ -428,50 +462,54 @@
                      <group>
                         <field name="id" />
                         <field name="name" />
+                        <field name="loai_record" attrs="{'invisible':[('tvcv_id','!=',False)]}" invisible="context.get('default_loai_record')"/>
+                        <field name="loai_record_show" attrs="{'invisible':[('tvcv_id','=',False)]}"  />
                         <field name="user_id" readonly="1" />
                         <field name="cty_id" />
                         <field name="cd_parent_id" attrs="{'invisible':[('cd_parent_id','=',False)]}" />
                         <field name="gd_parent_id" attrs="{'invisible':[('gd_parent_id','=',False)]}" />
                         <field name="hd_parent_id" attrs="{'invisible':[('hd_parent_id','=',False)]}" />
+                          <field name="gio_bat_dau" readonly="context.get('you_at_gd_form') or context.get('you_at_cd_form')" attrs="{'readonly':[('cd_parent_id','!=',False)]}" />
+                        <field name="gio_ket_thuc" readonly="context.get('you_at_cd_form')" attrs="{'readonly':[('cd_parent_id','!=',False)]}" />
                      </group>
                      <group>
-                        <field name="ngay_bat_dau"  invisible="1"/>
-                        <field name="gio_bat_dau" readonly="context.get('you_at_gd_form') or context.get('you_at_cd_form')" attrs="{'readonly':[('cd_parent_id','!=',False)]}" />
-                        <field name="gio_ket_thuc" readonly="context.get('you_at_cd_form')" attrs="{'readonly':[('cd_parent_id','!=',False)]}" />
+                        <field name="ngay_bat_dau" invisible="1" />
+                      
                         <field name="duration" />
-                        <field name="slncl" attrs="{'invisible':[('cd_children_ids','=',[]),('cd_parent_id','=',False)]}"/>
+                        <!--  <field name="loai_suco_suvu_id"  domain="[('type_suco_or_suvu','=',loai_record)]" context="{'default_type_suco_or_suvu':loai_record}" attrs="{'invisible':[('loai_record','!=','Sự Cố'),('loai_record','!=','Sự Vụ')]}"/> -->
+                        <!-- <field name="tvcv_id" string= "loai sự cố" attrs="{'readonly':[('loai_record','!=','Sự Cố'),('loai_record','!=','Sự Vụ')]}"/>     
+ 								 <field name="tvcv_id" attrs="{'readonly':[('loai_record','!=','Công Việc')]}"/>          -->
+                        <field name="tvcv_id" domain="[('loai_record','=',loai_record)]" attrs="{'readonly':['|',('loai_record','=',False),'|',('cam_sua','=',True),'&amp;',('id','&gt;',0),'|',('gd_parent_id','!=',False),('cd_parent_id','!=',False)]}" context="{'you_search_at_gd_form':context.get('you_at_gd_form'),                               'thu_vien_da_chon_list':context.get('xxx'),                               'thu_vien_id_of_gd_parent_id':context.get('thu_vien_id_of_gd_parent_id'),                               'default_loai_record':loai_record                               }" />
+                       <!--  <field name="comments_show" /> -->
+                        <field name="noi_dung" />
                      </group>
                   </group>
-                  <group>
+                   <group attrs="{'invisible':[('loai_record','!=','Công Việc')]}">
+             <!--      <group> -->
                      <group>
-                        <field name="tvcv_id" attrs="{'readonly':['|',('cam_sua','=',True),'&amp;',('id','&gt;',0),'|',('gd_parent_id','!=',False),('cd_parent_id','!=',False)]}" required="not context.get('you_at_cd_form')" context="{'you_search_at_gd_form':context.get('you_at_gd_form'),'thu_vien_da_chon_list':context.get('xxx'),'thu_vien_id_of_gd_parent_id':context.get('thu_vien_id_of_gd_parent_id')}" />
-                        <field name="diem_tvi" />
+                      <!--     <field name="tvcv_id" attrs="{'readonly':['|',('cam_sua','=',True),'&amp;',('id','&gt;',0),'|',('gd_parent_id','!=',False),('cd_parent_id','!=',False)]}"  context="{'you_search_at_gd_form':context.get('you_at_gd_form'),'thu_vien_da_chon_list':context.get('xxx'),'thu_vien_id_of_gd_parent_id':context.get('thu_vien_id_of_gd_parent_id')}" /> 
+                        -->  <field name="diem_tvi" />
                         <field name="don_vi" />
                         <field name="so_luong" attrs="{'readonly':['|',('cam_sua','=',True),'&amp;',('id','&gt;',0),'|',('gd_parent_id','!=',False),('cd_parent_id','!=',False)]}" readonly="context.get('you_at_gd_form')" />
-                        <!--  readonly="context.get('you_at_gd_form')" -->
                         <field name="so_lan" readonly="context.get('you_at_gd_form')" attrs="{'readonly':['|',('cam_sua','=',True),'&amp;',('id','&gt;',0),'|',('gd_parent_id','!=',False),('cd_parent_id','!=',False)]}" />
+                        <field name="slncl" attrs="{'invisible':[('cd_children_ids','=',[]),('cd_parent_id','=',False)]}" />
                      </group>
                      <group>
+                        <field name="loai_cvi" />
                         <field name="diem_goc" />
                         <field name="diemtt" />
                         <field name="percent_diemtt" attrs="{'readonly':['|',('cam_sua_do_chot','=',True),('cam_sua','=',True)],'invisible':[('cd_parent_id','=',False),('cd_children_ids','=',[])]}" />
                         <field name="diemtc" />
                         <field name="valid_diemtc_conclusion" />
-                        <field name="loai_cvi" />
-                     </group>
-                  </group>
-                  <group>
-                     <group>
-                        <field name="noi_dung" />
                         <field name="percent_diemtc" attrs="{'invisible' : [('is_sep', '=', False),('is_admin', '=', False)]}" />
                         <field name="diemld" attrs="{'invisible' : [('is_sep', '=', False),('is_admin', '=', False)]}" />
-                        <field name="cty_ids" />
                      </group>
-                     <group>
-                        <field name="doitac_ids" />
-                        <field name="file_ids" />
-                     </group>
-                     <group name="admin1" attrs="{'invisible':[('is_admin','=',False)]}">
+                  </group>
+                 
+                    <group attrs="{'invisible':[('loai_record','!=','Công Việc')]}"> 
+                  <!-- <group> -->
+                     <group name="admin1">
+                        <field name="is_admin" />
                         <field name="valid_diemtc" />
                         <field name="diem_remain_gd" />
                         <field name="sum_cd_con" />
@@ -479,11 +517,9 @@
                         <field name="valid_cd" />
                         <field name="valid_gd" />
                      </group>
-                     <!-- <group name="admin" invisible="not context.get('is_admin')">-->
                      <group name="admin2" attrs="{'invisible':[('is_admin','=',False)]}">
                         <field name="is_has_tvcv_con" />
                         <field name="thu_vien_da_chon_list" />
-                        <field name="is_admin" />
                         <field name="cam_sua" />
                         <field name="cam_sua_do_time" />
                         <!--   <field name="ly_do_cam_sua_do_time" ></field> -->
@@ -493,57 +529,63 @@
                      </group>
                   </group>
                   <notebook attrs="{'invisible':[('cd_parent_id','!=',False)]}" invisible="context.get('you_at_cd_form')">
-                     <page string="CHUNG ĐIỂM" attrs="{'invisible':['|','|','|',('cd_children_ids','!=',[]),('gd_children_ids','!=',[]),('tvcv_id','=',False),('hd_parent_id','!=',False)]}">
-                        <field name="hd_children_ids" context="{'default_cd_parent_id':active_id,'you_at_cd_form':True}">
+                     <page string="NHÂN VIÊN CÙNG HƯỜNG ĐIỂM" attrs="{'invisible':['|','|','|','|',('loai_record','!=','Công Việc'),('cd_children_ids','!=',[]),('gd_children_ids','!=',[]),('tvcv_id','=',False),('hd_parent_id','!=',False)]}">
+                        <field name="hd_children_ids" context="{'default_hd_parent_id':active_id,                                 'you_at_cd_form':True,'default_loai_record':loai_record}">
                            <tree decoration-danger="not valid_diemtc" editable="bottom">
-                              <!--  editable="bottom"  -->
+                           <!--  <field name="loai_record" /> -->  
                               <field name="hd_parent_id" invisible="1" />
-                              <field name="cam_sua" invisible="1" />
-                              <field name="is_admin" invisible="1" />
-                              <field name="is_sep" invisible="1" />
-                              <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)]}" domain="['|','|',('cty_id','=',parent.cty_id),('cty_id','child_of',parent.cty_id),('cty_id','parent_of',parent.cty_id)]" />
-                              <field name="gio_bat_dau" />
-                              <field name="gio_ket_thuc" />
-                              <field name="slncl" invisible="1" />
-                              <field name="tvcv_id" readonly="1" />
-                              <field name="loai_cvi" />
-                              <field name="noi_dung" />
-                              <field name="so_luong" readonly="1" />
-                              <field name="so_lan" readonly="1" />
-                              <field name="diem_goc" />
-                              <field name="diemtt" />
-                              <field name="percent_diemtt" invisible="1" />
-                              <field name="diemtc" />
-                              <field name="valid_cd" invisible="1" />
-                              <field name="valid_diemtc"  invisible="1" />
-                              <field name="percent_diemtc" attrs="{'invisible' : [('is_sep', '=', False),('is_admin', '=', False)]}" />
-                              <field name="diemld" attrs="{'invisible' : [('is_sep', '=', False),('is_admin', '=', False)]}" />
-                              <field name="valid_diemtc_conclusion" />
-                              <field name="name" />
-                              <field name="write_date" />
-                           </tree>
-                        </field>
-                     </page>
-                     <page string="CHIA ĐIỂM CHO NHIỀU NGƯỜI" attrs="{'invisible':['|','|','|',('gd_children_ids','!=',[]),('hd_children_ids','!=',[]),('tvcv_id','=',False),('hd_parent_id','!=',False)]}">
-                        <field name="cd_children_ids" context="{'default_cd_parent_id':active_id,'you_at_cd_form':True}">
-                           <tree decoration-danger="not valid_diemtc" editable="bottom">
-                              <!--  editable="bottom"  -->
+                             	<field name="loai_record" invisible="1"  />
                               <field name="cd_parent_id" invisible="1" />
                               <!-- có để tránh lỗi   r.diemtt = r.cd_parent_id.diem_goc/r.slnc và để cho @api.constrains('cd_parent_id') có tác dụngl-->
                               <field name="cam_sua" invisible="1" />
                               <field name="is_admin" invisible="1" />
                               <field name="is_sep" invisible="1" />
                               <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)]}" domain="['|','|',('cty_id','=',parent.cty_id),('cty_id','child_of',parent.cty_id),('cty_id','parent_of',parent.cty_id)]" />
-                              <field name="gio_bat_dau" />
+                              <field name="gio_bat_dau" invisible="1" />
                               <field name="gio_ket_thuc" invisible="1" />
-                              <field name="slncl" />
-                              <field name="tvcv_id" readonly="context.get('you_at_cd_form')" />
-                              <field name="loai_cvi" />
-                              <field name="noi_dung" />
+                              <field name="slncl"  invisible="1"/>
+                              <field name="tvcv_id" readonly="context.get('you_at_cd_form')"  invisible="1"/>
+                              <field name="loai_cvi"  invisible="1"/>
+                              <field name="noi_dung" invisible="1"/>
                               <field name="diem_goc" invisible="1" />
-                              <field name="so_luong" />
-                              <field name="so_lan" />
-                              <field name="diemtt" />
+                              <field name="so_luong" readonly="1" invisible="1" />
+                              <field name="so_lan" readonly="1" invisible="1" />
+                              <field name="diemtt"  />
+                              <field name="percent_diemtt" attrs="{'readonly':[('cam_sua','=',True)]}"  invisible="1"/>
+                              <field name="diemtc" />
+                              <field name="valid_cd" invisible="1" />
+                              <field name="percent_diemtc" attrs="{'invisible' : [('is_sep', '=', False),('is_admin', '=', False)]}"  invisible="1"/>
+                              <field name="diemld" attrs="{'invisible' : [('is_sep', '=', False),('is_admin', '=', False)]}" invisible="1" />
+                              <field name="valid_diemtc" invisible="1" />
+                              <field name="valid_diemtc_conclusion" />
+                              <field name="name" invisible="1" />
+                              <field name="write_date" invisible="1" />
+                              
+                              
+                           </tree>
+                        </field>
+                     </page>
+                     <page string="NHÂN VIÊN ĐƯỢC CHIA ĐIỂM" attrs="{'invisible':['|','|','|','|',('loai_record','!=','Công Việc'),('gd_children_ids','!=',[]),('hd_children_ids','!=',[]),('tvcv_id','=',False),('hd_parent_id','!=',False)]}">
+                        <field name="cd_children_ids" context="{'default_cd_parent_id':active_id,'you_at_cd_form':True,'default_loai_record':loai_record}">
+                           <tree decoration-danger="not valid_diemtc" editable="bottom">
+                              <!--  editable="bottom"  -->
+                            <field name="loai_record" invisible="1"  />
+                              <field name="cd_parent_id" invisible="1" />
+                              <!-- có để tránh lỗi   r.diemtt = r.cd_parent_id.diem_goc/r.slnc và để cho @api.constrains('cd_parent_id') có tác dụngl-->
+                              <field name="cam_sua" invisible="1" />
+                              <field name="is_admin" invisible="1" />
+                              <field name="is_sep" invisible="1" />
+                              <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)]}" domain="['|','|',('cty_id','=',parent.cty_id),('cty_id','child_of',parent.cty_id),('cty_id','parent_of',parent.cty_id)]" />
+                              <field name="gio_bat_dau" invisible="1" />
+                              <field name="gio_ket_thuc" invisible="1" />
+                              <field name="slncl"  invisible="1"/>
+                              <field name="tvcv_id" readonly="context.get('you_at_cd_form')"  invisible="1"/>
+                              <field name="loai_cvi"  invisible="1"/>
+                              <field name="noi_dung" invisible="1"/>
+                              <field name="diem_goc" invisible="1" />
+                              <field name="so_luong" readonly="1" invisible="1" />
+                              <field name="so_lan" readonly="1" invisible="1" />
+                              <field name="diemtt"  />
                               <field name="percent_diemtt" attrs="{'readonly':[('cam_sua','=',True)]}" />
                               <field name="diemtc" />
                               <field name="valid_cd" invisible="1" />
@@ -551,21 +593,22 @@
                               <field name="diemld" attrs="{'invisible' : [('is_sep', '=', False),('is_admin', '=', False)]}" />
                               <field name="valid_diemtc" invisible="1" />
                               <field name="valid_diemtc_conclusion" />
-                              <field name="name" />
-                              <field name="write_date" />
+                              <field name="name" invisible="1" />
+                              <field name="write_date" invisible="1" />
                            </tree>
                         </field>
                      </page>
-                     <page string="CÁC GIAI ĐOẠN CÔNG VIỆC" attrs="{'invisible':['|','|','|',('cd_children_ids','!=',[]),('hd_children_ids','!=',[]),('is_has_tvcv_con','=',False),('hd_parent_id','!=',False)]}">
-                        <field name="gd_children_ids" context="{'default_gd_parent_id':active_id,'default_so_luong':so_luong,'you_at_gd_form':True, 'xxx':thu_vien_da_chon_list,'thu_vien_id_of_gd_parent_id':tvcv_id}">
+                     <page string="CÁC GIAI ĐOẠN CÔNG VIỆC" attrs="{'invisible':['|','|','|','|',('loai_record','!=','Công Việc'),('cd_children_ids','!=',[]),('hd_children_ids','!=',[]),('is_has_tvcv_con','=',False),('hd_parent_id','!=',False)]}">
+                        <field name="gd_children_ids" context="{'default_gd_parent_id':active_id,                                 'default_so_luong':so_luong,'you_at_gd_form':True,                                  'xxx':thu_vien_da_chon_list,                                  'thu_vien_id_of_gd_parent_id':tvcv_id,                                  'default_loai_record':loai_record                                  }">
                            <tree decoration-danger="not valid_diemtc">
+                              <field name="loai_record"  invisible="1" /> 
                               <field name="id" invisible="1" />
-                              <field name="noi_dung" />
                               <field name="gd_parent_id" invisible="1" />
                               <field name="is_admin" invisible="1" />
                               <field name="is_sep" invisible="1" />
                               <field name="gio_bat_dau" />
                               <field name="gio_ket_thuc" />
+                              <field name="noi_dung" />
                               <field name="tvcv_id" />
                               <field name="loai_cvi" />
                               <field name="valid_cd" invisible="1" />
@@ -587,6 +630,18 @@
                      <page string="COMMENTS">
                         <field name="comment_ids" />
                      </page>
+                       <page string="THÔNG TIN KHÁC">
+                         <group>
+                     <group>
+                        <field name="cty_ids" />
+                     </group>
+                     <group>
+                        <field name="doitac_ids" />
+                        <field name="file_ids" />
+                     </group>
+                  </group>
+                     </page>
+                     
                   </notebook>
                </sheet>
             </form>
@@ -598,17 +653,18 @@
          <field name="model">cvi</field>
          <field name="groups_id" eval="[(4, ref('base.group_erp_manager'))]" />
          <field name="arch" type="xml">
-            <tree decoration-danger="not valid_diemtc">
+            <tree decoration-danger="not valid_diemtc" >
                <field name="id" />
-               <field name="ngay_bat_dau"  invisible="1"/>
+               <field name="loai_record" />
+               <field name="user_id" />
+               <field name="ngay_bat_dau" invisible="1" />
                <field name="gio_bat_dau" />
                <field name="gio_ket_thuc" />
                <field name="duration" />
+                <field name="tvcv_id" />
                <field name="noi_dung" />
-               <field name="user_id" />
+               <field name="comments_show" />
                <field name="cty_id" />
-               <field name="cty_ids" />
-               <field name="tvcv_id" />
                <field name="loai_cvi" />
                <!--<field name="cd_children_ids" widget="many2many_tags" invisible="context.get('you_at_cd_form')"></field> -->
                <field name="ctr_ids" />
@@ -626,14 +682,67 @@
                <field name="is_sep" invisible="1" />
                <field name="percent_diemtc" attrs="{'invisible' : [('is_sep', '=', False)]}" />
                <field name="diemld" attrs="{'invisible' : [('is_sep', '=', False)]}" />
-                <field name="hd_parent_id" />
-               <field name="hd_children_ids"  widget="many2many_tags"/>
+              <!-- 
+               <field name="hd_parent_id" />
+               <field name="hd_children_ids" widget="many2many_tags" />
                <field name="cd_parent_id" />
-               <field name="cd_children_ids"  widget="many2many_tags"/>
+               <field name="cd_children_ids" widget="many2many_tags" />
                <field name="file_ids" />
                <field name="gd_parent_id" />
-               <field name="gd_children_ids"  widget="many2many_tags"/>
+               <field name="gd_children_ids" widget="many2many_tags" />
+                -->
+               <field name="create_date" string="Giờ tạo" />
                <field name="write_date" string="Giờ sửa" />
+            </tree>
+         </field>
+      </record>
+      <record id="cvi_list_sample" model="ir.ui.view">
+         <field name="name">cvi list sample</field>
+         <field name="model">cvi</field>
+         <field name="priority">1</field>
+         <field name="arch" type="xml">
+            <tree decoration-danger="not valid_diemtc">
+               <field name="id" />
+               <field name="loai_record" />
+               <field name="user_id" />
+               <field name="ngay_bat_dau" invisible="1" />
+               <field name="gio_bat_dau" />
+               <field name="gio_ket_thuc" />
+               <field name="duration" />
+               <field name="tvcv_id" />
+               <field name="noi_dung" />
+               <field name="comments_show" />
+               <field name="cty_id" />
+               <field name="ctr_ids"  invisible=""/>
+               <field name="valid_diemtc" invisible="1" />
+               <!-- 
+                    <field name="cty_ids" />
+                    <field name="loai_cvi" />
+                    <field name="ctr_ids" />
+                    <field name="slncl" />
+                    <field name="diem_tvi" />
+                    <field name="don_vi" />
+                    <field name="so_luong" />
+                    <field name="so_lan" />
+                    <field name="diem_goc" invisible="1" />
+                    <field name="diemtt" />
+                    <field name="percent_diemtt" />
+                    <field name="diemtc" />
+                    <field name="valid_diemtc" invisible="1" />
+                    <field name="valid_diemtc_conclusion" />
+                    <field name="is_sep" invisible="1" />
+                    <field name="percent_diemtc" attrs="{'invisible' : [('is_sep', '=', False)]}" />
+                    <field name="diemld" attrs="{'invisible' : [('is_sep', '=', False)]}" />
+                    <field name="hd_parent_id" />
+                    <field name="hd_children_ids" widget="many2many_tags" />
+                    <field name="cd_parent_id" />
+                    <field name="cd_children_ids" widget="many2many_tags" />
+                    <field name="file_ids" />
+                    <field name="gd_parent_id" />
+                    <field name="gd_children_ids" widget="many2many_tags" />
+                    <field name="write_date" string="Giờ sửa" />
+                    
+                     -->
             </tree>
          </field>
       </record>
@@ -671,23 +780,25 @@
             </pivot>
          </field>
       </record>
-      <record id="action_dynamic_domain" model="ir.actions.server">
-         <field name="name">action_dynamic_domain cong viec</field>
-         <field name="priority" eval="1" />
-         <field name="sequence" eval="1" />
-         <field name="model_id" ref="model_cvi" />
-         <field name="state">code</field>
-         <field name="code">action = env['cvi'].action_dynamic_domain()</field>
-         <field eval="True" name="condition" />
-      </record>
+      <!-- 
+        <record id="action_dynamic_domain" model="ir.actions.server">
+            <field name="name">action_dynamic_domain cong viec</field>
+            <field name="priority" eval="1" />
+            <field name="sequence" eval="1" />
+            <field name="model_id" ref="model_cvi" />
+            <field name="state">code</field>
+            <field name="code">action = env['cvi'].action_dynamic_domain()</field>
+            <field eval="True" name="condition" />
+        </record>
+         -->
       <record model="ir.actions.act_window" id="cvi_action">
          <field name="name">Công việc</field>
          <field name="res_model">cvi</field>
          <field name="priority" eval="1" />
          <field name="sequence" eval="1" />
-         <field name="groups_id" eval="[(4, ref('base.group_erp_manager'))]" />
          <!-- <field name="context" >{'cty_id':2}</field> -->
-         <!--   <field name="domain" >[('cty_id','=',context.get('cty_id'))]</field>   -->
+         <field name="domain">[('loai_record','=','Công Việc')]</field>
+         <field name="context">{'default_loai_record':'Công Việc'}</field>
          <!--   <field name="domain" >['|',('cty_id','=',context.get('cty_id')),('cty_id','child_of',context.get('cty_id'))]</field> -->
          <field name="view_mode">tree,form,graph,pivot</field>
       </record>
@@ -798,6 +909,7 @@
                         <field name="id" />
                         <field name="name" />
                         <!-- 	<field name="is_active"></field> -->
+                        <field name="loai_record"></field>
                         <field name="code" />
                         <field name="cong_viec_cate_id" />
                         <field name="don_vi" />
@@ -831,6 +943,7 @@
          <field name="model">tvcv</field>
          <field name="arch" type="xml">
             <tree>
+               <field name="loai_record" />
                <field name="name" />
                <!--     <field name="is_active"></field> -->
                <field name="code" />
@@ -1502,7 +1615,24 @@
       </record>
       <!--  end sale config -->
       <!--  doi tac -->
-      --&gt;
+      <!--  Loại sự cố sự vụ -->
+      <!-- 
+      <record model="ir.ui.view" id="sucosuvu_form">
+         <field name="name">Su Co Su Vu form</field>
+         <field name="model">loaisucosuvu</field>
+         <field name="arch" type="xml">
+            <form string=" Form">
+               <sheet>
+                  <group>
+                     <field name="name" />
+                     <field name="type_suco_or_suvu" />
+                  </group>
+               </sheet>
+            </form>
+         </field>
+      </record>
+       -->
+      <!--  -->
       <record id="doitac_search" model="ir.ui.view">
          <field name="name">doitac  search</field>
          <field name="model">doitac</field>
@@ -1560,18 +1690,25 @@
       <menuitem id="import_tvcv_menu" parent="import_icon" action="importthuvien_action" sequence="1" />
       <!-- Công việc/ Ca Trực -->
       <menuitem name="Công Việc/Trực" id="ctrtvcv_icon" web_icon="dai_tgg,static/src/image/customers-icon-18.png" />
-      <menuitem name="Ca trực Menu" id="ctrmenu_menu" parent="ctrtvcv_icon" action="ctr_action" sequence="2" />
+      
+      <menuitem name="Ca trực Menu" id="ctrmenu_menu" parent="ctrtvcv_icon"  action="ctr_action" sequence="2" />
       <menuitem name="Ca trực" id="ctr_menu" parent="ctrmenu_menu" action="ctr_action" sequence="1" />
       <menuitem id="suco_menu" parent="ctrmenu_menu" action="suco_action" sequence="2" />
       <menuitem id="suvu_ke_thua_menu" parent="ctrmenu_menu" action="suvu_action" sequence="4" />
+     
+     
       <menuitem name=" Công Việc menu" id="menu_menu" parent="ctrtvcv_icon" sequence="1" />
-      <menuitem name=" Công Việc" id="cvi_menu" parent="menu_menu" action="action_dynamic_domain" sequence="1" />
+      <menuitem name=" Công Việc" id="cvi_menu" parent="menu_menu" action="cvi_action" sequence="1" />
       <menuitem id="tvcv_menu" parent="menu_menu" action="thuvientvcv_action" sequence="2" />
-      <menuitem name="Cấu hình" id="config_menu" parent="ctrtvcv_icon" action="ltk_config_settings_action" sequence="3" />
-      <menuitem name="Users(Nhân viên)" id="users_menu" parent="ctrtvcv_icon" action="users_action" sequence="3" />
-      <menuitem id="congty_menu" parent="ctrtvcv_icon" action="congty_action" sequence="4" />
-      <menuitem name="Đối Tác" id="doitac_menu" parent="ctrtvcv_icon" action="doitac_action" sequence="3" />
-      <menuitem id="file_menu" parent="ctrtvcv_icon" action="file_action" sequence="6" />
-      <menuitem id="comment_menu" parent="ctrtvcv_icon" action="comment_action" sequence="6" />
+      
+      
+      <menuitem name="ELSE Menu" id="else_more_menu" parent="ctrtvcv_icon" sequence="2" />
+      <menuitem name="Cấu hình" id="config_menu" parent="else_more_menu" action="ltk_config_settings_action" sequence="3" />
+      <menuitem name="Users(Nhân viên)" id="users_menu" parent="else_more_menu" action="users_action" sequence="3" />
+      <menuitem id="congty_menu" parent="else_more_menu" action="congty_action" sequence="4" />
+      <menuitem name="Đối Tác" id="doitac_menu" parent="else_more_menu" action="doitac_action" sequence="3" />
+      <menuitem id="file_menu" parent="else_more_menu" action="file_action" sequence="6" />
+      <menuitem id="comment_menu" parent="else_more_menu" action="comment_action" sequence="6" />
+      
    </data>
 </openerp>

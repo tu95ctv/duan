@@ -1,6 +1,27 @@
 # -*- coding: utf-8 -*-
-# import re
-# string = 'https://www.lazada.vn/apple-iphone-8-plus-64gb-bac-hang-nhap-khau-14736167.html?spm=a2o4n.campaign.products-list.10.ca6acc9rHlRkD&ff=1&time=1513133118&sc=IfIB'
-# rs = re.search('(\d+)\.html',string)
-# print rs.group(1)
-print False *3
+
+# def decorator(f):
+#     print 'out wrapper'
+#     def wrapper(x):
+#         print 'in wrapper'
+#         f(x)
+#     return wrapper
+# a = 0
+# class A():
+#     def __init__(self,a):
+#         self.a=1
+# #     @decorator
+#     def f(self):
+#         print 'hehe'
+#     f = decorator(f)
+#     def f1(self):
+#         self.f()
+#         
+#          
+#     
+# 
+# i =A(1)
+# i.f()
+import json
+kq = json.loads("[('loai_record','=','Công Việc')]")
+print kq

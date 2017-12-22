@@ -200,7 +200,8 @@ def ham_tao_tv_con(self_,val,field_attr,key_search_dict,update_dict,noti_dict):
         return get_or_create_object_sosanh(self_,field_attr['model'],{key_name:name_tv_con,'parent_id':parent_id.id},{'diem_percent':diem_percent_l,
                                                                                                                      'don_vi':update_dict['don_vi'],
                                                                                                                      'cong_viec_cate_id':update_dict['cong_viec_cate_id'],
-                                                                                                                     'parent_id':parent_id.id
+                                                                                                                     'parent_id':parent_id.id,
+                                                                                                                     'loai_record':u'Công Việc'
                                                                                                                      } )
     a_object_list = map(tao_thu_vien_childrens,enumerate(alist))
     a_object_list = map(lambda x:x.id,a_object_list)
@@ -421,6 +422,7 @@ def importthuvien(odoo_or_self_of_wizard):
                     if r.type_choose==u'Thư viện công việc':
                         cong_viec_cate_id = get_or_create_object_sosanh(self,'tvcvcate',{'name':sheet_name},{} )
                         update_dict['cong_viec_cate_id'] = cong_viec_cate_id.id
+                        update_dict['loai_record'] = u'Công Việc'
                     elif r.type_choose==u'User':
                         group_id = self.env.ref('base.group_user').id
                         update_dict['groups_id'] = [(4,group_id)]
@@ -537,7 +539,7 @@ def importthuvien(odoo_or_self_of_wizard):
                     if continue_row:
                         continue
                     if key_search_dict:
-                            get_or_create_object_sosanh(self,model_name,key_search_dict,update_dict,True,noti_dict=noti_dict,not_active_include_search  =not_active_include_search)
+                            get_or_create_object_sosanh(self,model_name,key_search_dict,update_dict,is_must_update='True',noti_dict=noti_dict,not_active_include_search  =not_active_include_search)
             r.create_number = noti_dict['create']
             r.update_number = noti_dict['update']
             r.skipupdate_number = noti_dict['skipupdate']

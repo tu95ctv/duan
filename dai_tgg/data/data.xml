@@ -54,6 +54,8 @@
             <field name="parent_id">ref('gccv_xml')</field>
         </record>  -->
         <!-- LOẠI SỰ CỐ -->
+        
+        <!-- 
         <record id="loaisuco_dutfo" model="loaisuco">
             <field name="name">Đứt FO</field>
         </record>
@@ -72,10 +74,48 @@
         <record id="loaisuvu_doitacbangiaovattu" model="loaisuvu">
             <field name="name">Đối tác bàn giao vật tư</field>
         </record>
+         -->
         <!-- END LOẠI SỰ CỐ -->
+        
+        <!-- -loai su co su vu -->
+        <!-- 
+        <record id="loaisucosuvu_hongthietbivotuyet" model="loaisucosuvu">
+            <field name="name">Hỏng thiết bị vô tuyến</field>
+            <field name="type_suco_or_suvu">Sự Cố</field>
+        </record>
+        <record id="loaisucosuvu_hongnguon" model="loaisucosuvu">
+            <field name="name">Hỏng nguồn</field>
+            <field name="type_suco_or_suvu">Sự Cố</field>
+        </record>
+        <record id="loaisucosuvu_doitacravaotram" model="loaisucosuvu">
+            <field name="name">Đối tác ra vào trạm</field>
+            <field name="type_suco_or_suvu">Sự Vụ</field>
+        </record>
+        <record id="loaisucosuvu_doitacbangiaovattu" model="loaisucosuvu">
+            <field name="name">Đối tác bàn giao vật tư</field>
+            <field name="type_suco_or_suvu">Sự Vụ</field>
+        </record>
+         -->
+        <!-- -  !loai su co su vu -->
         <!-- Thư viện cv   -->
         <record id="loaisuvu_viec_con_lai" model="tvcv">
             <field name="name">Việc Còn Lại</field>
         </record>
+         <record id="loai_hongthietbivotuyet" model="tvcv">
+            <field name="name">Hỏng thiết bị vô tuyến</field>
+            <field name="loai_record">Sự Cố</field>
+        </record>
+        <record id="loai_hongnguon1" model="tvcv">
+            <field name="name">Hỏng nguồn</field>
+            <field name="loai_record">Sự Cố</field>
+        </record>
+        <record id="loai_doitacravaotram1" model="tvcv">
+            <field name="name">Đối tác ra vào trạm</field>
+            <field name="loai_record">Sự Vụ</field>
+        </record>
+        <record id="loai_doitacbangiaovattu1" model="tvcv">
+            <field name="name">Đối tác bàn giao vật tư</field>
+            <field name="loai_record">Sự Vụ</field>
+           </record>
     </data>
 </odoo>
