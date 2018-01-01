@@ -141,6 +141,16 @@ def convert_odoo_datetime_to_vn_str(odoo_datetime):
         return False
     
 ################ CA TRỰC ##############
+class Company(models.Model):
+    _inherit = 'res.company'
+    cong_ty_type = fields.Many2one('congtytype', string=u'Loại đơn vị')
+    ca_sang_bat_dau = fields.Char(default=u'07:00:00', string=u'Ca sáng bắt đầu' )
+    ca_chieu_bat_dau = fields.Char(default=u'14:00:00', string=u'Ca chiều bắt đầu'  )
+    ca_dem_bat_dau = fields.Char(default=u'22:30:00', string=u'Ca đêm bắt đầu' )
+    ca_sang_duration = fields.Float(digits=(6,1),default=7, string = u'Ca sáng ')
+    ca_chieu_duration = fields.Float(digits=(6,1),default=8.5)
+    ca_dem_duration = fields.Float(digits=(6,1),default=8.5)
+
 class CTR(models.Model):
     _name = 'ctr'
     name = fields.Char(compute = '_name_truc_ca_compute', store=True)
@@ -498,15 +508,7 @@ class User(models.Model):
 #         return super(User, self).search(args, offset, limit, order, count=count)  
     
 #     
-class Company(models.Model):
-    _inherit = 'res.company'
-    cong_ty_type = fields.Many2one('congtytype', string=u'Loại đơn vị')
-    ca_sang_bat_dau = fields.Char(default=u'07:00:00', string=u'Ca sáng bắt đầu' )
-    ca_chieu_bat_dau = fields.Char(default=u'14:00:00', string=u'Ca chiều bắt đầu'  )
-    ca_dem_bat_dau = fields.Char(default=u'22:30:00', string=u'Ca đêm bắt đầu' )
-    ca_sang_duration = fields.Float(digits=(6,1),default=7, string = u'Ca sáng ')
-    ca_chieu_duration = fields.Float(digits=(6,1),default=8.5)
-    ca_dem_duration = fields.Float(digits=(6,1),default=8.5)
+
     
     
 #     nhan_vien_ids = fields.One2many('res.users','company_id')
@@ -1304,7 +1306,7 @@ class Cvi(models.Model):
             try:
                 user_id_int = r['user_id'][0]
                 user_id = self.env['res.users'].browse(user_id_int)
-                if self.env.uid not in user_id.cac_sep_ids.mapped('id') and not  self.user_has_groups('dai_tgg.cham_diem_group')  and not  self.user_has_groups('base.group_erp_manager') :# +  user_id.cac_sep_ids.cac_sep_ids.mapped('id')):
+                if self.env.uid not in user_id.cac_sep_ids.mapped('id') and not  self.user_has_groups('dai_tgg.cham_diem_group')  and not  self.user_has_groups('base.group_erp_manager ') :# +  user_id.cac_sep_ids.cac_sep_ids.mapped('id')):
                     r['diemld']=0
             except:
                 continue
