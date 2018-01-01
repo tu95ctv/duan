@@ -113,6 +113,7 @@
                     <group>
                         <group>
                               <field name="lazada_url"></field>
+                              <field name="html_lazada"></field>
                             <field name="html_lazada_thread_gia"></field>
                             <field name="test_lazada"></field>
                             <field name="html_lazada_thread"></field>

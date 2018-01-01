@@ -14,7 +14,7 @@
             <field name="args" eval="(2,)" />
             </record>
             
-             -->
+             
            <record id="ir_cron_scheduler_demo_action8" model="ir.cron">
             <field name="name">Demo scheduler 7</field>
             <field name="user_id" ref="base.user_root"/>
@@ -28,6 +28,6 @@
             </record>
              
             
-            
+            -->
    </data>
 </openerp>

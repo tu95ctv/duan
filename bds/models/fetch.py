@@ -502,11 +502,14 @@ def get_last_page_from_bdsvn_website(url_input):
 
 
 
-def get_link_on_one_page_laz(page_url):
+def get_link_on_one_page_laz(self,page_url):
     html = request_html(page_url)
+    print 'html a page',html
+    self.html_lazada = html
     soup = BeautifulSoup(html, 'html.parser')
     links_per_page = []
     title_soups = soup.select("div.c-product-card__description  a")
+    print 'title_soups',title_soups
     for a in title_soups:
         #print 'link hehe',a
         l =a['href']
@@ -608,7 +611,7 @@ def fetch_lazada(self):
 #         l =a['href']
 #         links_per_page.append(l)
 
-    links_per_page = get_link_on_one_page_laz(page_url)
+    links_per_page = get_link_on_one_page_laz(self,page_url)
     #print 'links_per_page',links_per_page
     test_page = []
     noti_dict = {}

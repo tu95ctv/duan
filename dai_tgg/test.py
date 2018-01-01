@@ -22,6 +22,8 @@
 # 
 # i =A(1)
 # i.f()
-import json
-kq = json.loads("[('loai_record','=','Công Việc')]")
-print kq
+a = [1,2,1]
+for c,i in enumerate(a):
+    b = a.index(i)
+    print c,b
+    

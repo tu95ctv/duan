@@ -234,6 +234,7 @@ def importthuvien(odoo_or_self_of_wizard):
                          ('thoi_gian_hoan_thanh',{'func':None,'xl_title':u'Thời gian hoàn thành','key':False}),
                          ('dot_xuat_hay_dinh_ky',{'model':'dotxuathaydinhky','func':None,'xl_title':None,'key':False,'col_index':7}),
                          ('diem',{'func':None,'xl_title':u'Điểm','key':False}),
+                         ('ghi_chu',{'func':None,'xl_title':u'Ghi chú','key':False}),
                         # ('is_active',{'func':active_function,'xl_title':u'active','key':False,'col_index':'skip_field_if_not_found_column_in_some_sheet','use_fnc_even_cell_is_False':True}),
                          ('active',{'func':active_function,'xl_title':u'active','key':True,'col_index':'skip_field_if_not_found_column_in_some_sheet','use_fnc_even_cell_is_False':True}),
                          ('children_ids',{'model':'tvcv',
@@ -253,16 +254,29 @@ def importthuvien(odoo_or_self_of_wizard):
                          #('tram_id',{'model':'tram','func':None,'xl_title':u'Trạm','key':False}),
                          #('parent_id',{'model':'res.users','func':None,'xl_title':u'Cấp trên','key':False,'key_name':'login','split_first_item_if_comma':True}),
                          ('cac_sep_ids',{'model':'res.users','func':None,'xl_title':u'Cấp trên','key':False,'key_name':'login','m2m':True}),
-                        ('cty_id',{'model':'congty','func':None,'xl_title':u'Bộ Phận','key':False}),
+#                         ('company_id',{'model':'congty','func':None,'xl_title':u'Bộ Phận','key':False}),
+                        ('company_ids',{'model':'res.company','func':None,'xl_title':u'Bộ Phận','key':False,'m2m':True}),
+                        ('company_id',{'model':'res.company','func':None,'xl_title':u'Bộ Phận','key':False}),
                         )
                 title_rows = [1]
+#             elif r.type_choose ==u'Công Ty':
+#                 model_name = 'res.company'
+# #                 model_name = 'congty'
+#                 sheet_names = [u'Công Ty']
+#                 field_dict= (
+#                         ('name',{'func':None,'xl_title':u'công ty','key':True}),
+#                        ('parent_id',{'model':'congty','func':None,'xl_title':u'parent_id','key':False}),
+# #                           ('cong_ty_type',{'model':'congtytype','func':None,'xl_title':u'cong_ty_type','key':False}),
+#                         )
+#                 title_rows = [1]
             elif r.type_choose ==u'Công Ty':
-                model_name = 'congty'
+                model_name = 'res.company'
+#                 model_name = 'congty'
                 sheet_names = [u'Công Ty']
                 field_dict= (
                         ('name',{'func':None,'xl_title':u'công ty','key':True}),
-                        ('parent_id',{'model':'congty','func':None,'xl_title':u'parent_id','key':False}),
-                          ('cong_ty_type',{'model':'congtytype','func':None,'xl_title':u'cong_ty_type','key':False}),
+                       ('parent_id',{'model':'res.company','func':None,'xl_title':u'parent_id','key':False}),
+#                           ('cong_ty_type',{'model':'congtytype','func':None,'xl_title':u'cong_ty_type','key':False}),
                         )
                 title_rows = [1]
             elif r.type_choose ==u'Kiểm Kê':
