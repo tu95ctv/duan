@@ -12,7 +12,8 @@
          <field name="arch" type="xml">
             <search string="Search ca truc">
                <field name="member_ids" />
-               <field name="cvi_ids" string="search theo loại hoặc nội dung " filter_domain="['|',('cvi_ids.tvcv_id.name','ilike',self),('cvi_ids.noi_dung','ilike',self)]" />
+               <field name="id" />
+               <field name="cvi_ids" string="search theo loại hoặc nội dung hoặc id công việc, sự cố, sự vụ " filter_domain="['|','|',('cvi_ids.name','ilike',self),('cvi_ids.tvcv_id.name','ilike',self),('cvi_ids.noi_dung','ilike',self)]" />
                <!-- 
                <field name="su_co_ids" filter_domain="['|',('su_co_ids.loai_su_co_id.name','ilike',self),('su_co_ids.noi_dung','ilike',self)]" />
                <field name="su_vu_ids" filter_domain="['|',('su_vu_ids.loai_su_vu_id.name','ilike',self),('su_vu_ids.noi_dung','ilike',self)]" />
@@ -39,7 +40,9 @@
                         <field name="gio_ket_thuc_ca" invisible="1" />
                      </group>
                      <group>
-                        <field name="member_ids">
+                        <field name="member_ids"        
+                        domain="['|',('company_id','child_of',company_id),('company_id','parent_of',company_id)]"
+                       >
                            <tree>
                               <field name="name" string="Tên người Trực" />
                               <field name="company_id" />
@@ -47,30 +50,20 @@
                         </field>
                      </group>
                   </group>
-                  <!-- 
-                        <group>
-                            <field name="ctr_lines_ids">
-                                <tree editable="bottom">
-                                    <field name="id" />
-                                    <field name="cvi_id" />
-                                    <field name="suco_id" />
-                                </tree>
-                            </field>
-                        </group>
-                         -->
+             
                   <notebook>
                      <page string="Công Việc/Sự Cố/Sự Vụ">
                         <field name="cvi_ids" context="{'active_ctr_id':active_id}" domain="[('ctr_ids','!=',False),('gio_ket_thuc','=',False),('company_id','=',company_id)]" />
                      </page>
-                     <!--
-                            <page string="Sự Cố">
-                                <field name="su_co_ids" context="{'active_ctr_id':active_id,'you_at_suco_form':True}" domain="[('ctr_ids','!=',False),('gio_ket_thuc','=',False),('company_id','=',company_id)]" />
-                            </page>
-                         
-                            <page string="Sự Vụ">
-                                <field name="su_vu_ids" context="{'active_ctr_id':active_id, 'you_at_suco_form':True}" domain="[('ctr_ids','!=',False),('gio_ket_thuc','=',False),('company_id','=',company_id)]" />
-                            </page>
-                             -->
+                     <page string="Nhận Ca, Giao Ca">
+                     			<group>
+                                             <field name="giao_ca_truoc_ids" context="{'tree_view_ref':'dai_tgg.comment_list_co_ctr'}"></field>
+                     			</group>
+                     			
+                     			<group>
+                                             <field name="giao_ca_ids"></field>
+                     			</group>
+                     </page>
                   </notebook>
                </sheet>
             </form>
@@ -175,6 +168,7 @@
          <field name="priority">1</field>
          <field name="arch" type="xml">
             <tree>
+               <field name="id"/>
                <field name="name" />
                <field name="login" />
                <field name="date" string="Ngày sinh" />
@@ -219,8 +213,15 @@
          <field name="inherit_id" ref="base.view_company_form" />
          <field name="mode">primary</field>
          <field name="arch" type="xml">
-            <xpath expr="//field[@name='partner_id']" position="replace">
+         	<xpath expr="//field[@name='parent_id']" position="replace">
                <field name="parent_id" />
+            </xpath>
+            
+            <xpath expr="//field[@name='currency_id']" position="replace">
+            </xpath>
+            
+            
+            <xpath expr="//field[@name='partner_id']" position="replace">
                <field name="child_ids" />
             </xpath>
          </field>
@@ -230,6 +231,7 @@
          <field name="model">res.company</field>
          <field name="arch" type="xml">
             <tree>
+            	<field name="id" />
                <field name="name" />
                <field name="parent_id" />
                <field name="child_ids" />
@@ -289,7 +291,7 @@
                         <field name="id" />
                      
                         <field name="name" />
-                        <field name="loai_record" attrs="{'invisible':[('tvcv_id','!=',False)]}" invisible="context.get('default_loai_record')" />
+                        <field name="loai_record" attrs="{'invisible':[('tvcv_id','!=',False)],'required':True}" invisible="context.get('default_loai_record')" />
                         <field name="loai_record_show" attrs="{'invisible':[('tvcv_id','=',False)]}"  invisible="context.get('default_loai_record')" />
                         <field name="user_id" readonly="1" />
                         <field name="company_id" />
@@ -306,13 +308,21 @@
                          -->
                         <field name="tvcv_id" 
                         attrs="{'readonly':['|',('loai_record','=',False),'|','&amp;',('cam_sua','=',True),('is_sep','=',False),'&amp;',('id','&gt;',0),'|',('gd_parent_id','!=',False),('cd_parent_id','!=',False)]}" 
-                        context="{'thu_vien_da_chon_list':parent.get('thu_vien_da_chon_list'), 'thu_vien_id_of_gd_parent_id':parent.get('tvcv_id'),'default_loai_record':loai_record                                      ,
+                        context="{'thu_vien_da_chon_list':parent.get('thu_vien_da_chon_list'),
+                         'thu_vien_id_of_gd_parent_id':parent.get('tvcv_id'),
+                         'default_loai_record':loai_record,
                         'tree_view_ref':tree_view_ref,
                         'search_view_ref': search_view_ref ,
-                        'default_name':noi_dung }"
+                        }"
+                        domain = "[('loai_record','=',loai_record)]"
                         required="1"
                          />
                         <field name="noi_dung" />
+                        <field name="cvi_lien_quan_ids">
+                          <tree>
+                          	<field name="name"></field>
+                          </tree>
+                        </field>
                      </group>
                   </group>
                   <group attrs="{'invisible':[('loai_record','!=','Công Việc')]}">
@@ -368,7 +378,8 @@
                               <field name="cam_sua" invisible="1" />
                               <field name="is_admin" invisible="1" />
                               <field name="is_sep" invisible="1" />
-                              <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)]}" context="{'cd_user_id':parent.get('cd_user_id')}" domain="['|','|',('company_id','=',parent.company_id),('company_id','child_of',parent.company_id),('company_id','parent_of',parent.company_id)]" />
+                              <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)]}" context="{'cd_user_id':parent.get('cd_user_id')}" 
+                              domain="['|','|',('company_id','=',parent.company_id),('company_id','child_of',parent.company_id),('company_id','parent_of',parent.company_id)]" />
                               <field name="gio_bat_dau" invisible="1" />
                               <field name="gio_ket_thuc" invisible="1" />
                               <field name="slncl" invisible="1" />
@@ -402,7 +413,10 @@
                               <field name="cam_sua" invisible="1" />
                               <field name="is_admin" invisible="1" />
                               <field name="is_sep" invisible="1" />
-                              <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)]}" context="{'cd_user_id':parent.get('cd_user_id')}" domain="['|','|',('company_id','=',parent.company_id),('company_id','child_of',parent.company_id),('company_id','parent_of',parent.company_id)]" />
+                              <field name="user_id" attrs="{'readonly':[('cam_sua','=',True)]}" 
+                              context="{'cd_user_id':parent.get('cd_user_id')}" 
+                              domain="['|','|',('company_id','=',parent.company_id),
+                              ('company_id','child_of',parent.company_id),('company_id','parent_of',parent.company_id)]" />
                               <field name="gio_bat_dau" invisible="1" />
                               <field name="gio_ket_thuc" invisible="1" />
                               <field name="slncl" invisible="1" />
@@ -550,17 +564,18 @@
          <field name="model">cvi</field>
       <!--    <field name="groups_id" eval="[(4, ref('base.group_erp_manager'))]" />  --><!-- không có tác dụng -->
          <field name="arch" type="xml">
-            <pivot>
+            <pivot string="dai HCM">
                <field name="company_id" type="row" />
                <field name="ngay_bat_dau" type="row" interval="month" />
                <field name="user_id" type="row" />
                <field name="ngay_bat_dau" type="row" interval="day" />
                <field name="id_for_pivot" type="row" />
+               <field name="name" type="row" />
                <field name="diem_tvi" type="measure" />
                <field name="so_luong" type="measure" />
                <field name="so_lan" type="measure" />
                <field name="diemtc" type="measure" />
-               <field name="diemld" type="measure" groups="base.group_erp_manager" />
+               <field name="diemld" type="measure" />
             </pivot>
          </field>
       </record>
@@ -607,7 +622,7 @@
          <field name="name">cvi search</field>
          <field name="model">cvi</field>
          <field name="arch" type="xml">
-            <search>
+            <search string = "Su cố search">
                <field name="name" />
                <field name="user_id" />
                <field name="tvcv_id" string="Loại" />
@@ -764,7 +779,7 @@
                   <group>
                      <group>
                         <field name="id" />
-                        <field name="name" string="Tên" />
+                        <field name="name"/> <!-- TÊn -->
                      </group>
                      <group>
                         <field name="loai_record" invisible="1" />
@@ -967,16 +982,45 @@
       </record>
       <record model="ir.ui.view" id="comment_list">
          <field name="name">Comment list</field>
+         <field name="priority">16</field>
          <field name="model">comment</field>
          <field name="arch" type="xml">
             <tree string="comment">
                <field name="noi_dung" />
+                <field name="company_id" />
                <field name="file_ids" />
                <field name="create_uid" string="Người comment" />
                <field name="create_date" string="Thời gian" />
             </tree>
          </field>
       </record>
+      
+      <record model="ir.ui.view" id="comment_list_co_ctr">
+         <field name="name">Comment list inherit</field>
+         <field name="model">comment</field>
+         <field name="priority">17</field>
+         <field name="inherit_id" ref="dai_tgg.comment_list"></field>
+         <field name="mode">primary</field>
+         <field name="arch" type="xml">
+         <xpath expr="//field[@name='company_id']" position="after">
+                     	<field name="giao_ca_id"></field>
+         
+         </xpath>
+         <!--   <field name="company_id" position="after">
+            	<field name="giao_ca_id"></field>
+            </field> --> 
+         </field>
+      </record>
+      
+       <record model="ir.actions.act_window" id="comment_action">
+         <field name="name">Comment</field>
+         <field name="res_model">comment</field>
+         <field name="view_mode">tree,form</field>
+      </record>
+      
+      
+      
+      
       <!--END COMMENT -->
       <!-- GHI CHÚ CÔNG VIỆC -->
       <record id="gccv_search" model="ir.ui.view">
@@ -1488,11 +1532,7 @@
          <field name="res_model">kknoc</field>
          <field name="view_mode">tree,form</field>
       </record>
-      <record model="ir.actions.act_window" id="comment_action">
-         <field name="name">Comment</field>
-         <field name="res_model">comment</field>
-         <field name="view_mode">tree,form</field>
-      </record>
+     
       <!-- kknoc -->
       <!--  Sale config -->
       <record id="ltk_config_settings_view" model="ir.ui.view">
@@ -1514,6 +1554,9 @@
                   </group>
                   <group string="CV Pivot">
                      <field name="is_cvi_id_in_pivot" />
+                  </group>
+                  <group>
+                  <field name="show_id_in_cvi_name_get"></field>
                   </group>
                   <group string="Show cột lãnh đạo trong các table công việc con trong công việc cha">
                      <field name="group_show_cot_lanh_dao" widget="radio" />
@@ -1649,7 +1692,7 @@
             <xpath expr="//group/group" position="replace">
                <field name="type" invisible="1" />
             </xpath>
-            <xpath expr="//field[@name='title']" position="replace" />
+        <!--  <xpath expr="//field[@name='title']" position="replace" /> -->   
             <xpath expr="//field[@name='mobile']" position="replace" />
             <xpath expr="//field[@name='fax']" position="replace" />
             <xpath expr="//field[@name='lang']" position="replace" />

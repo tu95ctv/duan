@@ -11,6 +11,8 @@ from tao_instance import import_strect
 import datetime
 import json
 from lxml import etree
+import logging
+_logger = logging.getLogger(__name__)
 
 ### ngày 05/10/2017 ##
 ############### BEGIN DAI HCM ##################
@@ -166,6 +168,16 @@ class CTR(models.Model):
 #     su_vu_ids = fields.Many2many('suvu','ctr_suvu_rel','ctr_id','suvu_id',string=u'Sự Vụ')
 #     ctr_lines_ids = fields.One2many('ctrlines','ctr_id')
     cvi_show =  fields.Char(compute='cvi_show_',string=u'Công Việc/Sự Cố/ Sự Vụ')
+    giao_ca_ids = fields.One2many('comment','giao_ca_id',string=u'Giao Ca Sau')
+    giao_ca_truoc_ids = fields.Many2many('comment', compute='nhan_ca_ids_',string=u'Ca Trước Giao')
+    @api.depends('name','company_id')
+    def nhan_ca_ids_(self):
+        for r in self:
+            domain = [('giao_ca_id','!=',False),('company_id','=',r.company_id.id)]
+            if r.id:
+                domain.append(('giao_ca_id','<',r.id))
+            giao_ca_truoc_ids = self.env['comment'].search(domain,limit=5,order='giao_ca_id desc')
+            r.giao_ca_truoc_ids = giao_ca_truoc_ids
     
     @api.depends('cvi_ids')
     def cvi_show_(self):
@@ -174,20 +186,23 @@ class CTR(models.Model):
                 r.cvi_show = u' | '.join(r.cvi_ids.mapped('name'))
             except TypeError:
                 pass
-    @api.multi
-    def name_get(self):
-        def get_names(r):
+            
+    def get_names(self,r):
+            print 'ahihi',self._context
             name = name_compute(r,
-            adict=[
-               # ('id',{'pr':u'Ca Trực, id'}),
-                   ('ca',{'pr':u'Ca'}),('date',{'pr':u'Ngày','func':Convert_date_orm_to_str}),
-                   #('member_ids',{'pr':u'Người Trực','func':convert_memebers_to_str})
+            adict=[('id',{'pr':u'Ca Trực id'}),
+                   ('date',{'pr':u'Ngày','func':Convert_date_orm_to_str}),
+                   ('ca',{'pr':u'Buổi'}),
+#                    ('member_ids',{'pr':u'Người Trực','func':convert_memebers_to_str})
                    ]
                                           
                                  )
             return name
+    @api.multi
+    def name_get(self):
+        
              
-        return [(r.id, get_names(r)) for r in self]
+        return [(r.id, self.get_names(r)) for r in self]
 #     @api.model
 #     def fields_view_get(self, view_id=None, view_type=False, toolbar=False, submenu=False):
 #         res = super(CTR, self).fields_view_get(view_id=view_id, view_type=view_type, toolbar=toolbar, submenu=submenu)
@@ -200,8 +215,7 @@ class CTR(models.Model):
     @api.depends('date','ca','member_ids')
     def _name_truc_ca_compute(self):
         for r in self:
-            adict=[('id',{'pr':u'Ca Trực, id'}),('ca',{'pr':u'Buổi'}),('date',{'pr':u'Ngày','func':Convert_date_orm_to_str}),('member_ids',{'pr':u'Người Trực','func':convert_memebers_to_str})]
-            ret =  name_compute(r, adict)
+            ret =  self.get_names(r)
             r.name = ret
     
     @api.depends('gio_bat_dau_ca')
@@ -262,38 +276,7 @@ class CTR(models.Model):
                 res[field] = empty_ket_thuc_comments.mapped('id')
         res['member_ids']  = [self.env.user.id]
         return res           
-#     @api.depends('create_uid')
-#     def cong_ty_(self):
-#         for r in self:
-#             r.company_id = r.create_uid.company_id
-            
-            
-# class CTRLines(models.Model):
-#     _name='ctrlines'
-#     name = fields.Char()
-#     cvi_id = fields.Many2one('cvi')
-#     suco_id = fields.Many2one('suco')
-#     ctr_id = fields.Many2one('ctr')
-#     
-#     @api.multi
-#     def write(self,vals):
-#         suco_id = vals.get('suco_id',None)
-#         for r in self:
-#             if suco_id != None:
-#                 print 'r.suco_id',r.suco_id
-#                 if r.suco_id != suco_id:
-#                     raise UserError(' khong duoc thay doi suco_id')
-#         res = super(CTRLines,self).write(vals)
-#         return res
-#     
-#     
-#     @api.multi
-#     def unlink(self):
-#         for r in self:
-#             if r.suco_id:
-#                 r.suco_id.unlink()
-#         res = super(CTRLines, self).unlink()
-#         return res
+
     
 ########################SỰ CỐ####################
 #SUCO_SUVU_LIST = ('su_co',u'Sự Cố'),('su_vu',u'Sự Vụ')
@@ -335,6 +318,7 @@ class LTKSetting(models.TransientModel):
         (1, u'Show thông tin admin,sếp')
         ], u"Show thông tin admin, sếp", implied_group='dai_tgg.group_show_thong_tin_admin_sep')
     is_cvi_id_in_pivot =fields.Boolean(string=u'có CV ID khi xuất pivot')
+    show_id_in_cvi_name_get = fields.Boolean(string=u'Show ID ở CV name get')
     @api.multi
     def set_is_cam_sua_truoc_ngay(self):
         self.env['ir.values'].sudo().set_default(
@@ -442,10 +426,22 @@ class Comment(models.Model):
     name = fields.Char(compute='name_',store=True)
     noi_dung = fields.Text(string=u'Nội dung comment')
     cvi_id = fields.Many2one('cvi')
-    su_co_id = fields.Many2one('suco')
-    su_vu_id = fields.Many2one('suvu')
+#     su_co_id = fields.Many2one('suco')
+#     su_vu_id = fields.Many2one('suvu')
     file_ids = fields.Many2many('dai_tgg.file','comment_file_relate','comment_id','file_id',string=u'Files đính kèm')
     doitac_ids = fields.Many2many('res.partner',string=u'Đối Tác')
+    giao_ca_id = fields.Many2one('ctr')
+    company_id = fields.Many2one('res.company')
+    
+    
+    @api.model
+    def create(self, vals):
+        if not vals.get('company_id'):
+            vals['company_id'] = self.env.user.company_id.id
+        rs = super(Comment, self).create(vals)
+        return rs
+    
+    
     @api.depends('noi_dung','create_uid','create_date')
     def name_(self):
         def noi_dung_trim(noi_dung):
@@ -475,6 +471,17 @@ class User(models.Model):
     cac_sep_ids = fields.Many2many('res.users','user_sep_relate','user_id','sep_id', string=u'Các Lãnh Đạo')
     cac_linh_ids = fields.Many2many('res.users','user_sep_relate','sep_id', 'user_id',string=u'Các Nhân Viên')
     is_admin = fields.Boolean(compute='is_admin_')
+    all_sep_ids = fields.Many2many('res.users','user_sep_relate','user_id','sep_id', string=u'Tất cả Lãnh Đạo',compute='all_sep_ids')
+    
+    @api.depends('cac_sep_ids')
+    def all_sep_ids_(self):
+        for r in self:
+            all_sep = []
+            for sep in r.cac_sep_ids:
+                all_sep.append(sep.id)
+                for sep_lon in sep.cac_sep_ids:
+                    all_sep.append(sep_lon.id)
+                
     
     @api.model
     def create(self, vals):
@@ -703,15 +710,19 @@ class Cvi(models.Model):
     #pivot_title = fields.Char(compute='pivot_title_',store=True)
     tree_view_ref = fields.Char(compute='tree_view_ref_',default='dai_tgg.tvcv_list')
     search_view_ref = fields.Char(compute='tree_view_ref_',default='dai_tgg.tvcv_search')
+    cvi_lien_quan_ids = fields.Many2many('cvi','cvi_cvi_relate','cvi_id','cvi_lien_quan_id', string=u'CV SC SV Liên quan')
+    
     @api.model
     def fields_view_get(self, view_id=None, view_type=False, toolbar=False, submenu=False):
         res = super(Cvi, self).fields_view_get(view_id=view_id, view_type=view_type, toolbar=toolbar, submenu=submenu)
-        if view_type =='tree':
-            print 'res',res
+        if view_type in ['tree','form']:
             loai_record = self._context.get('default_loai_record')
             if loai_record in [u'Sự Cố',u'Sự Vụ']:
                 fields = res.get('fields')
                 fields['tvcv_id']['string'] =u'Loại ' + loai_record # ['|',('ctr_ids','=','active_id'),'&',('ctr_ids','!=',False),('gio_ket_thuc','=',False)]
+            elif loai_record == u'Công Việc':
+                fields = res.get('fields')
+                fields['tvcv_id']['string'] =u'Thư Viện Công Việc'
         return res
     @api.depends('loai_record')
     def tree_view_ref_(self):
@@ -749,25 +760,12 @@ class Cvi(models.Model):
                     ('noi_dung',{'pr':u''}),
                                           ],
                                        join_char = ' ')
-                print 'i_text',i_text
                 comment_ids_text_lists.append(i_text)
             r.comments_show = u' | '.join(comment_ids_text_lists)
 #             r.comments_show_html = u'</br>'.join(comment_ids_text_lists)
                 
         
-#     @api.multi
-#     def name_get(self):
-#         def get_names(r):
-#             name = name_compute(r,adict=[
-#                                           ('id',{'pr':u'Công id'}),
-#                                           ('tvcv_id',{'func':lambda r: r.name}),
-#                                           ('noi_dung_trich_dan',{}),
-#                                           
-#                                           ]
-#                                  )
-#             return name
-#              
-#         return [(r.id, get_names(r)) for r in self]
+
     @api.depends('user_id','create_uid')
     def company_id_(self):
         for r in self:
@@ -1040,31 +1038,45 @@ class Cvi(models.Model):
         for r in self:
             r.diemld = r.diemtc * r.percent_diemtc /100
             
-            
-            
-    @api.depends('tvcv_id','noi_dung_trich_dan','loai_record')
-    def name_(self):
-        for r in self:
+    def get_names(self,r):
+#             name = name_compute(r,adict=[
+#                                           ('id',{'pr':u'Công id'}),
+#                                           ('tvcv_id',{'func':lambda r: r.name}),
+#                                           ('noi_dung_trich_dan',{}),
+#                                            
+#                                           ]
+#                                  )
             adict = {u'Công Việc':u'TVCV',u'Sự Cố':u'Loại',u'Sự Vụ':u'Loại'}
             if r.loai_record :
-#                 def tvcv_name(r):
-#                     if r:
-#                         return name_compute(r,adict=[
-#                                             ('name',{'skip_if_False':False}),
-#                                             ('code',{'skip_if_False':True,'func':lambda name: (u'(%s)'%name) if name else False}),
-#                                                ],join_char=u' ')
-#                     else:
-#                         return False
                 name  = name_compute(r,adict=[('id',{'pr':u'%s id'%r.loai_record}),
                                               ('tvcv_id',{'pr':adict[r.loai_record],'func':lambda val:val.name}),
                                               ('noi_dung_trich_dan',{'pr':u'Nội Dung','skip_if_False':False}),
                                               ]
                                      )
                 
-                r.name = name
-                if r.id:
-                    r.id_for_pivot = r.id
-            
+            else:
+                name = False
+            return name
+          
+    @api.multi
+    def name_get(self):
+        return [(r.id, self.get_names(r)) for r in self]
+   
+    @api.depends('tvcv_id','noi_dung_trich_dan','loai_record')
+    def name_(self):
+        for r in self:
+#             adict = {u'Công Việc':u'TVCV',u'Sự Cố':u'Loại',u'Sự Vụ':u'Loại'}
+#             if r.loai_record :
+#                 name  = name_compute(r,adict=[('id',{'pr':u'%s id'%r.loai_record}),
+#                                               ('tvcv_id',{'pr':adict[r.loai_record],'func':lambda val:val.name}),
+#                                               ('noi_dung_trich_dan',{'pr':u'Nội Dung','skip_if_False':False}),
+#                                               ]
+#                                      )
+#      
+            name = self.get_names(r)
+            r.name = name
+            if r.id:
+                r.id_for_pivot = r.id
     @api.depends('gio_bat_dau')
     def ngay_bat_dau_(self):#trong su kien
         for r in self:
@@ -1162,7 +1174,6 @@ class Cvi(models.Model):
                     for cd_child in r.hd_children_ids:
                         cd_child.write(update_dict_of_child)
             except exceptions as e:
-                print ' error chd_parent_constrains***'
                 raise ValueError(e)
  
     @api.constrains('hd_parent_id')
@@ -1174,7 +1185,6 @@ class Cvi(models.Model):
                     update_dict = self.get_parent_value_for_child(r,update_field_list,'hd_parent_id')
                     r.write(update_dict)
         except exceptions as e:
-            print ' error chd_parent_constrains***'
             raise ValueError(e)
     
     
@@ -1296,7 +1306,7 @@ class Cvi(models.Model):
 #         test_rt = []
         is_cvi_id_in_pivot = self.env['ir.values'].get_default('ltk.config.settings', 'is_cvi_id_in_pivot')
         for c,r in enumerate(res):
-            print 'c %s, r %s'%(c,r)
+#             print 'c %s, r %s'%(c,r)
 #             print 'r..',r
 #             print 'c',c
 #             if c in range(0,3):
@@ -1377,6 +1387,20 @@ class TVCV(models.Model):
 #             fields['date']['string'] =u'anh con no'# ['|',('ctr_ids','=','active_id'),'&',('ctr_ids','!=',False),('gio_ket_thuc','=',False)]
 #             fields['loai_su_co']['domain'] ='''[('l','!=',False)]'''
 #         return res
+
+    @api.model
+    def fields_view_get(self, view_id=None, view_type=False, toolbar=False, submenu=False):
+        res = super(TVCV, self).fields_view_get(view_id=view_id, view_type=view_type, toolbar=toolbar, submenu=submenu)
+        loai_record = self._context.get('default_loai_record')
+        if view_type in ['tree','form']:
+            loai_record = self._context.get('default_loai_record')
+            if loai_record in [u'Sự Cố',u'Sự Vụ']:
+                fields = res.get('fields')
+                fields['name']['string'] =u'Tên ' + loai_record # ['|',('ctr_ids','=','active_id'),'&',('ctr_ids','!=',False),('gio_ket_thuc','=',False)]
+            elif loai_record == u'Công Việc':
+                fields = res.get('fields')
+                fields['name']['string'] =u'Tên TVCV'
+        return res
     @api.depends('loai_record')
     def loai_record_show_(self):
         for r in self:
@@ -1631,15 +1655,33 @@ class ImportThuVien(models.Model):
 #         self.log = fields
 #         for f,field  in fields.iteritems():
 #             print type(field),field.type,type(field.type)
-        not_active_include_search = True
-        if not_active_include_search:
-            domain_not_active = [('f1','=','a')]
-        else:
-            domain_not_active = []
-        domain = [('f2','=','a'),('f3','=','a')]
-        domain = expression.OR([domain_not_active, domain])
+#         not_active_include_search = True
+#         if not_active_include_search:
+#             domain_not_active = [('f1','=','a')]
+#         else:
+#             domain_not_active = []
+#         domain = [('f2','=','a'),('f3','=','a')]
+#         domain = expression.OR([domain_not_active, domain])
+            
 #         res = self.env['tvcv'].search(domain)
-        self.log =domain
+        
+        tong = ''
+        _sql = "select 1 + 1"
+        self._cr.execute(_sql)
+        kq_fetch =  self._cr.fetchall()
+        one = self.env['res.company'].search([('id','parent_of',[8])])#self.env.user.company_id
+        tong += u'%s'%one + '\n'
+        _sql = "select 2 + 2"
+        self._cr.execute(_sql)
+        kq_fetch = self._cr.fetchall()
+        three = self.env['res.company'].search([('id','child_of',[9])])#self.env.user.company_id
+        four = self.env['res.company'].search([('id','child_of',[8])])#self.env.user.company_id
+
+
+        _logger.info('***22222222222222222****'*20 + u'%s'%kq_fetch)
+        two = len(one)
+        tong +=u'%s'%two + '\n%s'%three + '\n%s'%four
+        self.log =tong
     def trigger(self):
         if self.trigger_model:
             count = 0

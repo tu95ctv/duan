@@ -4,10 +4,10 @@ import xlrd
 import time
 import datetime
 from odoo.exceptions import UserError
-import logging
 from odoo import  fields
 import base64
 from copy import deepcopy
+import logging
 _logger = logging.getLogger(__name__)
 from odoo.osv import expression
 
