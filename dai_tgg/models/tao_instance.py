@@ -441,6 +441,7 @@ def importthuvien(odoo_or_self_of_wizard):
                         group_id = self.env.ref('base.group_user').id
                         update_dict['groups_id'] = [(4,group_id)]
                         update_dict['password'] = '123456'
+                        update_dict['lang'] = 'vi_VN'
                     elif r.type_choose==u'INVENTORY_240G':
                         update_dict['sheet_name'] = sheet_name
                         update_dict['file_name'] = r.type_choose

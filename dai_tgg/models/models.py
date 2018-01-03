@@ -178,18 +178,23 @@ class CTR(models.Model):
                 domain.append(('giao_ca_id','<',r.id))
             giao_ca_truoc_ids = self.env['comment'].search(domain,limit=5,order='giao_ca_id desc')
             r.giao_ca_truoc_ids = giao_ca_truoc_ids
-    
+#     @api.depends('cvi_ids')
+#     def cvi_show_(self):
+#         for r in self:
+#             try:
+#                 r.cvi_show = u' | '.join(r.cvi_ids.mapped('name'))
+#             except TypeError:
+#                 pass
+            
     @api.depends('cvi_ids')
     def cvi_show_(self):
         for r in self:
-            try:
-                r.cvi_show = u' | '.join(r.cvi_ids.mapped('name'))
-            except TypeError:
-                pass
-            
-    def get_names(self,r):
-            print 'ahihi',self._context
-            name = name_compute(r,
+            cvi_ids = r.cvi_ids
+            if cvi_ids:
+                r.cvi_show = u' | '.join(map(lambda r: r.get_names(),cvi_ids))
+          
+    def get_names(self):
+            name = name_compute(self,
             adict=[('id',{'pr':u'Ca Trực id'}),
                    ('date',{'pr':u'Ngày','func':Convert_date_orm_to_str}),
                    ('ca',{'pr':u'Buổi'}),
@@ -202,7 +207,7 @@ class CTR(models.Model):
     def name_get(self):
         
              
-        return [(r.id, self.get_names(r)) for r in self]
+        return [(r.id, r.get_names()) for r in self]
 #     @api.model
 #     def fields_view_get(self, view_id=None, view_type=False, toolbar=False, submenu=False):
 #         res = super(CTR, self).fields_view_get(view_id=view_id, view_type=view_type, toolbar=toolbar, submenu=submenu)
@@ -215,7 +220,7 @@ class CTR(models.Model):
     @api.depends('date','ca','member_ids')
     def _name_truc_ca_compute(self):
         for r in self:
-            ret =  self.get_names(r)
+            ret =  r.get_names()
             r.name = ret
     
     @api.depends('gio_bat_dau_ca')
@@ -826,11 +831,7 @@ class Cvi(models.Model):
             else:
                 r.is_sep = False
     ################# DEPEND##########################
-    @api.depends('noi_dung')
-    def noi_dung_trich_dan_(self):
-        for r in self:
-            if r.noi_dung and len(r.noi_dung) > 30:
-                r.noi_dung_trich_dan = r.noi_dung[:30] + u'...'
+    
     
     
     @api.depends(
@@ -1037,8 +1038,20 @@ class Cvi(models.Model):
     def diemld_(self):
         for r in self:
             r.diemld = r.diemtc * r.percent_diemtc /100
-            
-    def get_names(self,r):
+    
+    
+    @api.depends('noi_dung')
+    def noi_dung_trich_dan_(self):
+        for r in self:
+            if r.noi_dung:
+                if len(r.noi_dung) > 30:
+                    r.noi_dung_trich_dan = r.noi_dung[:30] + u'...'
+                else:
+                    r.noi_dung_trich_dan = r.noi_dung
+                
+                    
+    def get_names(self):
+            print 'ahihihi',self._context
 #             name = name_compute(r,adict=[
 #                                           ('id',{'pr':u'Công id'}),
 #                                           ('tvcv_id',{'func':lambda r: r.name}),
@@ -1047,10 +1060,10 @@ class Cvi(models.Model):
 #                                           ]
 #                                  )
             adict = {u'Công Việc':u'TVCV',u'Sự Cố':u'Loại',u'Sự Vụ':u'Loại'}
-            if r.loai_record :
-                name  = name_compute(r,adict=[('id',{'pr':u'%s id'%r.loai_record}),
-                                              ('tvcv_id',{'pr':adict[r.loai_record],'func':lambda val:val.name}),
-                                              ('noi_dung_trich_dan',{'pr':u'Nội Dung','skip_if_False':False}),
+            if self.loai_record :
+                name  = name_compute(self,adict=[('id',{'pr':u'%s id'%self.loai_record}),
+                                              ('tvcv_id',{'pr':adict[self.loai_record],'func':lambda val:val.name}),
+                                              ('noi_dung',{'pr':u'Nội Dung','skip_if_False':False}),
                                               ]
                                      )
                 
@@ -1060,9 +1073,9 @@ class Cvi(models.Model):
           
     @api.multi
     def name_get(self):
-        return [(r.id, self.get_names(r)) for r in self]
-   
-    @api.depends('tvcv_id','noi_dung_trich_dan','loai_record')
+        return [(r.id, r.get_names()) for r in self]
+    
+    @api.depends('tvcv_id','noi_dung_trich_dan','loai_record','noi_dung')
     def name_(self):
         for r in self:
 #             adict = {u'Công Việc':u'TVCV',u'Sự Cố':u'Loại',u'Sự Vụ':u'Loại'}
@@ -1073,7 +1086,7 @@ class Cvi(models.Model):
 #                                               ]
 #                                      )
 #      
-            name = self.get_names(r)
+            name = r.get_names()
             r.name = name
             if r.id:
                 r.id_for_pivot = r.id
@@ -1534,6 +1547,7 @@ class TVCV(models.Model):
 #         return res
     @api.model
     def name_search(self, name, args=None, operator='ilike', limit=100):
+        limit=500
         try:
             id_int = int(name)
             ma_tvcv_domain = ['|',('code','ilike',name),('id','=',id_int)]

@@ -507,7 +507,7 @@
                <field name="comments_show" />
                <field name="company_id" />
                <field name="loai_cvi" />
-               <field name="ctr_ids" />
+               <field name="ctr_ids" widget='one2many'/>
                <field name="slncl" />
                <field name="diem_tvi" />
                <field name="don_vi" />
@@ -570,7 +570,6 @@
                <field name="user_id" type="row" />
                <field name="ngay_bat_dau" type="row" interval="day" />
                <field name="id_for_pivot" type="row" />
-               <field name="name" type="row" />
                <field name="diem_tvi" type="measure" />
                <field name="so_luong" type="measure" />
                <field name="so_lan" type="measure" />
