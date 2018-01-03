@@ -275,6 +275,9 @@
                   <filter string="group theo Đơn vị tạo" context="{'group_by':'company_id'}" />
                   <filter string="group theo Thư Viện Công việc" context="{'group_by':'tvcv_id'}" />
                   <filter string="group theo Loại Công việc" context="{'group_by':'loai_cvi'}" />
+                  <filter string="group theo Ngày" context="{'group_by':'ngay_bat_dau:day'}" />
+                  <filter string="group theo Tháng" context="{'group_by':'ngay_bat_dau:month'}" />
+                  
                </group>
             </search>
          </field>
@@ -459,7 +462,6 @@
                               <field name="diemtc" />
                               <field name="valid_diemtc" invisible="1" />
                               <field name="valid_diemtc_conclusion" />
-                              
                                <field name="is_admin" invisible="1" />
                               <field name="is_sep" invisible="1" />
                               <field name="percent_diemtc" attrs="{'invisible' : [('is_sep', '=', False),('is_admin', '=', False)]}" />
