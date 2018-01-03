@@ -1339,8 +1339,8 @@ class Cvi(models.Model):
 #                 tvcv_name = cvi_obj.tvcv_id.name
                 adict=[]
                 adict.append(('gio_bat_dau',{'pr':u'','func': convert_odoo_datetime_to_vn_str}))
-#                 if is_cvi_id_in_pivot:
-#                     adict.append(('id',{'pr':u'id'}))
+                if is_cvi_id_in_pivot:
+                    adict.append(('id',{'pr':u'id'}))
                 adict.extend([
                                               ('tvcv_id',{'pr':None,'func':lambda val:val.name}),
                                               ('noi_dung',{'pr':u'Nội Dung'}),
