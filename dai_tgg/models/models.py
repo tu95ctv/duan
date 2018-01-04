@@ -170,6 +170,7 @@ class CTR(models.Model):
     cvi_show =  fields.Char(compute='cvi_show_',string=u'Công Việc/Sự Cố/ Sự Vụ')
     giao_ca_ids = fields.One2many('comment','giao_ca_id',string=u'Giao Ca Sau')
     giao_ca_truoc_ids = fields.Many2many('comment', compute='nhan_ca_ids_',string=u'Ca Trước Giao')
+    #cvi_loc   = fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')], string = u'Lọc loại record',)
     @api.depends('name','company_id')
     def nhan_ca_ids_(self):
         for r in self:
@@ -359,10 +360,12 @@ class CamSua(models.Model):
     ALLOW_WRITE_FIELDS_DIFF_USER = ['gio_ket_thuc','comment_ids','percent_diemtt']
     ALLOW_WRITE_FIELDS_CHOT=[]
     IS_CAM_SUA_DO_CHOT = False
+    
     @api.multi
     def is_admin_(self):
         for r in self:
             if self.user_has_groups('base.group_erp_manager'):
+#             if self.env.ref('base.group_erp_manager') in self.env.user.groups_id:
                 r.is_admin = True
     @api.multi
     def cam_sua_(self):
@@ -661,6 +664,7 @@ class Cvi(models.Model):
     diem_tvi = fields.Float(digits=(6,2),string=u'Điểm Thư Viện',related='tvcv_id.diem',store=True,readonly=True)# 
     don_vi = fields.Many2one('donvi',string=u'Đơn vị tính',compute='don_vi_',store=True)
     ctr_ids  = fields.Many2many('ctr','ctr_cvi_relate','cvi_id','ctr_id',string=u'Ca Trực')
+    ctr_show = fields.Char(compute='ctr_show_',string=u'Số ca trực')
 #     so_luong = fields.Integer(string=u'Số Lượng',default = 1,required=True)
     so_luong = fields.Float(string=u'Số Lượng',default = 1,required=True,digit=(6,2))
     so_lan = fields.Integer(string=u'Số Lần',default = 1,required=True)
@@ -715,8 +719,16 @@ class Cvi(models.Model):
     #pivot_title = fields.Char(compute='pivot_title_',store=True)
     tree_view_ref = fields.Char(compute='tree_view_ref_',default='dai_tgg.tvcv_list')
     search_view_ref = fields.Char(compute='tree_view_ref_',default='dai_tgg.tvcv_search')
-    cvi_lien_quan_ids = fields.Many2many('cvi','cvi_cvi_relate','cvi_id','cvi_lien_quan_id', string=u'CV SC SV Liên quan')
+    cvi_lien_quan_ids = fields.Many2many('cvi','cvi_cvi_relate','cvi_id','cvi_lien_quan_id', string=u'Công Việc/Sự Cố/ Sự Vụ Liên quan')
     
+    @api.depends('ctr_ids')
+    def ctr_show_(self):
+        for r in self:
+            r.ctr_show =u'%s ca trực'% len(r.ctr_ids)
+    @api.depends('name')
+    def is_admin_(self):
+        rs = super(Cvi,self).is_admin_()
+        return rs
     @api.model
     def fields_view_get(self, view_id=None, view_type=False, toolbar=False, submenu=False):
         res = super(Cvi, self).fields_view_get(view_id=view_id, view_type=view_type, toolbar=toolbar, submenu=submenu)
@@ -1051,7 +1063,6 @@ class Cvi(models.Model):
                 
                     
     def get_names(self):
-            print 'ahihihi',self._context
 #             name = name_compute(r,adict=[
 #                                           ('id',{'pr':u'Công id'}),
 #                                           ('tvcv_id',{'func':lambda r: r.name}),
@@ -1059,18 +1070,19 @@ class Cvi(models.Model):
 #                                            
 #                                           ]
 #                                  )
+            #print 'ahihi',self._context
             adict = {u'Công Việc':u'TVCV',u'Sự Cố':u'Loại',u'Sự Vụ':u'Loại'}
             if self.loai_record :
-                name  = name_compute(self,adict=[('id',{'pr':u'%s id'%self.loai_record}),
+                adict=[('id',{'pr':u'%s id'%self.loai_record}),
                                               ('tvcv_id',{'pr':adict[self.loai_record],'func':lambda val:val.name}),
                                               ('noi_dung',{'pr':u'Nội Dung','skip_if_False':False}),
                                               ]
-                                     )
-                
+                if self._context.get('default_loai_record') ==u'Công Việc':
+                    adict.append(('user_id',{'func':lambda r:r.name,'pr':u'Người Làm','skip_if_False':False}))
+                name  = name_compute(self,adict=adict)
             else:
                 name = False
             return name
-          
     @api.multi
     def name_get(self):
         return [(r.id, r.get_names()) for r in self]
@@ -1679,22 +1691,26 @@ class ImportThuVien(models.Model):
             
 #         res = self.env['tvcv'].search(domain)
         
-        tong = ''
-        _sql = "select 1 + 1"
-        self._cr.execute(_sql)
-        kq_fetch =  self._cr.fetchall()
-        one = self.env['res.company'].search([('id','parent_of',[8])])#self.env.user.company_id
-        tong += u'%s'%one + '\n'
-        _sql = "select 2 + 2"
-        self._cr.execute(_sql)
-        kq_fetch = self._cr.fetchall()
-        three = self.env['res.company'].search([('id','child_of',[9])])#self.env.user.company_id
-        four = self.env['res.company'].search([('id','child_of',[8])])#self.env.user.company_id
-
-
-        _logger.info('***22222222222222222****'*20 + u'%s'%kq_fetch)
-        two = len(one)
-        tong +=u'%s'%two + '\n%s'%three + '\n%s'%four
+#         tong = ''
+#         _sql = "select 1 + 1"
+#         self._cr.execute(_sql)
+#         kq_fetch =  self._cr.fetchall()
+#         one = self.env['res.company'].search([('id','parent_of',[8])])#self.env.user.company_id
+#         tong += u'%s'%one + '\n'
+#         _sql = "select 2 + 2"
+#         self._cr.execute(_sql)
+#         kq_fetch = self._cr.fetchall()
+#         three = self.env['res.company'].search([('id','child_of',[9])])#self.env.user.company_id
+#         four = self.env['res.company'].search([('id','child_of',[8])])#self.env.user.company_id
+# 
+# 
+#         _logger.info('***22222222222222222****'*20 + u'%s'%kq_fetch)
+#         two = len(one)
+#         tong +=u'%s'%two + '\n%s'%three + '\n%s'%four
+        tong = u''
+        tong += u'%s\n'%self.env.user.groups_id
+        tong += u'%s\n'%self.env.ref('base.group_erp_manager').id
+        tong += u'%s\n'%(self.env.ref('base.group_erp_manager') in self.env.user.groups_id)
         self.log =tong
     def trigger(self):
         if self.trigger_model:

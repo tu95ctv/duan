@@ -236,7 +236,7 @@ def importthuvien(odoo_or_self_of_wizard):
                          ('diem',{'func':None,'xl_title':u'Điểm','key':False}),
                          ('ghi_chu',{'func':None,'xl_title':u'Ghi chú','key':False}),
                         # ('is_active',{'func':active_function,'xl_title':u'active','key':False,'col_index':'skip_field_if_not_found_column_in_some_sheet','use_fnc_even_cell_is_False':True}),
-                         ('active',{'func':active_function,'xl_title':u'active','key':True,'col_index':'skip_field_if_not_found_column_in_some_sheet','use_fnc_even_cell_is_False':True}),
+                         ('active',{'func':active_function,'xl_title':u'active','key':False,'col_index':'skip_field_if_not_found_column_in_some_sheet','use_fnc_even_cell_is_False':True}),
                          ('children_ids',{'model':'tvcv',
                         'xl_title':u'Các công việc con',
                         'key':False,'col_index':'skip_field_if_not_found_column_in_some_sheet','m2m':True,'dung_ham_de_tao_val_rieng':ham_tao_tv_con
@@ -554,7 +554,7 @@ def importthuvien(odoo_or_self_of_wizard):
                     if continue_row:
                         continue
                     if key_search_dict:
-                            get_or_create_object_sosanh(self,model_name,key_search_dict,update_dict,is_must_update='True',noti_dict=noti_dict,not_active_include_search  =not_active_include_search)
+                            get_or_create_object_sosanh(self,model_name,key_search_dict,update_dict,is_must_update=True,noti_dict=noti_dict,not_active_include_search  =not_active_include_search)
             r.create_number = noti_dict['create']
             r.update_number = noti_dict['update']
             r.skipupdate_number = noti_dict['skipupdate']
