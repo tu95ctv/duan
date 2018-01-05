@@ -439,8 +439,8 @@ class Comment(models.Model):
 #     su_vu_id = fields.Many2one('suvu')
     file_ids = fields.Many2many('dai_tgg.file','comment_file_relate','comment_id','file_id',string=u'Files đính kèm')
     doitac_ids = fields.Many2many('res.partner',string=u'Đối Tác')
-    giao_ca_id = fields.Many2one('ctr')
-    company_id = fields.Many2one('res.company')
+    giao_ca_id = fields.Many2one('ctr',string=u'Ca Trực')
+    company_id = fields.Many2one('res.company',string=u'Công Ty')
     
     
     @api.model
@@ -661,7 +661,7 @@ class Cvi(models.Model):
     company_ids = fields.Many2many('res.company',string=u'Đơn vị liên quan',default=lambda self:[self.env.user.company_id.id],required=True)
     
     
-    tvcv_id = fields.Many2one('tvcv', string=u'Thư Viện Công việc/ Loại Sự Cố/ Loại Sự Vụ')
+    tvcv_id = fields.Many2one('tvcv', string=u'Thư Viện Công việc/ Loại Sự Cố/ Loại Sự Vụ',ondelete='restrict')
     diem_tvi = fields.Float(digits=(6,2),string=u'Điểm Thư Viện',related='tvcv_id.diem',store=True,readonly=True)# 
     don_vi = fields.Many2one('donvi',string=u'Đơn vị tính',compute='don_vi_',store=True)
     ctr_ids  = fields.Many2many('ctr','ctr_cvi_relate','cvi_id','ctr_id',string=u'Ca Trực')
@@ -1593,7 +1593,7 @@ class TVCV(models.Model):
             ma_tvcv_domain = ['|',('code','ilike',name),('id','=',id_int)]
         except:
             ma_tvcv_domain = [('code','ilike',name)]
-        ma_tvcv_domain = expression.OR([['|','|',('name_khong_dau', 'ilike', name),('name_viet_tat', 'ilike', name)], ma_tvcv_domain])
+        ma_tvcv_domain = expression.OR([['|',('name_khong_dau', 'ilike', name),('name_viet_tat', 'ilike', name)], ma_tvcv_domain])
         thu_vien_id_of_gd_parent_id = self._context.get('thu_vien_id_of_gd_parent_id')
         if thu_vien_id_of_gd_parent_id:#self._context.get('you_search_at_gd_form'):
             thu_vien_da_chon_list_txt = self._context.get('thu_vien_da_chon_list')
