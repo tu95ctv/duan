@@ -12,6 +12,7 @@ import datetime
 import json
 from lxml import etree
 import logging
+from unidecode import unidecode
 _logger = logging.getLogger(__name__)
 
 ### ngày 05/10/2017 ##
@@ -1380,11 +1381,23 @@ class Cvi(models.Model):
     
      
 
-
+def viet_tat(string):
+    print '***string***',string
+    string = string.strip()
+    ns = re.sub('\s{2,}', ' ', string)
+    ns = re.sub('[^\w ]','', ns,flags = re.UNICODE)
+    slit_name = ns.split(' ')
+    slit_name = filter(lambda w : True if w else False, slit_name)
+    one_char_slit_name = map(lambda w: w[0],slit_name)
+    rs = ''.join(one_char_slit_name).upper()
+    return rs
+# rs = viet_tat(string)
 class TVCV(models.Model):
     _name = 'tvcv'
     _parent_name = 'parent_id'
     name = fields.Char(string=u'Tên công việc')
+    name_khong_dau = fields.Char(compute='name_khong_dau_', store=True)
+    name_viet_tat =  fields.Char(compute='name_khong_dau_', store=True)
     loai_record = fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')], string = u'Loại Record')
     code = fields.Char(string=u'Mã công việc')
     don_vi = fields.Many2one('donvi',string=u'Đơn vị tính')
@@ -1413,6 +1426,21 @@ class TVCV(models.Model):
 #             fields['loai_su_co']['domain'] ='''[('l','!=',False)]'''
 #         return res
 
+    @api.depends('name')
+    def name_khong_dau_(self):
+        for r  in self:
+            print 'in name khong dau'
+            if r.name:
+#                 name = r.name.strip(' ')
+                name = r.name
+                if name:
+                    try:
+                        name_khong_dau = unidecode(name)
+                    except:
+                        raise ValueError(name)
+                    r.name_khong_dau = name_khong_dau
+                    r.name_viet_tat = viet_tat(name_khong_dau)
+        
     @api.model
     def fields_view_get(self, view_id=None, view_type=False, toolbar=False, submenu=False):
         res = super(TVCV, self).fields_view_get(view_id=view_id, view_type=view_type, toolbar=toolbar, submenu=submenu)
@@ -1565,6 +1593,7 @@ class TVCV(models.Model):
             ma_tvcv_domain = ['|',('code','ilike',name),('id','=',id_int)]
         except:
             ma_tvcv_domain = [('code','ilike',name)]
+        ma_tvcv_domain = expression.OR([['|','|',('name_khong_dau', 'ilike', name),('name_viet_tat', 'ilike', name)], ma_tvcv_domain])
         thu_vien_id_of_gd_parent_id = self._context.get('thu_vien_id_of_gd_parent_id')
         if thu_vien_id_of_gd_parent_id:#self._context.get('you_search_at_gd_form'):
             thu_vien_da_chon_list_txt = self._context.get('thu_vien_da_chon_list')

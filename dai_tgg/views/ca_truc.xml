@@ -279,6 +279,7 @@
                   <filter string="group theo Loại Công việc" context="{'group_by':'loai_cvi'}" />
                   <filter string="group theo Ngày" context="{'group_by':'ngay_bat_dau:day'}" />
                   <filter string="group theo Tháng" context="{'group_by':'ngay_bat_dau:month'}" />
+                  <filter string="group theo id" context="{'group_by':'id_for_pivot'}" />
                   
                </group>
             </search>
@@ -797,7 +798,7 @@
          <field name="model">tvcv</field>
          <field name="arch" type="xml">
             <search>
-               <field name="name" filter_domain="['|',('name','ilike',self),('code','ilike',self)]" />
+               <field name="name" filter_domain="['|','|',('name_khong_dau','ilike',self),('name','ilike',self),('code','ilike',self)]" />
                <field name="id" />
                <field name="active" />
                <field name="code" />
@@ -839,6 +840,8 @@
                      <group>
                         <field name="id" />
                         <field name="name"/> <!-- TÊn -->
+                       <!--  <field name="name_khong_dau"/>
+                        <field name="name_viet_tat"/> -->
                      </group>
                      <group>
                         <field name="loai_record" invisible="1" />
@@ -888,6 +891,8 @@
             <tree>
                <field name="loai_record"  groups="dai_tgg.show_loai_record" invisible="1"/>
                <field name="name" />
+                <field name="name_khong_dau" groups="base.group_erp_manager"/>
+                <field name="name_viet_tat" groups="base.group_erp_manager"/>
                <field name="code" />
                <field name="cong_viec_cate_id" />
                <field name="don_vi" />
@@ -945,6 +950,8 @@
             <tree>
                <field name="id" />
                <field name="name" string="Tên" />
+               <field name="name_khong_dau" groups="base.group_erp_manager"/>
+               <field name="name_viet_tat" groups="base.group_erp_manager"/>
             </tree>
          </field>
       </record>

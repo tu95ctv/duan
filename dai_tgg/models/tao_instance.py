@@ -36,7 +36,7 @@ def get_or_create_object_sosanh(self,class_name,search_dict,
         search_dict.update(create_write_dict)
         created_object = self.env[class_name].create(search_dict)
         if noti_dict !=None and ( model_effect_noti_dict==False or model_effect_noti_dict==class_name):
-            noti_dict['create'] = noti_dict['create'] + 1
+            noti_dict['create'] = noti_dict.get('create',0) + 1
         return_obj =  created_object
     else:
         if not is_must_update:
@@ -62,12 +62,12 @@ def get_or_create_object_sosanh(self,class_name,search_dict,
         if is_write:
             searched_object.sudo().write(create_write_dict)
             if noti_dict !=None and ( model_effect_noti_dict==False or model_effect_noti_dict==class_name):
-                noti_dict['update'] = noti_dict['update'] + 1
+                noti_dict['update'] = noti_dict.get('update',0) + 1
             #print 'searched_object 2'
 
         else:#'update'
             if noti_dict !=None and ( model_effect_noti_dict==False or model_effect_noti_dict==class_name):
-                noti_dict['skipupdate'] = noti_dict['skipupdate'] + 1
+                noti_dict['skipupdate'] = noti_dict.get('skipupdate',0) + 1
                 log_new += search_dict['name'] + '\n'
 
         #print 'is_write***',is_write,'class_name',class_name,'noti_dict',noti_dict
@@ -227,7 +227,7 @@ def importthuvien(odoo_or_self_of_wizard):
                 model_name = 'tvcv'
                 
                 field_dict_goc= (
-                         ('name', {'func':None,'xl_title':u'Công việc','key':True,'break_when_xl_field_empty':True}),#'func_de_tranh_empty':lambda r:  len(r) > 2
+                         ('name', {'func':None,'xl_title':u'Công việc','key':'Both','break_when_xl_field_empty':True}),#'func_de_tranh_empty':lambda r:  len(r) > 2
                          ( 'code',{'func':None,'xl_title':u'Mã CV','key':False }),
                          ('do_phuc_tap',{'func':None,'xl_title':u'Độ phức tạp','key':False,'func_write_log':write_log}),
                          ('don_vi',{'model':'donvi','func':lambda x: unicode(x).title().strip(),'xl_title':u'Đơn vị','key':False}),
@@ -555,9 +555,9 @@ def importthuvien(odoo_or_self_of_wizard):
                         continue
                     if key_search_dict:
                             get_or_create_object_sosanh(self,model_name,key_search_dict,update_dict,is_must_update=True,noti_dict=noti_dict,not_active_include_search  =not_active_include_search)
-            r.create_number = noti_dict['create']
-            r.update_number = noti_dict['update']
-            r.skipupdate_number = noti_dict['skipupdate']
+            r.create_number = noti_dict.get('create')
+            r.update_number = noti_dict.get('update')
+            r.skipupdate_number = noti_dict.get('skipupdate')
             r.log= log_new
             
 

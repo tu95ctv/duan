@@ -26,5 +26,28 @@
 # for c,i in enumerate(a):
 #     b = a.index(i)
 #     print c,b
-a = {1:3}
-print a.get(3,False)
+# a = {1:3}
+# print a.get(3,False)
+
+import re
+# string = u'    anh             con    no em '
+# def viet_tat(string):
+#     string = string.strip()
+#     ns = re.sub('\s{2,}', ' ', string)
+#     rs = ns.split(' ')
+#     rs = map(lambda word: word[0],rs)
+#     rs = ''.join(rs).upper()
+#     return rs
+# rs = viet_tat(string)
+# print rs
+
+string = u'...---===+++***&&&^^^%%$$$##@@!Tăng cường xử lý ứng cứu (tùy thực tế)'
+ns = re.sub('[^\w ]','', string,flags = re.UNICODE)
+print ns
+
+
+
+
+
+
+

@@ -1,0 +1,94 @@
+<odoo>
+  <data>
+  <record id="view_picking_form_inherit" model="ir.ui.view">
+         <field name="name">stock picking inherit</field>
+         <field name="model">stock.picking</field>
+   <!--       <field name="mode">primary</field> -->
+         <field name="priority">11</field> 
+         <field name="inherit_id" ref="stock.view_picking_form"/>
+         <field name="arch" type="xml" >
+         	<!-- <field name="origin" position="attributes">
+                   	<attribute name="invisible">0</attribute>
+         </field>	 -->
+         <xpath expr="//field[@name='origin']" position="attributes">
+            	<attribute name="invisible">1</attribute>
+         </xpath>
+         <!--  <xpath expr="(//notebook/page)[1]" position="attributes">
+            	<attribute name="invisible">1</attribute>
+            </xpath>
+             -->  
+            <!-- <xpath expr="//page[@string='Initial Demand']" position="attributes">
+            	<attribute name="invisible">1</attribute>
+            </xpath> -->
+            
+            <xpath expr="//page[1]" position="attributes">
+                        	<attribute name="attrs">{}</attribute>
+            </xpath>
+            
+            <xpath expr="//page[2]" position="attributes">
+                        	<attribute name="invisible">1</attribute>
+            </xpath>
+            
+            
+            
+         </field>
+      </record>
+      
+      
+    <!-- explicit list view definition -->
+    <!--
+    <record model="ir.ui.view" id="tonkho.list">
+      <field name="name">tonkho list</field>
+      <field name="model">tonkho.tonkho</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="name"/>
+          <field name="value"/>
+          <field name="value2"/>
+        </tree>
+      </field>
+    </record>
+    -->
+
+    <!-- actions opening views on models -->
+    <!--
+    <record model="ir.actions.act_window" id="tonkho.action_window">
+      <field name="name">tonkho window</field>
+      <field name="res_model">tonkho.tonkho</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+    -->
+
+    <!-- server action to the one above -->
+    <!--
+    <record model="ir.actions.server" id="tonkho.action_server">
+      <field name="name">tonkho server</field>
+      <field name="model_id" ref="model_tonkho_tonkho"/>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "tree,form",
+          "res_model": self._name,
+        }
+      </field>
+    </record>
+    -->
+
+    <!-- Top menu item -->
+    <!--
+    <menuitem name="tonkho" id="tonkho.menu_root"/>
+    -->
+    <!-- menu categories -->
+    <!--
+    <menuitem name="Menu 1" id="tonkho.menu_1" parent="tonkho.menu_root"/>
+    <menuitem name="Menu 2" id="tonkho.menu_2" parent="tonkho.menu_root"/>
+    -->
+    <!-- actions -->
+    <!--
+    <menuitem name="List" id="tonkho.menu_1_list" parent="tonkho.menu_1"
+              action="tonkho.action_window"/>
+    <menuitem name="Server to list" id="tonkho" parent="tonkho.menu_2"
+              action="tonkho.action_server"/>
+    -->
+  </data>
+</odoo>
