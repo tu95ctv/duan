@@ -64,18 +64,18 @@ class DownloadCvi(http.Controller):
     
     @http.route('/web/binary/download_cvi',type='http', auth="public")
     def download_cvi(self,model,id, **kw):
-#         print 'id',id
-#         print '**kw**',kw
-#         print  'model',model
+#         #print 'id',id
+#         #print '**kw**',kw
+#         #print  'model',model
 #         dlcv_obj = request.env[model].browse(int(id))
-#         print 'dlcv_obj',dlcv_obj
+#         #print 'dlcv_obj',dlcv_obj
         
         num2alpha = dict(zip(range(0, 26), string.ascii_uppercase))
         header_bold_style = xlwt.easyxf("font: bold on; pattern: pattern solid, fore_colour gray25;borders: left thin, right thick, top thick, bottom thick")
         normal_border_style = xlwt.easyxf("borders: left thick,right thick, top thick, bottom thick")
 #         borders":{'left':'thin', 'right': 'thin', 'top': 'thin', 'bottom': 'thin
         company_id = request.env.user.company_id
-        print 'company_id**',company_id.name
+        #print 'company_id**',company_id.name
         records = request.env['cvi'].search([('company_id','=',company_id.id),('loai_record','=',u'Công Việc')])
         user_ids = records.mapped('user_id')
         workbook = xlwt.Workbook()
@@ -89,7 +89,6 @@ class DownloadCvi(http.Controller):
             worksheet = workbook.add_sheet(user_id.name,cell_overwrite_ok=True)
             title_column_index = 0
             fields = request.env['cvi']._fields
-            print '*****fields****',fields
             
             person_records = request.env['cvi'].search([('company_id','=',company_id.id),('user_id','=',user_id.id),('loai_record','=',u'Công Việc')])
             worksheet.write(0,7,u'Điểm Tổng')
@@ -97,7 +96,7 @@ class DownloadCvi(http.Controller):
                 f_name,f_func_dict =  field_from_my_adict
                 field = fields[f_name]
                 f_string = field.string
-                print 'f_string',f_string
+                #print 'f_string',f_string
                 worksheet.write(1, title_column_index,f_string,header_bold_style)
                 width = get_width(len(f_string))
                 worksheet.col(title_column_index).width = width
@@ -126,7 +125,7 @@ class DownloadCvi(http.Controller):
                 f_name,f_func_dict =  field_from_my_adict
                 field = fields[f_name]
 #                 f_string = field.string
-#                 print 'f_string',f_string
+#                 #print 'f_string',f_string
 #                 worksheet.write(2, title_column_index,f_string)
                 sum_a= f_func_dict.get('sum')
                 if sum_a:
@@ -230,9 +229,9 @@ class PivotInherit(pivot.TableExporter):
     @http.route('/web/pivot/export_xls_ahiihi', type='http', auth="user")
     def export_xls(self, data, token):
         jdata = json.loads(data)
-        print 'jdata_data',jdata
+        #print 'jdata_data',jdata
         nbr_measures = jdata['nbr_measures']
-        print '**nbr_measures**',nbr_measures
+        #print '**nbr_measures**',nbr_measures
         
         workbook = xlwt.Workbook()
         worksheet = workbook.add_sheet(jdata['title'])
@@ -242,19 +241,19 @@ class PivotInherit(pivot.TableExporter):
 
         # Step 1: writing headers
         headers = jdata['headers']
-        print 'headers',headers
+        #print 'headers',headers
         # x,y: current coordinates
         # carry: queue containing cell information when a cell has a >= 2 height
         #      and the drawing code needs to add empty cells below
         x, y, carry = 1, 0, deque()
         for i, header_row in enumerate(headers):
-            print 'i',i
-            print 'header_row',header_row
+            #print 'i',i
+            #print 'header_row',header_row
             worksheet.write(i, 0, '', header_plain)
             for header in header_row:
-                print 'for header in header_row, header', header
+                #print 'for header in header_row, header', header
                 while (carry and carry[0]['x'] == x):
-                    print 'carry',carry
+                    #print 'carry',carry
                     cell = carry.popleft()
                     for i in range(nbr_measures):
                         worksheet.write(y, x+i, '', header_plain)
@@ -288,7 +287,7 @@ class PivotInherit(pivot.TableExporter):
         # Step 3: writing data
         x = 0
         for row in jdata['rows']:
-            print 'row',row
+            #print 'row',row
             worksheet.write(y, x, row['indent'] * '     ' + ustr(row['title']), header_plain)
             for cell in row['values']:
                 x = x + 1

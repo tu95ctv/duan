@@ -20,3 +20,4 @@ access_dai_tgg_doitac,dai_tgg.doitac,model_doitac,base.group_user,1,1,1,1
 access_dai_tgg_loaisuvu,dai_tgg.loaisuvu,model_loaisuvu,base.group_user,1,1,1,1
 access_dai_tgg_res_partner1,dai_tgg res partner,base.model_res_partner,base.group_user,1,1,1,1
 access_dai_tgg_res_company,dai_tgg res partner,base.model_res_company,base.group_user,1,1,1,1
+access_dai_tgg_dlcv,dai_tgg.dlcv,model_dlcv,base.group_user,1,1,1,1
