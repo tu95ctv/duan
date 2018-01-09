@@ -650,6 +650,15 @@ class DLCV(models.Model):
         }
            
     def cvi_filter(self):
+        log = u''
+        fields = self.env['cvi']._fields
+        for k,v in fields.iteritems():
+            break
+        v.string
+        log += u'string: %s\n type %s'%(v.string,v.type)
+        self.log = log
+        return True
+        
 #         args = [('loai_record','=',u'Công Việc')]
 #         self._cr.execute(_sql)
 #         kq_fetch =  self._cr.fetchall()

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import string
 
 # def decorator(f):
 #     print 'out wrapper'
@@ -45,11 +46,29 @@
 # ns = re.sub('[^\w ]','', string,flags = re.UNICODE)
 # print ns
 
-print [ f 
-       for f in range(5) 
-       if f %2]
+# print [ f 
+#        for f in range(5) 
+#        if f %2]
+# 
+# for i in range(0,10):
+#     for j in range (0,10):
+#         i = i + 1
+#         print i
 
+# from collections import deque
+# print deque()
+# l = [1,2,3]
+# # l = deque(l)
+# # l.popleft()
+# # print l
+# i= 5
+# for i in l:
+#     break
+# print i
 
+# num2alpha = dict(zip(range(0, 26), string.ascii_uppercase))
+# 
+# print num2alpha
 
-
-
+adict = {'a':1}
+print u' %(a)s noi di %(a)s'%adict
