@@ -361,12 +361,10 @@ class CamSua(models.Model):
     ALLOW_WRITE_FIELDS_DIFF_USER = ['gio_ket_thuc','comment_ids','percent_diemtt']
     ALLOW_WRITE_FIELDS_CHOT=[]
     IS_CAM_SUA_DO_CHOT = False
-    
     @api.multi
     def is_admin_(self):
         for r in self:
             if self.user_has_groups('base.group_erp_manager'):
-#             if self.env.ref('base.group_erp_manager') in self.env.user.groups_id:
                 r.is_admin = True
     @api.multi
     def cam_sua_(self):
@@ -402,6 +400,7 @@ class CamSua(models.Model):
         for r in self:
             if not r.id:
                 r.ly_do_cam_sua_do_diff_user = u'Ko Cấm do new'
+                cam_sua =  False
             elif self.user_has_groups('base.group_erp_manager'):
                 r.ly_do_cam_sua_do_diff_user = u'Ko Cấm do user là admin'
                 cam_sua =  False
@@ -631,54 +630,289 @@ def skip_depends_if_not_congviec_decorator_valid_diemtc(depend_func):
             else:
                 depend_func(r)
     return wrapper
+from odoo.osv.query import Query
+class DLCV(models.Model):
+    _name = 'dlcv'
+    ngay_bat_dau_filter = fields.Date()
+    ngay_ket_thuc_filter = fields.Date()
+    company_ids = fields.Many2many('res.company')
+    member_ids = fields.Many2many('res.users')
+    rs_cvi_ids = fields.Many2many('cvi')
+    log =  fields.Text()
+    log2 =  fields.Text()
+    @api.multi
+    def download_cvi(self):
+        return {
+             'type' : 'ir.actions.act_url',
+             #'url': '/web/binary/download_document?model=importbd&field=file&id=%s&filename=product_stock.xls'%(self.id),
+             'url': '/web/binary/download_cvi?model=dlcv&id=%s&more=abc'%(self.id),
+             'target': 'self',
+        }
+           
+    def cvi_filter(self):
+#         args = [('loai_record','=',u'Công Việc')]
+#         self._cr.execute(_sql)
+#         kq_fetch =  self._cr.fetchall()
+#         if self.ngay_bat_dau_filter:
+#             '''SELECT "cvi".id FROM "cvi" WHERE (("cvi"."ngay_bat_dau" >= '2018-01-08 00:00:00')  AND  ("cvi"."loai_record" = 'Công Việc')) ORDER BY "cvi"."id" DESC '''
+#             domain = [('loai_record','=',u'Công Việc')]
+#             domain = expression.AND([[('ngay_bat_dau','>=',fields.Datetime.from_string(self.ngay_bat_dau_filter))],domain])
+        args = [('company_id.name','ilike',u'ltk'),('loai_record','=',u'Công Việc')]
+        domain = args
+#         rs = self.env['cvi'].search(args)
+#         self.rs_cvi_ids = rs
+#         log = u''
+#         _sql = ''' select sum(diemtc) from cvi '''
+#         self._cr.execute(_sql)
+#         kq_fetch =  self._cr.dictfetchall()
+#         log +=u'%s'%kq_fetch
+#         self.log = log
+#         log = u''
+#         if domain:
+#             e = expression.expression(domain, self.env['cvi'])
+#             log +='%s\n'%e
+#             tables = e.get_tables()
+#             log +='tables : %s\n'%tables
+#             where_clause, where_params = e.to_sql()
+#             log +='where_clause %s, where_params %s\n'%(where_clause, where_params)
+#             where_clause = [where_clause] if where_clause else []
+#         else:
+#             where_clause, where_params, tables = [], [], ['"%s"' % self._table]
+#         query =  Query(tables, where_clause, where_params)
+#         log +='query : %s\n'%query
+#         
+#         order_by = self._generate_order_by(None, query)
+#         log +='order_by : %s\n'%order_by
+#         from_clause, where_clause, where_clause_params = query.get_sql()
+#         log +='from_clause: %s, where_clause: %s, where_clause_params: %s\n'%(from_clause, where_clause, where_clause_params)
+#         self.log = log
+        log2 = u''
+        log=u''
+        log3=u''
+        if domain:
+            e = expression.expression(domain, self.env['cvi'])
+            leafs= map(lambda leaf: leaf.leaf,e.result)
+            log3 += '%s\n'%leafs
+            log +='%s\n'%e
+            tables = e.get_tables()
+            log +='tables : %s\n'%tables
+            where_clause, where_params = e.to_sql()
+            log +='where_clause %s, where_params %s\n'%(where_clause, where_params)
+            where_clause = [where_clause] if where_clause else []
+        else:
+            where_clause, where_params, tables = [], [], ['"%s"' % self._table]
+        query =  Query(tables, where_clause, where_params)
+        log +='query:%s\n'%query
+        query = self.env['cvi']._where_calc(args)
+        log2 +='query:%s\n'%query
+#         self._apply_ir_rules(query, 'read')
+#         order_by = self._generate_order_by(order, query)
 
-
-class Cvi(models.Model):
-    _name = 'cvi'
-    _parent_name = 'gd_parent_id'
-    _inherit = ['camsua']
-    _auto = True
-    _order = "id desc"
-    ALLOW_WRITE_FIELDS_TIME = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids','percent_diemtt']
-    ALLOW_WRITE_FIELDS_CHOT = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids',]
-    ALLOW_WRITE_FIELDS_DIFF_USER = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids','percent_diemtc']
-    IS_CAM_SUA_DO_CHOT = True
-    ti_le_chia_diem = fields.Float(digits=(6,2),string=u'Tỉ lệ chia điểm')
-    id_for_pivot = fields.Integer(compute='name_',store=True)
+        
+        from_clause, where_clause, where_clause_params = query.get_sql()
+        log2 +='from_clause: %s, where_clause: %s, where_clause_params: %s\n' %(from_clause, where_clause, where_clause_params)
+        where_str = where_clause and (" WHERE %s" % where_clause) or ''
+        query_str = 'SELECT %s.id FROM '%from_clause + from_clause + where_str
+        self._cr.execute(query_str, where_clause_params)
+        rs = self._cr.fetchall()
+#         res = self._cr.dictfetchall()
+        self.log = log
+        self.log2 = log3
+        
+        
+class CviSuCo(models.Model):
+    _name = 'cvisuco'
+    _auto = False
     loai_record = fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')], string = u'Loại Record')
-    loai_suco_suvu_id = fields.Many2one('loaisucosuvu')
     name = fields.Char(compute='name_',store=True)
     ngay_bat_dau =  fields.Date(compute='ngay_bat_dau_',store=True,string=u'Ngày',translate=True)
     gio_bat_dau = fields.Datetime(string=u'Giờ bắt đầu ', default=fields.Datetime.now)
     gio_ket_thuc = fields.Datetime(string=u'Giờ Kết Thúc')
     duration = fields.Float(digits=(6, 1), help='Duration in Hours',compute = '_get_duration', store = True,string=u'Thời lượng (giờ)')
     user_id = fields.Many2one('res.users',default =  lambda self: self.env.uid, string=u'Nhân viên làm')   
-    
-#     company_id = fields.Many2one('congty',string=u'Đơn vị tạo',compute='company_id_',store=True)
-#     company_ids = fields.Many2many('congty',string=u'Đơn vị liên quan',default=lambda self:[self.env.user.company_id.id],required=True)
-    
     company_id = fields.Many2one('res.company',string=u'Đơn vị tạo',compute='company_id_',store=True)
     company_ids = fields.Many2many('res.company',string=u'Đơn vị liên quan',default=lambda self:[self.env.user.company_id.id],required=True)
-    
-    
-    tvcv_id = fields.Many2one('tvcv', string=u'Thư Viện Công việc/ Loại Sự Cố/ Loại Sự Vụ',ondelete='restrict')
-    diem_tvi = fields.Float(digits=(6,2),string=u'Điểm Thư Viện',related='tvcv_id.diem',store=True,readonly=True)# 
-    don_vi = fields.Many2one('donvi',string=u'Đơn vị tính',compute='don_vi_',store=True)
-    ctr_ids  = fields.Many2many('ctr','ctr_cvi_relate','cvi_id','ctr_id',string=u'Ca Trực')
-    ctr_show = fields.Char(compute='ctr_show_',string=u'Số ca trực')
-#     so_luong = fields.Integer(string=u'Số Lượng',default = 1,required=True)
-    so_luong = fields.Float(string=u'Số Lượng',default = 1,required=True,digit=(6,2))
-    so_lan = fields.Integer(string=u'Số Lần',default = 1,required=True)
     noi_dung = fields.Text(string=u'Nội dung') 
     noi_dung_trich_dan = fields.Char(compute='noi_dung_trich_dan_',store=True)
     comment_ids = fields.One2many('comment','cvi_id',string=u'Comments/Ghi Chú/Tiến Độ')
+    file_ids = fields.Many2many('dai_tgg.file','cvi_file_relate','cvi_id','file_id',string=u'Files đính kèm')
+    doitac_ids = fields.Many2many('res.partner',string=u'Đối Tác')
+    ctr_ids  = fields.Many2many('ctr','ctr_cvi_relate','cvi_id','ctr_id',string=u'Ca Trực')
+    ctr_show = fields.Char(compute='ctr_show_',string=u'Số ca trực')
+    comments_show = fields.Char(compute='comments_show_',string=u'Comments/Ghi Chú/Tiến Độ')
+    loai_record_show =  fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')], string = u'Loại Record',compute='loai_record_show_')
+    tvcv_id = fields.Many2one('tvcv', string=u'Thư Viện Công việc/ Loại Sự Cố/ Loại Sự Vụ',ondelete='restrict')
+    
+    @api.depends('loai_record')
+    def loai_record_show_(self):
+        for r in self:
+            r.loai_record_show = r.loai_record
+            
+    @api.depends('comment_ids')
+    def comments_show_(self):
+        for r in self:
+            comment_ids_text_lists = []
+            for i in r.comment_ids:
+                i_text = name_compute_char_join_rieng(i, [
+                    ('create_date',{'func':convert_odoo_datetime_to_vn_str}),#,'pr_more':u'('
+                    ('create_uid',{'func': lambda r: r.name ,'join_char':u'-'}),#'sf_more':u')' 
+                    ('noi_dung',{'pr':u''}),
+                                          ],
+                                       join_char = ' ')
+                comment_ids_text_lists.append(i_text)
+            r.comments_show = u' | '.join(comment_ids_text_lists)
+#             r.comments_show_html = u'</br>'.join(comment_ids_text_lists)
+                
+        
+
+    
+ 
+    
+            
+            
+            
+    @api.depends('ctr_ids')
+    def ctr_show_(self):
+        for r in self:
+            r.ctr_show =u'%s ca trực'% len(r.ctr_ids)
+    @api.depends('name')
+    def is_admin_(self):
+        rs = super(Cvi,self).is_admin_()
+        return rs
+    @api.model
+    def fields_view_get(self, view_id=None, view_type=False, toolbar=False, submenu=False):
+        res = super(CviSuCo, self).fields_view_get(view_id=view_id, view_type=view_type, toolbar=toolbar, submenu=submenu)
+        if view_type in ['tree','form']:
+            loai_record = self._context.get('default_loai_record')
+            if loai_record in [u'Sự Cố',u'Sự Vụ']:
+                fields = res.get('fields')
+                fields['tvcv_id']['string'] =u'Loại ' + loai_record # ['|',('ctr_ids','=','active_id'),'&',('ctr_ids','!=',False),('gio_ket_thuc','=',False)]
+            elif loai_record == u'Công Việc':
+                fields = res.get('fields')
+                fields['tvcv_id']['string'] =u'Thư Viện Công Việc'
+        return res
+    @api.depends('loai_record')
+    def tree_view_ref_(self):
+        for r in self:
+            if r.loai_record ==u'Công Việc':
+                r.tree_view_ref = 'dai_tgg.tvcv_list'
+                r.search_view_ref = 'dai_tgg.tvcv_search'
+            else:
+                r.tree_view_ref = 'dai_tgg.loai_suco_suvu_list'
+                r.search_view_ref = 'dai_tgg.loai_suco_suvu_search'
+                
+    @api.depends('noi_dung')
+    def noi_dung_trich_dan_(self):
+        for r in self:
+            if r.noi_dung:
+                if len(r.noi_dung) > 30:
+                    r.noi_dung_trich_dan = r.noi_dung[:30] + u'...'
+                else:
+                    r.noi_dung_trich_dan = r.noi_dung
+                
+                    
+    def get_names(self):
+            adict = {u'Công Việc':u'TVCV',u'Sự Cố':u'Loại',u'Sự Vụ':u'Loại'}
+            if self.loai_record :
+                adict=[('id',{'pr':u'%s id'%self.loai_record}),
+                                              ('tvcv_id',{'pr':adict[self.loai_record],'func':lambda val:val.name}),
+                                              ('noi_dung',{'pr':u'Nội Dung','skip_if_False':False}),
+                                              ]
+                if self._context.get('default_loai_record') ==u'Công Việc':
+                    adict.append(('user_id',{'func':lambda r:r.name,'pr':u'Người Làm','skip_if_False':False}))
+                name  = name_compute(self,adict=adict)
+            else:
+                name = False
+            return name
+    @api.multi
+    def name_get(self):
+        return [(r.id, r.get_names()) for r in self]
+    
+    @api.depends('tvcv_id','noi_dung_trich_dan','loai_record','noi_dung')
+    def name_(self):
+        for r in self:
+
+            name = r.get_names()
+            r.name = name
+            if r.id:
+                r.id_for_pivot = r.id
+    @api.depends('gio_bat_dau')
+    def ngay_bat_dau_(self):#trong su kien
+        for r in self:
+            if r.gio_bat_dau:
+                r.ngay_bat_dau = convert_odoo_datetime_to_vn_datetime(r.gio_bat_dau).date()
+                
+    
+    @api.depends('gio_ket_thuc','gio_bat_dau')
+    def _get_duration(self):
+        for r in self:
+            if r.gio_bat_dau == False or r.gio_ket_thuc==False:
+                r.duration = False
+            else:
+                start_date = fields.Datetime.from_string(r.gio_bat_dau)
+                end_date = fields.Datetime.from_string(r.gio_ket_thuc)
+                duration = (end_date - start_date)
+                secs = duration.total_seconds()
+                hour = secs / 3600
+                r.duration = hour            
+
+class Cvi(models.Model):
+    _name = 'cvi'
+    _parent_name = 'gd_parent_id'
+    _inherit = ['camsua','cvisuco']
+    _auto = True
+    _order = "id desc"
+    ALLOW_WRITE_FIELDS_TIME = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids','percent_diemtt']
+    ALLOW_WRITE_FIELDS_CHOT = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids',]
+    ALLOW_WRITE_FIELDS_DIFF_USER = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids','percent_diemtc']
+    IS_CAM_SUA_DO_CHOT = True
+    
+    @api.depends('user_id','create_uid')
+    def company_id_(self):
+        for r in self:
+            if r.user_id:
+                r.company_id = r.user_id.company_id
+            else:
+                r.company_id = r.create_uid.company_id
+   
+#     loai_record = fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')], string = u'Loại Record')
+#     name = fields.Char(compute='name_',store=True)
+#     ngay_bat_dau =  fields.Date(compute='ngay_bat_dau_',store=True,string=u'Ngày',translate=True)
+#     gio_bat_dau = fields.Datetime(string=u'Giờ bắt đầu ', default=fields.Datetime.now)
+#     gio_ket_thuc = fields.Datetime(string=u'Giờ Kết Thúc')
+#     duration = fields.Float(digits=(6, 1), help='Duration in Hours',compute = '_get_duration', store = True,string=u'Thời lượng (giờ)')
+#     
+#     user_id = fields.Many2one('res.users',default =  lambda self: self.env.uid, string=u'Nhân viên làm')   
+#     company_id = fields.Many2one('res.company',string=u'Đơn vị tạo',compute='company_id_',store=True)
+#     company_ids = fields.Many2many('res.company',string=u'Đơn vị liên quan',default=lambda self:[self.env.user.company_id.id],required=True)
+#     noi_dung = fields.Text(string=u'Nội dung') 
+#     noi_dung_trich_dan = fields.Char(compute='noi_dung_trich_dan_',store=True)
+#     comment_ids = fields.One2many('comment','cvi_id',string=u'Comments/Ghi Chú/Tiến Độ')
+#     file_ids = fields.Many2many('dai_tgg.file','cvi_file_relate','cvi_id','file_id',string=u'Files đính kèm')
+#     doitac_ids = fields.Many2many('res.partner',string=u'Đối Tác')
+#     ctr_ids  = fields.Many2many('ctr','ctr_cvi_relate','cvi_id','ctr_id',string=u'Ca Trực')
+#     ctr_show = fields.Char(compute='ctr_show_',string=u'Số ca trực')
+#     comments_show = fields.Char(compute='comments_show_',string=u'Comments/Ghi Chú/Tiến Độ')
+#     loai_record_show =  fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')], string = u'Loại Record',compute='loai_record_show_')
+#     tvcv_id = fields.Many2one('tvcv', string=u'Thư Viện Công việc/ Loại Sự Cố/ Loại Sự Vụ',ondelete='restrict')
+    
+    ti_le_chia_diem = fields.Float(digits=(6,2),string=u'Tỉ lệ chia điểm')
+    id_for_pivot = fields.Integer(compute='name_',store=True)
+    tvcv_id_name = fields.Char(compute='tvcv_id_name_',string=u'Thư Viện Công Việc',store=True)
+    code= fields.Char(compute='code_',string=u'Mã Thư viện',store=True)
+    diem_tvi = fields.Float(digits=(6,2),string=u'Điểm Thư Viện',related='tvcv_id.diem',store=True,readonly=True)# 
+    don_vi = fields.Many2one('donvi',string=u'Đơn vị tính',compute='don_vi_',store=True)
+    so_luong = fields.Float(string=u'Số Lượng',default = 1,required=True,digit=(6,2))
+    so_lan = fields.Integer(string=u'Số Lần',default = 1,required=True)
+    tree_view_ref = fields.Char(compute='tree_view_ref_',default='dai_tgg.tvcv_list')
+    search_view_ref = fields.Char(compute='tree_view_ref_',default='dai_tgg.tvcv_search')
+    cvi_lien_quan_ids = fields.Many2many('cvi','cvi_cvi_relate','cvi_id','cvi_lien_quan_id', string=u'Công Việc/Sự Cố/ Sự Vụ Liên quan')
     gd_parent_id = fields.Many2one('cvi',string=u'Công Việc Giai Đoạn Cha',ondelete='cascade')
     gd_children_ids = fields.One2many('cvi','gd_parent_id',string=u'Các CV Giai Đoạn Con')
     cd_parent_id = fields.Many2one('cvi',string=u'Công Việc Chia Điểm Cha',ondelete='cascade')# ondelete='restrict' #ondelete='cascade', ondelete='set null'
     cd_children_ids = fields.One2many('cvi','cd_parent_id',string=u'Các CV Chia Điểm Con')
     hd_parent_id = fields.Many2one('cvi',string=u'Công Việc Hưởng điểm Cha',ondelete='cascade')# ondelete='restrict' #ondelete='cascade', ondelete='set null'
     hd_children_ids = fields.One2many('cvi','hd_parent_id',string=u'Các CV Hưởng Điểm Con')
-    
     diem_goc = fields.Float(digits=(6,2),string=u'Điểm Góc',compute='diem_goc_',store=True)# 
     diemtc = fields.Float(digits=(6,2),compute='diemtc_',string=u'Điểm Nhân Viên',store=True)
     diem_remain_gd = fields.Float(compute='diem_remain_gd_',string=u'Điểm còn lại của giai đoạn con',store=True)
@@ -701,97 +935,25 @@ class Cvi(models.Model):
                                   (u'Thiếu giai đoạn và Chia điểm không đủ 100%',u'Thiếu giai đoạn và Chia điểm không đủ 100%'),
                                   (u'Kiểm tra điểm OK',u'Kiểm tra điểm OK'),         
                                                            ],compute='valid_diemtc_',store=True,string=u'Kết luận Valid')
-    file_ids = fields.Many2many('dai_tgg.file','cvi_file_relate','cvi_id','file_id',string=u'Files đính kèm')
-    doitac_ids = fields.Many2many('res.partner',string=u'Đối Tác')
+    
     #MIDLE FIELD , Trung gian
     len_gd_child = fields.Integer(compute='len_gd_child_',store=True)
     sum_gd_con = fields.Float(digits=(6,2),compute='sum_gd_con_',store=True)
     sum_cd_con = fields.Float(digits=(6,2),compute='sum_cd_con_',store=True)
-
     #compute field
     is_sep = fields.Boolean(compute='is_sep_')
     is_has_tvcv_con = fields.Boolean(compute='is_has_tvcv_con_')
     thu_vien_da_chon_list = fields.Char(compute='thu_vien_da_chon_list_')   
     cd_user_id = fields.Char(compute='cd_user_id_')   
+    @api.depends('tvcv_id')
+    def tvcv_id_name_(self):
+        for r in self:
+            r.tvcv_id_name = r.tvcv_id.name
     
-    comments_show = fields.Char(compute='comments_show_',string=u'Comments/Ghi Chú/Tiến Độ')
-#     comments_show_html = fields.Html(compute='comments_show_',string=u'Comments/Ghi Chú/Tiến Độ')
-    loai_record_show =  fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')], string = u'Loại Record',compute='loai_record_show_')
-    #pivot_title = fields.Char(compute='pivot_title_',store=True)
-    tree_view_ref = fields.Char(compute='tree_view_ref_',default='dai_tgg.tvcv_list')
-    search_view_ref = fields.Char(compute='tree_view_ref_',default='dai_tgg.tvcv_search')
-    cvi_lien_quan_ids = fields.Many2many('cvi','cvi_cvi_relate','cvi_id','cvi_lien_quan_id', string=u'Công Việc/Sự Cố/ Sự Vụ Liên quan')
-    
-    @api.depends('ctr_ids')
-    def ctr_show_(self):
+    @api.depends('tvcv_id')
+    def code_(self):
         for r in self:
-            r.ctr_show =u'%s ca trực'% len(r.ctr_ids)
-    @api.depends('name')
-    def is_admin_(self):
-        rs = super(Cvi,self).is_admin_()
-        return rs
-    @api.model
-    def fields_view_get(self, view_id=None, view_type=False, toolbar=False, submenu=False):
-        res = super(Cvi, self).fields_view_get(view_id=view_id, view_type=view_type, toolbar=toolbar, submenu=submenu)
-        if view_type in ['tree','form']:
-            loai_record = self._context.get('default_loai_record')
-            if loai_record in [u'Sự Cố',u'Sự Vụ']:
-                fields = res.get('fields')
-                fields['tvcv_id']['string'] =u'Loại ' + loai_record # ['|',('ctr_ids','=','active_id'),'&',('ctr_ids','!=',False),('gio_ket_thuc','=',False)]
-            elif loai_record == u'Công Việc':
-                fields = res.get('fields')
-                fields['tvcv_id']['string'] =u'Thư Viện Công Việc'
-        return res
-    @api.depends('loai_record')
-    def tree_view_ref_(self):
-        for r in self:
-            if r.loai_record ==u'Công Việc':
-                r.tree_view_ref = 'dai_tgg.tvcv_list'
-                r.search_view_ref = 'dai_tgg.tvcv_search'
-            else:
-                r.tree_view_ref = 'dai_tgg.loai_suco_suvu_list'
-                r.search_view_ref = 'dai_tgg.loai_suco_suvu_search'
-    @api.depends('cd_children_ids','hd_children_ids')
-    def cd_user_id_(self):
-        for r in self:
-            cd_user_id = []
-            if r.cd_children_ids:
-                cd_user_id = r.cd_children_ids.mapped('user_id.id')
-            elif r.hd_children_ids:
-                cd_user_id = r.hd_children_ids.mapped('user_id.id')
-            if cd_user_id:
-                cd_user_id.append(r.user_id.id)
-                r.cd_user_id = cd_user_id
-            
-    @api.depends('loai_record')
-    def loai_record_show_(self):
-        for r in self:
-            r.loai_record_show = r.loai_record
-    @api.depends('comment_ids')
-    def comments_show_(self):
-        for r in self:
-            comment_ids_text_lists = []
-            for i in r.comment_ids:
-                i_text = name_compute_char_join_rieng(i, [
-                    ('create_date',{'func':convert_odoo_datetime_to_vn_str}),#,'pr_more':u'('
-                    ('create_uid',{'func': lambda r: r.name ,'join_char':u'-'}),#'sf_more':u')' 
-                    ('noi_dung',{'pr':u''}),
-                                          ],
-                                       join_char = ' ')
-                comment_ids_text_lists.append(i_text)
-            r.comments_show = u' | '.join(comment_ids_text_lists)
-#             r.comments_show_html = u'</br>'.join(comment_ids_text_lists)
-                
-        
-
-    @api.depends('user_id','create_uid')
-    def company_id_(self):
-        for r in self:
-            if r.user_id:
-                r.company_id = r.user_id.company_id
-            else:
-                r.company_id = r.create_uid.company_id
- 
+            r.code = r.tvcv_id.code
     @api.multi
     def cam_sua_do_diff_user_(self):
         for r in self:
@@ -819,12 +981,26 @@ class Cvi(models.Model):
                 else:
                     r.ly_do_cam_sua_do_diff_user = u'Không cấm do cùng User'
             r.cam_sua_do_diff_user =  cam_sua
+    @api.depends('cd_children_ids','hd_children_ids')
+    @skip_depends_if_not_congviec_decorator
+    def cd_user_id_(self):
+        for r in self:
+            cd_user_id = []
+            if r.cd_children_ids:
+                cd_user_id = r.cd_children_ids.mapped('user_id.id')
+            elif r.hd_children_ids:
+                cd_user_id = r.hd_children_ids.mapped('user_id.id')
+            if cd_user_id:
+                cd_user_id.append(r.user_id.id)
+                r.cd_user_id = cd_user_id
             
     @api.depends('tvcv_id.don_vi')
+    @skip_depends_if_not_congviec_decorator
     def don_vi_(self):
         for r in self:
             r.don_vi = r.tvcv_id.don_vi
     @api.onchange('gd_children_ids')
+    @skip_depends_if_not_congviec_decorator
     def thu_vien_da_chon_list_(self):
         for r in self:
             if r.gd_children_ids:
@@ -832,11 +1008,13 @@ class Cvi(models.Model):
             
     
     @api.depends('tvcv_id')
+    @skip_depends_if_not_congviec_decorator
     def is_has_tvcv_con_(self):
         for r in self:
             if r.tvcv_id:
                 r.is_has_tvcv_con = r.tvcv_id.is_has_children
     @api.multi
+    @skip_depends_if_not_congviec_decorator
     def is_sep_(self):
         for r in self:
             if self.env.uid in r.user_id.cac_sep_ids.mapped('id') or self.user_has_groups('dai_tgg.cham_diem_group'):# +  r.user_id.cac_sep_ids.cac_sep_ids.mapped('id'):
@@ -852,6 +1030,7 @@ class Cvi(models.Model):
                 'cd_parent_id.cd_children_ids', # Trigger cho slncl CHIA ĐIỂM CON
                 'len_gd_child',#moi add
                 )      # khi form thay đổi bất cứ field nào thì chắc chắn cd_children_ids thay đổi vì ta sẽ luôn thay nó trong hàm write()
+    @skip_depends_if_not_congviec_decorator
     def slncl_(self):
         for r in self:
             if r.cd_children_ids:
@@ -866,10 +1045,12 @@ class Cvi(models.Model):
                 r.slncl = 1
                 
     @api.depends('gd_children_ids')
+    @skip_depends_if_not_congviec_decorator
     def len_gd_child_(self):
         for r in self:
             r.len_gd_child = len(r.gd_children_ids)
     @api.depends('tvcv_id.diem','so_luong','so_lan','len_gd_child')
+    @skip_depends_if_not_congviec_decorator
     def diem_remain_gd_(self):
         for r in self:
             if r.len_gd_child:
@@ -955,6 +1136,7 @@ class Cvi(models.Model):
         return valid_cd
     
     @api.depends('sum_cd_con','cd_parent_id.sum_cd_con')
+    @skip_depends_if_not_congviec_decorator
     def valid_cd_(self):
         for r in self:
             if r.cd_parent_id:
@@ -965,6 +1147,7 @@ class Cvi(models.Model):
     #test git    
                 
     @api.depends('diem_goc','len_gd_child','gd_children_ids.diem_goc')
+    @skip_depends_if_not_congviec_decorator
     def sum_gd_con_(self):
         for r in self:
             if r.len_gd_child :
@@ -987,6 +1170,7 @@ class Cvi(models.Model):
                         'sum_gd_con',
                          'gd_parent_id.sum_gd_con'
                  )
+    @skip_depends_if_not_congviec_decorator
     def valid_gd_(self):
         for r in self:
             if r.gd_parent_id:
@@ -1053,75 +1237,7 @@ class Cvi(models.Model):
             r.diemld = r.diemtc * r.percent_diemtc /100
     
     
-    @api.depends('noi_dung')
-    def noi_dung_trich_dan_(self):
-        for r in self:
-            if r.noi_dung:
-                if len(r.noi_dung) > 30:
-                    r.noi_dung_trich_dan = r.noi_dung[:30] + u'...'
-                else:
-                    r.noi_dung_trich_dan = r.noi_dung
-                
-                    
-    def get_names(self):
-#             name = name_compute(r,adict=[
-#                                           ('id',{'pr':u'Công id'}),
-#                                           ('tvcv_id',{'func':lambda r: r.name}),
-#                                           ('noi_dung_trich_dan',{}),
-#                                            
-#                                           ]
-#                                  )
-            #print 'ahihi',self._context
-            adict = {u'Công Việc':u'TVCV',u'Sự Cố':u'Loại',u'Sự Vụ':u'Loại'}
-            if self.loai_record :
-                adict=[('id',{'pr':u'%s id'%self.loai_record}),
-                                              ('tvcv_id',{'pr':adict[self.loai_record],'func':lambda val:val.name}),
-                                              ('noi_dung',{'pr':u'Nội Dung','skip_if_False':False}),
-                                              ]
-                if self._context.get('default_loai_record') ==u'Công Việc':
-                    adict.append(('user_id',{'func':lambda r:r.name,'pr':u'Người Làm','skip_if_False':False}))
-                name  = name_compute(self,adict=adict)
-            else:
-                name = False
-            return name
-    @api.multi
-    def name_get(self):
-        return [(r.id, r.get_names()) for r in self]
-    
-    @api.depends('tvcv_id','noi_dung_trich_dan','loai_record','noi_dung')
-    def name_(self):
-        for r in self:
-#             adict = {u'Công Việc':u'TVCV',u'Sự Cố':u'Loại',u'Sự Vụ':u'Loại'}
-#             if r.loai_record :
-#                 name  = name_compute(r,adict=[('id',{'pr':u'%s id'%r.loai_record}),
-#                                               ('tvcv_id',{'pr':adict[r.loai_record],'func':lambda val:val.name}),
-#                                               ('noi_dung_trich_dan',{'pr':u'Nội Dung','skip_if_False':False}),
-#                                               ]
-#                                      )
-#      
-            name = r.get_names()
-            r.name = name
-            if r.id:
-                r.id_for_pivot = r.id
-    @api.depends('gio_bat_dau')
-    def ngay_bat_dau_(self):#trong su kien
-        for r in self:
-            if r.gio_bat_dau:
-                r.ngay_bat_dau = convert_odoo_datetime_to_vn_datetime(r.gio_bat_dau).date()
-                
-    
-    @api.depends('gio_ket_thuc','gio_bat_dau')
-    def _get_duration(self):
-        for r in self:
-            if r.gio_bat_dau == False or r.gio_ket_thuc==False:
-                r.duration = False
-            else:
-                start_date = fields.Datetime.from_string(r.gio_bat_dau)
-                end_date = fields.Datetime.from_string(r.gio_ket_thuc)
-                duration = (end_date - start_date)
-                secs = duration.total_seconds()
-                hour = secs / 3600
-                r.duration = hour      
+          
                     
     ###################contrains##############
 
@@ -1352,16 +1468,22 @@ class Cvi(models.Model):
 #                 tvcv_name = cvi_obj.tvcv_id.name
                 adict=[]
                 adict.append(('gio_bat_dau',{'pr':u'','func': convert_odoo_datetime_to_vn_str}))
-                if is_cvi_id_in_pivot:
-                    adict.append(('id',{'pr':u'id'}))
-                adict.extend([
-                                              ('tvcv_id',{'pr':None,'func':lambda val:val.name}),
-                                              ('noi_dung',{'pr':u'Nội Dung'}),
-                                              ])
+#                 if is_cvi_id_in_pivot:
+#                     adict.append(('id',{'pr':u'id'}))
+#                 if 0:
+#                     adict.extend([
+#                                                   ('tvcv_id',{'pr':None,'func':lambda val:val.name}),
+#                                                   ('noi_dung',{'pr':u'Nội Dung'}),
+#                                                   ])
                 name  = name_compute(cvi_obj,adict=adict
                                      )
+#                 noi_dung  = name_compute(cvi_obj,adict= [('noi_dung',{'pr':u'Nội Dung','skip_if_False':False})] )
                 r["id_for_pivot"] = name
-            except:
+                tvcv_id_name = cvi_obj.tvcv_id.name
+                r["tvcv_id_name"] =  tvcv_id_name if tvcv_id_name else u' '
+                r["noi_dung"] = cvi_obj.noi_dung if cvi_obj.noi_dung else u' ' 
+                r["code"] = cvi_obj.code if cvi_obj.code else u' ' 
+            except: 
                 continue
            
                  

@@ -88,6 +88,102 @@ class Binary(http.Controller):
             #cookies={'fileToken': token}
         )
         
+    @api.multi
+    @http.route('/web/binary/download_cvi',type='http', auth="public")
+#     @serialize_exception
+    def download_cvi(self,model,id, **kw):
+        print 'id',id
+        print '**kw**',kw
+        print  'model',model
+        dlcv_obj = request.env[model].browse(int(id))
+        print 'dlcv_obj',dlcv_obj
+        
+        workbook = xlwt.Workbook()
+        worksheet = workbook.add_sheet('Sheet 1',cell_overwrite_ok=True)
+        
+        ALIGN_BORDER_dict = {'align':{'horiz': 'left','vert':'centre','wrap':'yes'},
+                     "borders":{'left':'thin', 'right': 'thin', 'top': 'thin', 'bottom': 'thin'}
+                     }
+
+        title_format_dict = deepcopy(ALIGN_BORDER_dict)
+        title_format_dict['align']['horiz'] = 'centre'
+        title_format_dict['font'] = {"bold":"on"}
+        title_format_txt = adict_flat(title_format_dict)
+        title_format_style = xlwt.easyxf(title_format_txt)
+        normal_txt = adict_flat(ALIGN_BORDER_dict)
+        normal_style = xlwt.easyxf(normal_txt)
+        date_style = xlwt.easyxf(normal_txt, num_format_str='DD/MM/YYYY')
+        worksheet.write_merge(0, 0, 0 , 4,u"Danh sách Update thông tin đối tượng",title_format_style)
+        worksheet.write(1, 0,u"STT",title_format_style)
+    
+        worksheet.write(1, 1,u"Mã đối tượng",title_format_style)
+        worksheet.write(1, 2,u"Thuộc Tính",title_format_style)
+        worksheet.write(1, 3,u"Giá trị cập nhật",title_format_style)
+        worksheet.write(1, 4,u"Ghi chú",title_format_style)
+        row_index = 1
+        
+        
+        worksheet.col(1).width =int(20*260)
+        worksheet.col(2).width =int(25*260)
+        worksheet.col(3).width =int(20*260)
+            
+            
+        if mode_1900:
+            if sitetype=='3G':
+                env = 'nodeb'
+            elif sitetype =='4G':
+                env = 'enodeb'
+            elif sitetype=='2G':
+                env='bts'
+            
+            for i in request.env[env].search([('ngay_bao_duong','=',False)]):
+                row_index+=1
+                worksheet.write(row_index, 1,i.ma_tram,normal_style)
+                worksheet.write(row_index, 2, u'Thời gian bảo dưỡng',normal_style)
+                worksheet.write(row_index, 3,datetime.date(1900, 1, 1),date_style)
+                worksheet.write(row_index, 4, u'',normal_style)
+
+                row_index+=1
+                worksheet.write(row_index, 1,i.ma_tram,normal_style)
+                worksheet.write(row_index, 2, u'Đơn vị thực hiện',normal_style)
+                worksheet.write(row_index, 3,u'Đài VT TGG',normal_style)
+                worksheet.write(row_index, 4, u'',normal_style)
+        else:
+            import_tuan_id = id
+            model_class = request.env['importbdtuan']
+            import_tuan = model_class.browse(int(import_tuan_id))
+            lineimports = import_tuan.lineimports
+            loop = lineimports
+            for line in loop:
+                if import_tuan.tuan_export and line.week_number !=import_tuan.tuan_export:
+                        continue
+                if sitetype =='2G':
+                    ma_doi_tuong = line.bts_id.ma_tram
+                elif sitetype=='3G':
+                    ma_doi_tuong = line.nodeb_id.ma_tram
+                date_bd  = fields.Datetime.from_string(line.date)
+                if ma_doi_tuong:
+                    row_index+=1
+                    worksheet.write(row_index, 1,ma_doi_tuong,normal_style)
+                    worksheet.write(row_index, 2, u'Thời gian bảo dưỡng',normal_style)
+                    worksheet.write(row_index, 3,date_bd,date_style)
+                    worksheet.write(row_index, 4, u'',normal_style)
+        fp = StringIO()
+        workbook.save(fp)
+        fp.seek(0)
+        data = fp.read()
+        fp.close()
+        
+        return request.make_response(
+            data,
+            #self.from_data(columns_headers, rows),
+            headers=[
+                ('Content-Disposition', 'attachment; filename="import_rnas_%s.xls"'%sitetype),
+                ('Content-Type', 'application/octet-stream')
+            ],
+            #cookies={'fileToken': token}
+        )
+        
         
         
         

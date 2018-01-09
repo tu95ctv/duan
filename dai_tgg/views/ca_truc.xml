@@ -582,8 +582,11 @@
                <field name="company_id" type="row" />
                <field name="ngay_bat_dau" type="row" interval="month" />
                <field name="user_id" type="row" />
-               <field name="ngay_bat_dau" type="row" interval="day" />
+       <!--      <field name="ngay_bat_dau" type="row" interval="day" /> -->   
                <field name="id_for_pivot" type="row" />
+               <field name="code" type="measure" />
+               <field name="tvcv_id_name" type="measure" />
+               <field name="noi_dung" type="measure" />
                <field name="diem_tvi" type="measure" />
                <field name="so_luong" type="measure" />
                <field name="so_lan" type="measure" />
@@ -1807,6 +1810,42 @@
          <field name="view_id" ref="partner_dai_tgg_form_inherit" />
          <field name="act_window_id" ref="dai_tgg.partner_action" />
       </record>
+      
+      
+      <record id="dlcv_form" model="ir.ui.view">
+            <field name="name">dlcv.form</field>
+            <field name="model">dlcv</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                     <!--    <button name="import_bd_tuan" string="Import bảo dưỡng từ file excel" type="object" class="btn-warning" /> -->
+                  <!--       <button name="download_for_rnas 2G" string="download 2G" type="object" class="btn-primary" /> -->
+                       <button name="download_cvi" string="download_cvi" type="object" class="btn-primary" />
+                       <button name="cvi_filter" string="cvi_filter" type="object" class="btn-primary" />
+                    </header>
+                    <sheet>
+                        <group>
+                            <field name="ngay_bat_dau_filter"></field>
+                            <field name="ngay_ket_thuc_filter"></field>
+                            <field name="log"></field>
+                            <field name="log2"></field>
+                            <field name="company_ids"></field>
+                            <field name="member_ids"></field>
+                            <field name="rs_cvi_ids"></field>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        
+       <record model="ir.actions.act_window" id="dlcv_action">
+         <field name="name">dlcv</field>
+         <field name="res_model">dlcv</field>
+         <field name="view_mode">tree,form</field>
+      </record>
+        
+        
       <!-- end doi tac-->
       <menuitem name="Kiểm Kê" id="kiemke_icon" sequence="1" />
       <menuitem name="Vật Tư LTK" id="vattu_menu" parent="kiemke_icon" sequence="1" action="vattu_action" />
@@ -1841,5 +1880,6 @@
       <menuitem name="Partner(Đối tác))" id="partner_menu" parent="else_more_menu" action="partner_action" sequence="3" />
       <menuitem id="file_menu" parent="else_more_menu" action="file_action" sequence="6" />
       <menuitem id="comment_menu" parent="else_more_menu" action="comment_action" sequence="6" />
+      <menuitem id="dlcv_menu" parent="else_more_menu" action="dlcv_action" sequence="6" />
    </data>
 </openerp>

@@ -20,20 +20,12 @@ class ExcelExportView(ExcelExport):
     @http.route('/web/export/xls_view', type='http', auth='user')
     def export_xls_view(self, data, token):
         data = json.loads(data)
+        print 'data***',data,data['context']
+        print 'domain***',data['domain']
         model = data.get('model', [])
         columns_headers = data.get('headers', [])
         rows = data.get('rows', [])
-        all_recored = data.get('all_recored',False)
-        if all_recored:
-            rows = []
-            print 'self.env[model]._fields',request.env[model]._fields
-            field_list_map_header = []
-            for field_des in columns_headers:
-                for field_name,field in request.env[model]._fields.items():
-                    if field_des ==field.string:
-                        field_list_map_header.append(field.name)
-            raise ValueError('dfdfdfd',field_list_map_header)
-        
+
         return request.make_response(
             self.from_data(columns_headers, rows),
             headers=[

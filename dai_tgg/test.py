@@ -29,7 +29,7 @@
 # a = {1:3}
 # print a.get(3,False)
 
-import re
+# import re
 # string = u'    anh             con    no em '
 # def viet_tat(string):
 #     string = string.strip()
@@ -41,11 +41,13 @@ import re
 # rs = viet_tat(string)
 # print rs
 
-string = u'...---===+++***&&&^^^%%$$$##@@!Tăng cường xử lý ứng cứu (tùy thực tế)'
-ns = re.sub('[^\w ]','', string,flags = re.UNICODE)
-print ns
+# string = u'...---===+++***&&&^^^%%$$$##@@!Tăng cường xử lý ứng cứu (tùy thực tế)'
+# ns = re.sub('[^\w ]','', string,flags = re.UNICODE)
+# print ns
 
-
+print [ f 
+       for f in range(5) 
+       if f %2]
 
 
 
