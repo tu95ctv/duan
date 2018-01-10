@@ -79,7 +79,7 @@ class DownloadCvi(http.Controller):
         num2alpha = dict(zip(range(0, 26), string.ascii_uppercase))
         header_bold_style = xlwt.easyxf("font: bold on; pattern: pattern solid, fore_colour gray25;borders: left thin, right medium, top medium, bottom medium")
         normal_border_style = xlwt.easyxf("borders: left medium,right medium, top medium, bottom medium")
-        cty_bold_style = xlwt.easyxf("font: bold on, height 256")# align: horiz centre, vert centre
+        cty_bold_style = xlwt.easyxf("font: bold on, height 256; align: horiz centre, vert centre, wrap 1; alignment: wrap 1")# align: horiz centre, vert centre
         bold_style = xlwt.easyxf("font: bold on")
 #         borders":{'left':'thin', 'right': 'thin', 'top': 'thin', 'bottom': 'thin
         if not request.env.user.user_has_groups('base.group_erp_manager'):
@@ -95,6 +95,7 @@ class DownloadCvi(http.Controller):
         workbook = xlwt.Workbook()
         adict = [
             #('user_id',{'func': lambda val: val.name}),
+                 ('stt',{'is_not_model_field':True,'string':u'STT'}),
                  ('ngay_bat_dau',{'func':convert_date_odoo_to_str_vn_date,'width':get_width(10)}),
                  ('code',{}),('tvcv_id_name',{'width':get_width(40)}),('noi_dung',{'width':get_width(40)}),
                  ('diem_tvi',{}),('so_luong',{}),('so_lan',{}),
@@ -102,12 +103,15 @@ class DownloadCvi(http.Controller):
                 # ,('diemld',{'sum':True})
                             ]
         offset_column = 1
-        trungtam_row=0
-        offset_thong_tin = 0
-        sum_row = trungtam_row  +5
-        title_row = trungtam_row + 7
+        ROW_TRUNG_TAM=0
+        ROW_HO_TEN = ROW_TRUNG_TAM+ 1
+        ROW_TRAM = ROW_TRUNG_TAM + 2
+        ROW_SUM = ROW_TRUNG_TAM + 3
+        ROW_TITLE = ROW_TRUNG_TAM + 5
+        KEY_COL = offset_column + 3
+        VAL_COL = offset_column + 4
         for user_id in user_ids:
-            row_index = title_row + 1
+            row_index = ROW_TITLE + 1
             worksheet = workbook.add_sheet(user_id.name,cell_overwrite_ok=True)
             cvi_fields = request.env['cvi']._fields
             domain = [('user_id','=',user_id.id),('loai_record','=',u'Công Việc')]
@@ -118,20 +122,29 @@ class DownloadCvi(http.Controller):
                 
                 
             person_records = request.env['cvi'].search(domain,order='ngay_bat_dau')
-            worksheet.write(trungtam_row, offset_column + 2,u'TRUNG TÂM HẠ TẦNG MẠNG MIỀN NAM',cty_bold_style)
-            worksheet.write(trungtam_row + 1, offset_column + 2,u'ĐÀI VIỄN THÔNG HỒ CHÍ MINH',cty_bold_style)
-            worksheet.write(trungtam_row + 3, offset_column + offset_thong_tin + 2,u'Họ và Tên')
-            worksheet.write(trungtam_row + 3, offset_column  + offset_thong_tin + 3,user_id.name,bold_style)
-            worksheet.write(trungtam_row + 4,offset_column  + offset_thong_tin + 2,u'Trạm')
-            worksheet.write(trungtam_row  +4,offset_column   + offset_thong_tin + 3 ,user_id.company_id.name,bold_style)
-            worksheet.write(sum_row, offset_column + offset_thong_tin + 2,u'Điểm Tổng')
+#             worksheet.write(ROW_TRUNG_TAM, offset_column + 2,u'TRUNG TÂM HẠ TẦNG MẠNG MIỀN NAM',cty_bold_style)
+#             worksheet.write(ROW_TRUNG_TAM + 1, offset_column + 2,u'ĐÀI VIỄN THÔNG HỒ CHÍ MINH',cty_bold_style)
+            worksheet.write_merge(ROW_TRUNG_TAM, ROW_TRUNG_TAM, KEY_COL, VAL_COL, u'TRUNG TÂM HẠ TẦNG MẠNG MIỀN NAM\n ĐÀI VIỄN THÔNG HỒ CHÍ MINH',cty_bold_style)
+#             worksheet.write(ROW_TRUNG_TAM + 1, offset_column + 2,u'ĐÀI VIỄN THÔNG HỒ CHÍ MINH',cty_bold_style)
+            worksheet.row(ROW_TRUNG_TAM).height_mismatch = True
+            worksheet.row(ROW_TRUNG_TAM).height = 256*5
+            
+            worksheet.write(ROW_HO_TEN,KEY_COL,u'Họ và Tên')
+            worksheet.write(ROW_HO_TEN, VAL_COL,user_id.name,bold_style)
+            worksheet.write(ROW_TRAM,KEY_COL, u'Trạm')
+            worksheet.write(ROW_TRAM,VAL_COL ,user_id.company_id.name,bold_style)
+            worksheet.write(ROW_SUM, KEY_COL,u'Điểm Tổng')
             for title_column_index, field_from_my_adict in enumerate(adict):
                 title_column_index += offset_column
                 f_name,f_func_dict =  field_from_my_adict
-                field = cvi_fields[f_name]
-                f_string = field.string
-                #print 'f_string',f_string
-                worksheet.write(title_row, title_column_index,f_string,header_bold_style)
+                                
+                is_not_model_field = f_func_dict.get('is_not_model_field')
+                if is_not_model_field:
+                    f_string =f_func_dict.get('string') or  f_name
+                else:
+                    field = cvi_fields[f_name]
+                    f_string = field.string
+                worksheet.write(ROW_TITLE, title_column_index,f_string,header_bold_style)
                 width  = f_func_dict.get('width')
                 if not width :
                     width = get_width(len(f_string))
@@ -140,30 +153,38 @@ class DownloadCvi(http.Controller):
 #                 if sum:
 #                     worksheet.write(1, title_column_index,xlwt.Formula(sum))
                 
-            
+            stt = 1
             for r in person_records:#request.env['cvi'].search([]):
                 for title_column_index, field_from_my_adict in enumerate(adict):
                     title_column_index += offset_column
                     f_name,f_func_dict =  field_from_my_adict
-                    val = getattr(r, f_name)
-                    func = f_func_dict.get('func',None)
-                    if func:
-                        val = func(val)
-                    if val == False:
-                        val = u''
-#                     if val !=False:
+                    is_not_model_field = f_func_dict.get('is_not_model_field')
+                    if is_not_model_field:
+                        if f_name=='stt':
+                            val = stt
+                            
+                    else:
+                        val = getattr(r, f_name)
+                        func = f_func_dict.get('func',None)
+                        if func:
+                            val = func(val)
+                        if val == False:
+                            val = u''
                     worksheet.write(row_index, title_column_index,val,normal_border_style)
                 row_index +=1
-                
-
+                stt +=  1
             for title_column_index, field_from_my_adict in enumerate(adict):
                 title_column_index += offset_column
                 f_name,f_func_dict =  field_from_my_adict
-                field = cvi_fields[f_name]
-                sum_a= f_func_dict.get('sum')
-                if sum_a:
-                    column_index_apha = num2alpha[title_column_index]
-                    worksheet.write(sum_row, offset_column + offset_thong_tin + 3, xlwt.Formula('SUM(%s%s:%s%s)'%(column_index_apha,title_row + 2,column_index_apha,row_index)))
+                is_not_model_field = f_func_dict.get('is_not_model_field')
+                if is_not_model_field:
+                    pass
+                else:
+                    field = cvi_fields[f_name]
+                    sum_a= f_func_dict.get('sum')
+                    if sum_a:
+                        column_index_apha = num2alpha[title_column_index]
+                        worksheet.write(ROW_SUM, VAL_COL, xlwt.Formula('SUM(%s%s:%s%s)'%(column_index_apha,ROW_TITLE + 2,column_index_apha,row_index)))
         
         response = request.make_response(None,
             headers=[('Content-Type', 'application/vnd.ms-excel'),
