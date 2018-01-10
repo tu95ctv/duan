@@ -100,10 +100,11 @@ def name_compute_char_join_rieng(r,adict=None,join_char = u' - '):
 
 def convert_memebers_to_str(member_ids):
     return u','.join(member_ids.mapped('name'))
-def Convert_date_orm_to_str(date_orm_str):
+
+def Convert_date_orm_to_str(date_orm_str,format_date = '%d/%m/%y'):
     if date_orm_str:
         date_obj = fields.Date.from_string(date_orm_str)
-        return date_obj.strftime('%d/%m/%y')
+        return date_obj.strftime(format_date)
     else:
         return False
     
@@ -734,7 +735,7 @@ class CviSuCo(models.Model):
     _auto = False
     loai_record = fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')], string = u'Loại Record')
     name = fields.Char(compute='name_',store=True)
-    ngay_bat_dau =  fields.Date(compute='ngay_bat_dau_',store=True,string=u'Ngày',translate=True)
+    ngay_bat_dau =  fields.Date(compute='ngay_bat_dau_',store=True,string=u'Ngày')
     gio_bat_dau = fields.Datetime(string=u'Giờ bắt đầu ', default=fields.Datetime.now)
     gio_ket_thuc = fields.Datetime(string=u'Giờ Kết Thúc')
     duration = fields.Float(digits=(6, 1), help='Duration in Hours',compute = '_get_duration', store = True,string=u'Thời lượng (giờ)')
@@ -908,7 +909,7 @@ class Cvi(models.Model):
     ti_le_chia_diem = fields.Float(digits=(6,2),string=u'Tỉ lệ chia điểm')
     id_for_pivot = fields.Integer(compute='name_',store=True)
     tvcv_id_name = fields.Char(compute='tvcv_id_name_',string=u'Thư Viện Công Việc',store=True)
-    code= fields.Char(compute='code_',string=u'Mã Thư viện',store=True)
+    code= fields.Char(compute='code_',string=u'Mã Công Việc',store=True)
     diem_tvi = fields.Float(digits=(6,2),string=u'Điểm Thư Viện',related='tvcv_id.diem',store=True,readonly=True)# 
     don_vi = fields.Many2one('donvi',string=u'Đơn vị tính',compute='don_vi_',store=True)
     so_luong = fields.Float(string=u'Số Lượng',default = 1,required=True,digit=(6,2))

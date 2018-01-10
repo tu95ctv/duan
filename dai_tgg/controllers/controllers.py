@@ -15,6 +15,7 @@ import json
 from odoo.tools import ustr
 from collections import deque
 # from tools import convert_odoo_datetime_to_vn_str
+from odoo.osv import expression
 
 import pytz
 import string
@@ -48,7 +49,13 @@ def convert_odoo_datetime_to_vn_str(odoo_datetime):
     else:
         return False
     
-    
+def convert_date_odoo_to_str_vn_date(odoo_date):
+    if odoo_date:
+        datetime_odoo = fields.Date.from_string(odoo_date)
+        str_vn_date = datetime_odoo.strftime('%d/%m/%Y')
+        return str_vn_date
+    else:
+        return False
     
 def adict_flat(adict,item_seperate=';',k_v_separate = ':'):
     alist = []
@@ -61,55 +68,83 @@ def adict_flat(adict,item_seperate=';',k_v_separate = ':'):
 def get_width(num_characters):
     return int((1+num_characters) * 256)
 class DownloadCvi(http.Controller):
-    
     @http.route('/web/binary/download_cvi',type='http', auth="public")
     def download_cvi(self,model,id, **kw):
-#         #print 'id',id
-#         #print '**kw**',kw
-#         #print  'model',model
-#         dlcv_obj = request.env[model].browse(int(id))
-#         #print 'dlcv_obj',dlcv_obj
+        #print 'id',id
+        #print '**kw**',kw
+        #print  'model',model
+        dlcv_obj = request.env[model].browse(int(id))
+        #print 'dlcv_obj',dlcv_obj
         
         num2alpha = dict(zip(range(0, 26), string.ascii_uppercase))
-        header_bold_style = xlwt.easyxf("font: bold on; pattern: pattern solid, fore_colour gray25;borders: left thin, right thick, top thick, bottom thick")
-        normal_border_style = xlwt.easyxf("borders: left thick,right thick, top thick, bottom thick")
+        header_bold_style = xlwt.easyxf("font: bold on; pattern: pattern solid, fore_colour gray25;borders: left thin, right medium, top medium, bottom medium")
+        normal_border_style = xlwt.easyxf("borders: left medium,right medium, top medium, bottom medium")
+        cty_bold_style = xlwt.easyxf("font: bold on, height 256")# align: horiz centre, vert centre
+        bold_style = xlwt.easyxf("font: bold on")
 #         borders":{'left':'thin', 'right': 'thin', 'top': 'thin', 'bottom': 'thin
-        company_id = request.env.user.company_id
-        #print 'company_id**',company_id.name
-        records = request.env['cvi'].search([('company_id','=',company_id.id),('loai_record','=',u'Công Việc')])
+        if not request.env.user.user_has_groups('base.group_erp_manager'):
+            company_ids = [request.env.user.company_id.id]
+        else:
+            company_ids = dlcv_obj.company_ids.ids or [request.env.user.company_id.id]
+            
+        
+        records = request.env['cvi'].search([('company_id','in',company_ids),('loai_record','=',u'Công Việc')])
         user_ids = records.mapped('user_id')
+        
+        
         workbook = xlwt.Workbook()
-        adict = [('user_id',{'func': lambda val: val.name}),('gio_bat_dau',{'func':convert_odoo_datetime_to_vn_str}),
-                 ('code',{}),('tvcv_id_name',{}),('noi_dung',{}),
+        adict = [
+            #('user_id',{'func': lambda val: val.name}),
+                 ('ngay_bat_dau',{'func':convert_date_odoo_to_str_vn_date,'width':get_width(10)}),
+                 ('code',{}),('tvcv_id_name',{'width':get_width(40)}),('noi_dung',{'width':get_width(40)}),
                  ('diem_tvi',{}),('so_luong',{}),('so_lan',{}),
                  ('diemtc',{'sum':True})
                 # ,('diemld',{'sum':True})
-                               ]
+                            ]
+        offset_column = 1
+        trungtam_row=0
+        offset_thong_tin = 0
+        sum_row = trungtam_row  +5
+        title_row = trungtam_row + 7
         for user_id in user_ids:
+            row_index = title_row + 1
             worksheet = workbook.add_sheet(user_id.name,cell_overwrite_ok=True)
-            title_column_index = 0
-            fields = request.env['cvi']._fields
-            
-            person_records = request.env['cvi'].search([('company_id','=',company_id.id),('user_id','=',user_id.id),('loai_record','=',u'Công Việc')])
-            worksheet.write(0,7,u'Điểm Tổng')
+            cvi_fields = request.env['cvi']._fields
+            domain = [('user_id','=',user_id.id),('loai_record','=',u'Công Việc')]
+            if dlcv_obj.ngay_bat_dau_filter:
+                domain = expression.AND([[('ngay_bat_dau','>=',fields.Datetime.from_string(dlcv_obj.ngay_bat_dau_filter))],domain])
+            if dlcv_obj.ngay_ket_thuc_filter:
+                domain = expression.AND([[('ngay_bat_dau','<=',fields.Datetime.from_string(dlcv_obj.ngay_ket_thuc_filter))],domain])
+                
+                
+            person_records = request.env['cvi'].search(domain,order='ngay_bat_dau')
+            worksheet.write(trungtam_row, offset_column + 2,u'TRUNG TÂM HẠ TẦNG MẠNG MIỀN NAM',cty_bold_style)
+            worksheet.write(trungtam_row + 1, offset_column + 2,u'ĐÀI VIỄN THÔNG HỒ CHÍ MINH',cty_bold_style)
+            worksheet.write(trungtam_row + 3, offset_column + offset_thong_tin + 2,u'Họ và Tên')
+            worksheet.write(trungtam_row + 3, offset_column  + offset_thong_tin + 3,user_id.name,bold_style)
+            worksheet.write(trungtam_row + 4,offset_column  + offset_thong_tin + 2,u'Trạm')
+            worksheet.write(trungtam_row  +4,offset_column   + offset_thong_tin + 3 ,user_id.company_id.name,bold_style)
+            worksheet.write(sum_row, offset_column + offset_thong_tin + 2,u'Điểm Tổng')
             for title_column_index, field_from_my_adict in enumerate(adict):
+                title_column_index += offset_column
                 f_name,f_func_dict =  field_from_my_adict
-                field = fields[f_name]
+                field = cvi_fields[f_name]
                 f_string = field.string
                 #print 'f_string',f_string
-                worksheet.write(1, title_column_index,f_string,header_bold_style)
-                width = get_width(len(f_string))
+                worksheet.write(title_row, title_column_index,f_string,header_bold_style)
+                width  = f_func_dict.get('width')
+                if not width :
+                    width = get_width(len(f_string))
                 worksheet.col(title_column_index).width = width
 #                 sum = f_func_dict.get('sum')
 #                 if sum:
 #                     worksheet.write(1, title_column_index,xlwt.Formula(sum))
                 
-            row_index = 2
+            
             for r in person_records:#request.env['cvi'].search([]):
                 for title_column_index, field_from_my_adict in enumerate(adict):
+                    title_column_index += offset_column
                     f_name,f_func_dict =  field_from_my_adict
-                    field = fields[f_name]
-                    f_string = field.string
                     val = getattr(r, f_name)
                     func = f_func_dict.get('func',None)
                     if func:
@@ -120,21 +155,19 @@ class DownloadCvi(http.Controller):
                     worksheet.write(row_index, title_column_index,val,normal_border_style)
                 row_index +=1
                 
-            
+
             for title_column_index, field_from_my_adict in enumerate(adict):
+                title_column_index += offset_column
                 f_name,f_func_dict =  field_from_my_adict
-                field = fields[f_name]
-#                 f_string = field.string
-#                 #print 'f_string',f_string
-#                 worksheet.write(2, title_column_index,f_string)
+                field = cvi_fields[f_name]
                 sum_a= f_func_dict.get('sum')
                 if sum_a:
                     column_index_apha = num2alpha[title_column_index]
-                    worksheet.write(0, title_column_index,xlwt.Formula('SUM(%s3:%s%s)'%(column_index_apha,column_index_apha,row_index)),normal_border_style)
+                    worksheet.write(sum_row, offset_column + offset_thong_tin + 3, xlwt.Formula('SUM(%s%s:%s%s)'%(column_index_apha,title_row + 2,column_index_apha,row_index)))
         
         response = request.make_response(None,
             headers=[('Content-Type', 'application/vnd.ms-excel'),
-                    ('Content-Disposition', 'attachment; filename=table_cv_%s.xls;'%company_id.name)],
+                    ('Content-Disposition', 'attachment; filename=table_cv_%s_%s.xls;'%(user_id.company_id.name,datetime.datetime.now().strftime('%d_%m_%H_%M')))],
            # cookies={'fileToken': token}
             )
         workbook.save(response.stream)

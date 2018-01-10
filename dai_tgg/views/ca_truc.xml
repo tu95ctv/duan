@@ -1880,6 +1880,6 @@
       <menuitem name="Partner(Đối tác))" id="partner_menu" parent="else_more_menu" action="partner_action" sequence="3" />
       <menuitem id="file_menu" parent="else_more_menu" action="file_action" sequence="6" />
       <menuitem id="comment_menu" parent="else_more_menu" action="comment_action" sequence="6" />
-      <menuitem id="dlcv_menu" parent="else_more_menu" action="dlcv_action" sequence="6" />
+      <menuitem id="dlcv_menu" parent="else_more_menu" action="dlcv_action" sequence="7" />
    </data>
 </openerp>

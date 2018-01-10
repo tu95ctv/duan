@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import string
-
+import datetime
 # def decorator(f):
 #     print 'out wrapper'
 #     def wrapper(x):
@@ -70,5 +70,6 @@ import string
 # 
 # print num2alpha
 
-adict = {'a':1}
-print u' %(a)s noi di %(a)s'%adict
+# adict = {'a':1}
+# print u' %(a)s noi di %(a)s'%adict
+print datetime.date.today().strftime('%d/%m/%Y')
