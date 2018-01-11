@@ -19,43 +19,44 @@ from odoo.osv import expression
 
 import pytz
 import string
+from odoo.addons.dai_tgg.mytools import  convert_date_odoo_to_str_vn_date
 
-
-def convert_utc_to_gmt_7(utc_datetime_inputs):
-    local = pytz.timezone('Etc/GMT-7')
-    utc_tz =pytz.utc
-    gio_bat_dau_utc_native = utc_datetime_inputs#fields.Datetime.from_string(self.gio_bat_dau)
-    gio_bat_dau_utc = utc_tz.localize(gio_bat_dau_utc_native, is_dst=None)
-    gio_bat_dau_vn = gio_bat_dau_utc.astimezone (local)
-    return gio_bat_dau_vn
-def convert_odoo_datetime_to_vn_datetime(odoo_datetime):
-        utc_datetime_inputs = fields.Datetime.from_string(odoo_datetime)
-        vn_time = convert_utc_to_gmt_7(utc_datetime_inputs)
-        return vn_time
-  
-def convert_vn_datetime_to_utc_datetime(native_ca_gio_in_vn):
-            local = pytz.timezone('Etc/GMT-7')
-            utc_tz =pytz.utc
-            gio_bat_dau_in_vn = local.localize(native_ca_gio_in_vn, is_dst=None)
-            gio_bat_dau_in_utc = gio_bat_dau_in_vn.astimezone (utc_tz)
-            return gio_bat_dau_in_utc
-        
-def convert_odoo_datetime_to_vn_str(odoo_datetime):
-    if odoo_datetime:
-        utc_datetime_inputs = fields.Datetime.from_string(odoo_datetime)
-        vn_time = convert_utc_to_gmt_7(utc_datetime_inputs)
-        vn_time_str = vn_time.strftime('%d/%m/%Y %H:%M')
-        return vn_time_str
-    else:
-        return False
-    
-def convert_date_odoo_to_str_vn_date(odoo_date):
-    if odoo_date:
-        datetime_odoo = fields.Date.from_string(odoo_date)
-        str_vn_date = datetime_odoo.strftime('%d/%m/%Y')
-        return str_vn_date
-    else:
-        return False
+# from mytools import convert_date_odoo_to_str_vn_date
+# def convert_utc_to_gmt_7(utc_datetime_inputs):
+#     local = pytz.timezone('Etc/GMT-7')
+#     utc_tz =pytz.utc
+#     gio_bat_dau_utc_native = utc_datetime_inputs#fields.Datetime.from_string(self.gio_bat_dau)
+#     gio_bat_dau_utc = utc_tz.localize(gio_bat_dau_utc_native, is_dst=None)
+#     gio_bat_dau_vn = gio_bat_dau_utc.astimezone (local)
+#     return gio_bat_dau_vn
+# def convert_odoo_datetime_to_vn_datetime(odoo_datetime):
+#         utc_datetime_inputs = fields.Datetime.from_string(odoo_datetime)
+#         vn_time = convert_utc_to_gmt_7(utc_datetime_inputs)
+#         return vn_time
+#   
+# def convert_vn_datetime_to_utc_datetime(native_ca_gio_in_vn):
+#             local = pytz.timezone('Etc/GMT-7')
+#             utc_tz =pytz.utc
+#             gio_bat_dau_in_vn = local.localize(native_ca_gio_in_vn, is_dst=None)
+#             gio_bat_dau_in_utc = gio_bat_dau_in_vn.astimezone (utc_tz)
+#             return gio_bat_dau_in_utc
+#         
+# def convert_odoo_datetime_to_vn_str(odoo_datetime):
+#     if odoo_datetime:
+#         utc_datetime_inputs = fields.Datetime.from_string(odoo_datetime)
+#         vn_time = convert_utc_to_gmt_7(utc_datetime_inputs)
+#         vn_time_str = vn_time.strftime('%d/%m/%Y %H:%M')
+#         return vn_time_str
+#     else:
+#         return False
+#     
+# def convert_date_odoo_to_str_vn_date(odoo_date):
+#     if odoo_date:
+#         datetime_odoo = fields.Date.from_string(odoo_date)
+#         str_vn_date = datetime_odoo.strftime('%d/%m/%Y')
+#         return str_vn_date
+#     else:
+#         return False
     
 def adict_flat(adict,item_seperate=';',k_v_separate = ':'):
     alist = []
@@ -77,8 +78,8 @@ class DownloadCvi(http.Controller):
         #print 'dlcv_obj',dlcv_obj
         
         num2alpha = dict(zip(range(0, 26), string.ascii_uppercase))
-        header_bold_style = xlwt.easyxf("font: bold on; pattern: pattern solid, fore_colour gray25;borders: left thin, right medium, top medium, bottom medium")
-        normal_border_style = xlwt.easyxf("borders: left medium,right medium, top medium, bottom medium")
+        header_bold_style = xlwt.easyxf("font: bold on, name Times New Roman, height 240 ; pattern: pattern solid, fore_colour gray25;borders: left thin, right thin, top thin, bottom thin")
+        normal_border_style = xlwt.easyxf("borders: left thin,right thin, top thin, bottom thin")
         cty_bold_style = xlwt.easyxf("font: bold on, height 256; align: horiz centre, vert centre, wrap 1; alignment: wrap 1")# align: horiz centre, vert centre
         bold_style = xlwt.easyxf("font: bold on")
 #         borders":{'left':'thin', 'right': 'thin', 'top': 'thin', 'bottom': 'thin
