@@ -17,7 +17,9 @@ def convert_sheetname_to_tram(sheet_name):
 class ImportThuVien(models.Model):
     _name = 'importthuvien' 
     type_choose = fields.Selection([(u'Thư viện công việc',u'Thư viện công việc'),
-                                    (u'User',u'User'),(u'Công Ty',u'Công Ty')
+                                    (u'User',u'User')
+                                    ,(u'Công Ty',u'Công Ty')
+                                    ,(u'Công Ty',u'Công Ty')
                                     ,(u'Kiểm Kê',u'Kiểm Kê'),(u'Vật Tư LTK',u'Vật Tư LTK')
                                     ,(u'x',u'x'),(u'640',u'640G 1850 ')
                                     ,(u'INVENTORY_240G',u'INVENTORY_240G')

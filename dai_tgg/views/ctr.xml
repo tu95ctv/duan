@@ -50,7 +50,7 @@
                   <notebook>
                      <page string="Công Việc/Sự Cố/Sự Vụ">
                         <field name="cvi_ids" context="{'active_ctr_id':active_id,'tree_view_ref':'dai_tgg.cvi_list_sample'}" 
-                        domain="[('ctr_ids','!=',False),('gio_ket_thuc','=',False),('company_id','=',company_id)]" />
+                        domain="[('ctr_ids','!=',False),('gio_ket_thuc','=',False),('company_ids','=',company_id)]" />
                      </page>
                      <page string="Nhận Ca, Giao Ca">
                      			<group>
@@ -64,7 +64,7 @@
                                              <field name="giao_ca_ids" context="{'tree_view_ref':'dai_tgg.comment_list',
                                              'form_view_ref':'dai_tgg.comment_form',
                                              'default_loai_record':'Comment',
-                                             'loai_comment_la_cong_viec':'Công Việc',
+                                             'loai_record_more':['Công Việc'],
                                              'giao_ca_context':True,
                                              'comment_context':True,
                                              }" domain="[('loai_record','=','Comment')]"></field>

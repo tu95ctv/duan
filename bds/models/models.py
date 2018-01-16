@@ -5,6 +5,8 @@ from fetch import fetch,fetch_lazada
 from fetch import get_quan_list_in_big_page
 from fetch import update_phuong_or_quan_for_url_id,import_contact
 import logging
+from fetch import request_html
+from bs4 import BeautifulSoup
 _logger = logging.getLogger(__name__)
 import smtplib
 
@@ -13,8 +15,6 @@ import threading
 import time
 from threading import current_thread
 from fetch import g_or_c_ss
-import base64
-import urllib2
 import re
 import datetime
 from odoo.osv import expression
@@ -93,68 +93,7 @@ class Images(models.Model):
     bds_id = fields.Many2one('bds.bds')
     
 
-class bds(models.Model):
-    _name = 'bds.bds'
-    name = fields.Char(compute = 'name_',store = True)
-    title = fields.Char()
-    images_ids = fields.One2many('bds.images','bds_id')
-    siteleech_id = fields.Many2one('bds.siteleech')
-    thumb = fields.Char()
-    thumb_view = fields.Binary(compute='thumb_view_')   
-    present_image_link = fields.Char()
-    present_image_link_show = fields.Binary(compute='present_image_link_show_')
-    
-    poster_id = fields.Many2one('bds.poster')
-    poster_m2m_fake_ids = fields.Many2many('bds.poster',compute='poster_m2m_fake_ids_')
-    post_ids_of_user  = fields.One2many('bds.bds','poster_id',related='poster_id.post_ids')
-    html = fields.Html()
-    gia = fields.Float()
-    area = fields.Float(digits=(32,1))
-    address=fields.Char()
-    quan_id = fields.Many2one('bds.quan',ondelete='restrict')
-    phuong_id = fields.Many2one('bds.phuong')
-    link = fields.Char()
-    cho_tot_link_fake = fields.Char(compute='cho_tot_link_fake_')
-    ngay_dang = fields.Datetime()
-    
-    count_chotot_post_of_poster = fields.Integer(related= 'poster_id.count_chotot_post_of_poster',store=True,string=u'chotot post quantity')
-    count_bds_post_of_poster = fields.Integer(related= 'poster_id.count_bds_post_of_poster',store=True,string=u'bds post quantity')
-    count_post_all_site = fields.Integer(related= 'poster_id.count_post_all_site',store=True)
-    data = fields.Text()
 
-    
-    url_ids = fields.Many2many('bds.url','url_post_relate','post_id','url_id')
-  
-
-    
-    @api.depends('poster_id')
-    def poster_m2m_fake_ids_(self):
-        for r in self:
-            r.poster_m2m_fake_ids = r.poster_id
-    
-    @api.multi
-    def cho_tot_link_fake_(self):
-        for r in self:
-            if 'chotot' in r.link:
-                rs = re.search('/(\d*)$',r.link)
-                id_link = rs.group(1)
-                r.cho_tot_link_fake = 'https://nha.chotot.com/quan-10/mua-ban-nha-dat/' + 'xxx-' + id_link+ '.htm'
-    @api.depends('thumb')
-    def thumb_view_(self):
-        for r in self:
-            if r.thumb:
-                photo = base64.encodestring(urllib2.urlopen(r.thumb).read())
-                r.thumb_view = photo 
-    @api.depends('present_image_link')
-    def present_image_link_show_(self):
-        for r in self:
-            if r.present_image_link:
-                photo = base64.encodestring(urllib2.urlopen(r.present_image_link).read())
-                r.present_image_link_show = photo 
-
-    @api.depends('title')
-    def name_(self):
-        self.name = self.title
   
 class QuanHuyen(models.Model):
     _name = 'bds.quan'
@@ -192,9 +131,7 @@ class Poster(models.Model):
     name = fields.Char()
     sms_ids = fields.Many2many('bds.sms','sms_poster_relate','poster_id','sms_id')
     post_ids = fields.One2many('bds.bds','poster_id')
-    
     mycontact_id = fields.Many2one('bds.mycontact',compute='mycontact_id_',store=True)
-    
     cong_ty = fields.Char()
     ghi_chu = fields.Char()
     site_count_of_poster = fields.Integer(compute='site_count_of_poster_',store=True)
@@ -204,21 +141,11 @@ class Poster(models.Model):
     nhan_xet = fields.Char()
     nha_mang = fields.Selection([('vina','vina'),('mobi','mobi'),('viettel','viettel'),('khac','khac')],compute='nha_mang_',store=True)
     log_text = fields.Char()
-    
-    
     username_in_site_ids = fields.One2many('bds.posternamelines','poster_id')
     username_in_site_ids_show = fields.Char(compute='username_in_site_ids_show_')
- 
-#     count_tan_binh = fields.Integer(compute='quanofposter_ids_tanbinh',store=True)
-   
-#     avg_tan_binh = fields.Float(compute='quanofposter_ids_tanbinh',store=True)
-   
     quanofposter_ids = fields.One2many('bds.quanofposter','poster_id',compute='quanofposter_ids_',store = True)#,compute='quanofposter_ids_',store = True
-    
-    
     quan_id_for_search = fields.Many2one('bds.quan',related = 'quanofposter_ids.quan_id')
     quanofposter_ids_show = fields.Char(compute='quanofposter_ids_show_')
-    
     trang_thai_lien_lac = fields.Selection([(u'chờ request zalo',u'chờ request zalo'),(u'request zalo',u'request zalo'),(u'added zalo',u'added zalo'),
                                             (u'Đã gửi sổ',u'Đã gửi sổ'),(u'Đã xem nhà',u'Đã xem nhà'),(u'Đã dẫn khách',u'Đã Dẫn khách')])
     da_goi_dien_hay_chua = fields.Selection([(u'Chưa gọi điện',u'Chưa gọi điện'),(u'Đã liên lạc',u'Đã liên lạc'),(u'Không bắt máy',u'Không đổ chuông')],
@@ -284,7 +211,7 @@ class Poster(models.Model):
                         name = quan.name_unidecode.replace('-','_')
                         name = key1+'_'+name
                         setattr(r, name, value)
-                        print 'set attr',name,value
+#                         print 'set attr',name,value
 
     
     @api.depends('post_ids','post_ids.gia')
@@ -301,7 +228,9 @@ class Poster(models.Model):
             for k,product_category_query in a.iteritems():
                 self.env.cr.execute(product_category_query)
                 quan_va_gia_fetchall = self.env.cr.fetchall()
-                print 'quan_va_gia_fetchall',quan_va_gia_fetchall
+#                 print 'count(quan_id) %s,quan_id %s,min(gia) %s ,avg(gia) %s,max(gia) %s,siteleech_id %s' %*quan_va_gia_fetchall
+#                 print 'count(quan_id) %s,quan_id %s,min(gia) %s ,avg(gia) %s,max(gia) %s,siteleech_id %s' %*quan_va_gia_fetchall
+#                 print 'quan_va_gia_fetchall',quan_va_gia_fetchall
                 for  tuple_count_quan in quan_va_gia_fetchall:
                     quan_id = int(tuple_count_quan[1])
                     if k =='product_category_query_no_siteleech':
@@ -389,9 +318,10 @@ class SMS(models.Model):
    
 class GetPhonePoster(models.Model):
     _name = 'bds.getphoneposter'
+    name = fields.Char(compute='name_',store=True)
     is_repost_for_poster = fields.Boolean()
     filter_sms_or_filter_sql = fields.Selection([('sms_ids','sms_ids'),('by_sql','by_sql')],default='sms_ids')
-    name = fields.Char()
+#     name = fields.Char()
     sms_id = fields.Many2one('bds.sms')
     nha_mang = fields.Selection([('vina','vina'),('mobi','mobi'),('viettel','viettel'),('khac','khac')],default='vina')
     post_count_min = fields.Integer(default=10)
@@ -400,21 +330,25 @@ class GetPhonePoster(models.Model):
     len_posters_of_sms = fields.Integer()
     phuong_loc_ids = fields.Many2many('bds.phuong')
 
-    quan_id = fields.Many2one('bds.quan',default = lambda self:self.default_quan())
+    quan_ids = fields.Many2many('bds.quan',default = lambda self:self.default_quan())
     phone_list = fields.Text(compute='phone_list_',store=True)
     danh_sach_doi_tac = fields.Html(compute='phone_list_',store=True)
     poster_ids = fields.Many2many('bds.poster','getphone_poster_relate','getphone_id','poster_id')#,compute='poster_ids_',store=True)
-    
+    loc_gian_tiep_quan_bds_topic = fields.Selection([(u'Qua Thống Kê Quận Object',u'Qua Thống Kê Quận Object'),(u'Qua BDS Object',u'Qua BDS Object')],default = u'Qua Thống Kê Quận Object')
+    gia_be_hon = fields.Float(digits=(6,2))
+    bds_ids = fields.Many2many('bds.bds',compute='poster_ids_',store=True)
 #     @api.onchange('poster_ids')
 #     def danh_sach_doi_tac_(self):
 #         for r in self:
 #             r.danh_sach_doi_tac = '\r\n'.join(r.poster_ids.mapped('name'))
             
    
-    
+    def name_(self):
+        for r in self:
+            r.name = u'get phone,id %s'%r.id
     def default_quan(self):
         quan_10 = self.env['bds.quan'].search([('name','=',u'Quận 10')])
-        return quan_10.id
+        return [quan_10.id]
     
  
     @api.depends('poster_ids')
@@ -423,8 +357,9 @@ class GetPhonePoster(models.Model):
             phone_lists = filter(lambda l: not isinstance(l,bool),r.poster_ids.mapped('phone'))
             r.phone_list = ','.join(phone_lists)
    
-    @api.onchange('quan_id','post_count_min','nha_mang','sms_id','exclude_poster_ids','poster_ids.exclude_sms_ids','phuong_loc_ids','is_repost_for_poster')
+    @api.onchange('gia_be_hon','loc_gian_tiep_quan_bds_topic','quan_ids','post_count_min','nha_mang','sms_id','exclude_poster_ids','poster_ids.exclude_sms_ids','phuong_loc_ids','is_repost_for_poster')
     def poster_ids_(self):
+        
         def filter_for_poster(l):
             if l.id in r.exclude_poster_ids.ids:
                 return False
@@ -452,26 +387,43 @@ class GetPhonePoster(models.Model):
                     return True  
                 
         for r in self:
-            if not r.sms_id:
-                pass
-            else:
-                domain_tong = []
+            if r.loc_gian_tiep_quan_bds_topic ==u'Qua Thống Kê Quận Object':
+                if not r.sms_id:
+                    pass
+                else:
+                    domain_tong = []
+                    if r.nha_mang:
+                        nha_mang_domain = ('nha_mang','=',r.nha_mang)
+                        domain_tong.append(nha_mang_domain)
+    
+                    if r.quan_ids and r.post_count_min:
+                        domain_tong = expression.AND([[( 'quanofposter_ids.quan_id','in',r.quan_ids.ids),('quanofposter_ids.quantity','>=',r.post_count_min)], domain_tong])
+                    if r.phuong_loc_ids:
+                        domain_tong = expression.AND([('phuong_id' ,'in',r.phuong_loc_ids.mapped('id')),domain_tong])
+                        
+                    if r.filter_sms_or_filter_sql =='sms_ids' and not r.is_repost_for_poster:
+                        domain_tong.append(('sms_ids','!=',r.sms_id.id))
+                    poster_quan10_greater_10 = self.env['bds.poster'].search(domain_tong)
+                    poster_quan10_greater_10 = poster_quan10_greater_10.filtered(filter_for_poster )
+                    r.poster_ids =poster_quan10_greater_10
+                    r.len_poster = len(poster_quan10_greater_10)
+            elif r.loc_gian_tiep_quan_bds_topic ==u'Qua BDS Object':
+                domain = []
+                if r.quan_ids:
+                    domain = expression.AND([[( 'quan_id','in',r.quan_ids.ids)],domain])
+                if  r.post_count_min:
+                    domain = expression.AND([[('count_post_all_site','>=',r.post_count_min)],domain])
+                if r.gia_be_hon:
+                    domain = expression.AND([[('gia','<=',r.gia_be_hon)],domain])
+                rs = self.env['bds.bds'].search(domain)
+                post_ids = rs.mapped('poster_id')
                 if r.nha_mang:
-                    nha_mang_domain = ('nha_mang','=',r.nha_mang)
-                    domain_tong.append(nha_mang_domain)
-
-                if r.quan_id and r.post_count_min:
-                    domain_tong = expression.AND([[( 'quanofposter_ids.quan_id','=',r.quan_id.id),('quanofposter_ids.quantity','>=',r.post_count_min)], domain_tong])
-                if r.phuong_loc_ids:
-                    domain_tong = expression.AND([('phuong_id' ,'in',r.phuong_loc_ids.mapped('id')),domain_tong])
-                    
-                if r.filter_sms_or_filter_sql =='sms_ids' and not r.is_repost_for_poster:
-                    domain_tong.append(('sms_ids','!=',r.sms_id.id))
-                poster_quan10_greater_10 = self.env['bds.poster'].search(domain_tong)
-                poster_quan10_greater_10 = poster_quan10_greater_10.filtered(filter_for_poster )
-                r.poster_ids =poster_quan10_greater_10
-                r.len_poster = len(poster_quan10_greater_10)
+                    post_ids = post_ids.filtered(lambda i: i.nha_mang == r.nha_mang)
+                r.poster_ids = post_ids
+                r.len_poster = len(post_ids)
+                r.bds_ids = rs
                 
+                                
 
         
 class Importcontact(models.Model):
@@ -721,36 +673,49 @@ class DienThoai(models.Model):
 
 class Fetch(models.Model):
     _name = 'bds.fetch'
-#     url = fields.Char(default = 'https://batdongsan.com.vn/ban-nha-rieng-quan-10/-1/2500-3500/-1/-1')
+    name = fields.Char(compute='name_',store=True)
     url_id = fields.Many2one('bds.url')
     url_ids = fields.Many2many('bds.url')
-#     is_fetch_circle = fields.Boolean(string=u'vòng tròn link',default=True)
     last_fetched_url_id = fields.Integer()#>0
     name = fields.Char()
-    link = fields.Char()
     web_last_page_number = fields.Integer()
-    set_page_end = fields.Integer(default=4)
-    set_number_of_page_once_fetch = fields.Integer(default=5)
+#     page_begin = fields.Integer()
+#     set_page_end = fields.Integer()
+    set_number_of_page_once_fetch = fields.Integer(default=1)
     link_number = fields.Integer()
     update_link_number = fields.Integer()
     create_link_number = fields.Integer()
     existing_link_number = fields.Integer()
-    bds_ids_quantity = fields.Integer()
+#     bds_ids_quantity = fields.Integer()
     
-    phuong_ids =  fields.Many2many('bds.phuong')
-    quan_ids =  fields.Many2many('bds.quan')
-    bds_ids = fields.Many2many('bds.bds','fetch_bds_relate','fetch_id','bds_id')
-    fetch_cronfield = fields.Integer()
-    page_begin = fields.Integer()
-    per_page = fields.Integer()
+#     phuong_ids =  fields.Many2many('bds.phuong')
+#     quan_ids =  fields.Many2many('bds.quan')
+#     bds_ids = fields.Many2many('bds.bds','fetch_bds_relate','fetch_id','bds_id')
     note = fields.Char()
     update_field_of_existing_recorder = fields.Selection([(u'giá',u'giá'),(u'all',u'all')],default = u'all')
     lazada_url = fields.Char()
+    input_text = fields.Char()
+    invisible_or_show_html_lazada =  fields.Boolean(store=False)
     test_lazada = fields.Text()
     html_lazada = fields.Text()
     html_lazada_thread = fields.Text()
     html_lazada_thread_gia = fields.Text()
     
+    @api.depends('set_number_of_page_once_fetch')
+    def name_(self):
+        for r in self:
+            r.name = 'Fetch, id:%s-set_number_of_page_once_fetch: %s'%(r.id,r.set_number_of_page_once_fetch)
+    @api.multi
+    def test_something(self):
+        html = request_html(self.input_text)
+        soup = BeautifulSoup(html, 'html.parser')
+#         soup.select('a[href^="http://example.com/"]')
+#         rs = soup.select('meta[property="og:image"]')
+#         log = u''
+#         log +=u'%s'%rs
+#         log +=u'%s'%map(lambda i:i['content'],rs)
+        self.html_lazada = html
+
     @api.multi
     def fetch_lazada(self):
         fetch_lazada(self)
@@ -804,11 +769,7 @@ class Fetch(models.Model):
 
 
     
-#     @api.multi
-#     def fetch_cron1(self):
-#         fetch_id2 = self.browse(2)
-#         fetch_id2.fetch_cronfield +=1
-    @api.multi
+
     def fetch_cron(self,id_fetch):
         fetch_id2 = self.browse(id_fetch)
         fetch(fetch_id2,note=u'cập nhật lúc ' +  fields.Datetime.now(),is_fetch_in_cron = True)

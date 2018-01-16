@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api,exceptions,tools,_
-from odoo.addons.dai_tgg.mytools import  convert_utc_to_gmt_7,name_compute,convert_odoo_datetime_to_vn_datetime,convert_odoo_datetime_to_vn_str,name_compute_char_join_rieng,convert_vn_datetime_to_utc_datetime,Convert_date_orm_to_str
+from odoo.addons.dai_tgg.mytools import  convert_memebers_to_str,convert_utc_to_gmt_7,name_compute,convert_odoo_datetime_to_vn_datetime,convert_odoo_datetime_to_vn_str,name_compute_char_join_rieng,convert_vn_datetime_to_utc_datetime,Convert_date_orm_to_str
 import datetime
 class CTR(models.Model):
     _name = 'ctr'
@@ -11,7 +11,7 @@ class CTR(models.Model):
     gio_bat_dau_ca = fields.Datetime(u'Giờ bắt đầu ca ',default=lambda self: self.gio_bat_dau_defaut_or_ket_thuc_())
     gio_ket_thuc_ca = fields.Datetime(u'Giờ Kết Thúc ca',default=lambda self: self.gio_bat_dau_defaut_or_ket_thuc_(is_tinh_gio_bat_dau_or_ket_thuc = 'gio_ket_thuc'))#
     company_id = fields.Many2one('res.company',string=u'Đơn vị',default=lambda self:self.env.user.company_id, readonly=True,required=True)
-    member_ids = fields.Many2many('res.users', string=u'Những thành viên trực')
+    member_ids = fields.Many2many('res.users', string=u'Những thành viên trực',default =  lambda self : [self.env.user.id])
     cvi_ids = fields.Many2many('cvi','ctr_cvi_relate','ctr_id','cvi_id',string=u'Công Việc/Sự Cố/Sự Vụ')
 #     su_co_ids = fields.Many2many('suco','ctr_suco_rel','ctr_id','suco_id',string=u'Sự Cố')
 #     su_vu_ids = fields.Many2many('suvu','ctr_suvu_rel','ctr_id','suvu_id',string=u'Sự Vụ')
@@ -26,7 +26,7 @@ class CTR(models.Model):
             domain = [('giao_ca_id','!=',False),('company_id','=',r.company_id.id)]
             if r.id:
                 domain.append(('giao_ca_id','<',r.id))
-            giao_ca_truoc_ids = self.env['cvi'].search(domain,limit=5,order='giao_ca_id desc')
+            giao_ca_truoc_ids = self.env['cvi'].search(domain,limit=10,order='giao_ca_id desc')
             r.giao_ca_truoc_ids = giao_ca_truoc_ids
 #     @api.depends('cvi_ids')
 #     def cvi_show_(self):
@@ -48,7 +48,7 @@ class CTR(models.Model):
             adict=[('id',{'pr':u'Ca Trực id'}),
                    ('date',{'pr':u'Ngày','func':Convert_date_orm_to_str}),
                    ('ca',{'pr':u'Buổi'}),
-#                    ('member_ids',{'pr':u'Người Trực','func':convert_memebers_to_str})
+                    ('member_ids',{'pr':u'Người Trực','func':convert_memebers_to_str})
                    ]
                                           
                                  )
@@ -73,11 +73,11 @@ class CTR(models.Model):
             ret =  r.get_names()
             r.name = ret
     
-    @api.depends('gio_bat_dau_ca')
-    def date_(self):
-        for r in self:
-            if r.gio_bat_dau:
-                r.date = convert_odoo_datetime_to_vn_datetime(r.gio_bat_dau).date()
+#     @api.depends('gio_bat_dau_ca')
+#     def date_(self):
+#         for r in self:
+#             if r.gio_bat_dau:
+#                 r.date = convert_odoo_datetime_to_vn_datetime(r.gio_bat_dau).date()
     
     
     def buoi_ca_now_default_(self,gio_bat_dau_vn_return = False):
@@ -115,7 +115,7 @@ class CTR(models.Model):
     @api.model
     def default_get(self, fields):
         res = super(CTR, self).default_get(fields)
-        adict = {'cvi_ids':{'model':'cvi','add_domain':[('ctr_ids','!=',False)]},
+        adict = {'cvi_ids':{'model':'cvi','domain':[('gio_ket_thuc','=',False),('ctr_ids','!=',False),('company_ids','=',self.env.user.company_id.id)]},
 #                  'su_co_ids':{'model':'suco','add_domain':[('ctr_ids','!=',False)]},
 #                  'su_vu_ids':{'model':'suvu','add_domain':[('ctr_ids','!=',False)]}
               
@@ -123,11 +123,9 @@ class CTR(models.Model):
         #def afunc(atuple):
         for field,attr_field_dict in adict.items():
             model = attr_field_dict['model']
-            domain = [('gio_ket_thuc','=',False)]
-            if 'add_domain' in attr_field_dict:
-                domain.extend(attr_field_dict['add_domain'])
+            domain=  attr_field_dict['domain']
             empty_ket_thuc_comments = self.env[ model].search(domain)
             if empty_ket_thuc_comments:
                 res[field] = empty_ket_thuc_comments.mapped('id')
-        res['member_ids']  = [self.env.user.id]
+#         res['member_ids']  = [self.env.user.id]
         return res           

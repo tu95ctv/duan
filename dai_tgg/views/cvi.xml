@@ -51,7 +51,7 @@
                         <field name="cd_parent_id" readonly="1" attrs="{'invisible':[('cd_parent_id','=',False)]}" />
                         <field name="gd_parent_id" readonly="1" attrs="{'invisible':[('gd_parent_id','=',False)]}" />
                         <field name="hd_parent_id" readonly="1" attrs="{'invisible':[('hd_parent_id','=',False)]}" />
-                        <field name="gio_bat_dau" readonly="context.get('you_at_gd_form') or context.get('you_at_cd_form')" attrs="{'readonly':[('cd_parent_id','!=',False)]}" />
+                        <field name="gio_bat_dau" readonly="context.get('you_at_gd_form') or context.get('you_at_cd_form')" attrs="{'readonly':['|','|',('cd_parent_id','!=',False),('hd_parent_id','!=',False),('cam_sua','=',True)]}" />
                         <field name="gio_ket_thuc" readonly="context.get('you_at_cd_form')" attrs="{'readonly':[('cd_parent_id','!=',False)]}" />
                      </group>
                      <group>
@@ -62,13 +62,13 @@
                         <field name="tvcv_id" attrs="{'readonly':['|',('loai_record','=',False),'|','&amp;',('cam_sua','=',True),('is_sep','=',False),'&amp;',('id','&gt;',0),'|',('gd_parent_id','!=',False),('cd_parent_id','!=',False)]}"
                          context="{'thu_vien_da_chon_list':parent.get('thu_vien_da_chon_list'), 
                          'you_at_gd_form':context.get('you_at_gd_form'),
-                         'loai_record':loai_record,
+                         'loai_record_more':context.get('loai_record_more',[]),
                          'thu_vien_id_of_gd_parent_id':parent.get('tvcv_id'),  
                          'default_loai_record':loai_record,
                          'tree_view_ref':tree_view_ref, 
                           'search_view_ref': search_view_ref ,                         }" requried="[('loai_record','=','Công Việc')]" 
-                        domain="['|',('loai_record','=',loai_record),('loai_record','=',context.get('loai_comment_la_cong_viec'))]" /><!-- ,('loai_record','=',context.get('loai_comment_la_cong_viec')) -->
-                        <field name="noi_dung" />
+                        domain="['|',('loai_record','=',loai_record),('loai_record','=',context.get('loai_record_more'))]" /><!-- ,('loai_record','=',context.get('loai_comment_la_cong_viec')) -->
+                        <field name="noi_dung"  attrs="{'readonly':['|','&amp;',('cam_sua','=',True),('is_sep','=',False),'&amp;',('id','&gt;',0),'|',('hd_parent_id','!=',False),('cd_parent_id','!=',False)]}" />
                      </group>
                   </group>
                   <group attrs="{'invisible':[('loai_record','!=','Công Việc')]}">

@@ -24,7 +24,7 @@ class CviSuCo(models.Model):
     gio_bat_dau = fields.Datetime(string=u'Giờ bắt đầu ', default=fields.Datetime.now)
     gio_ket_thuc = fields.Datetime(string=u'Giờ Kết Thúc')
     duration = fields.Float(digits=(6, 1), help='Duration in Hours',compute = '_get_duration', store = True,string=u'Thời lượng (giờ)')
-    user_id = fields.Many2one('res.users',default =  lambda self: self.env.uid, string=u'Nhân viên làm')   
+    user_id = fields.Many2one('res.users',default =  lambda self: self.env.uid, string=u'Nhân viên tạo')   
     company_ids = fields.Many2many('res.company',string=u'Đơn vị liên quan',default=lambda self:[self.env.user.company_id.id],required=True)
 #     noi_dung_trich_dan = fields.Char(compute='noi_dung_trich_dan_',store=True)
     ctr_ids  = fields.Many2many('ctr','ctr_cvi_relate','cvi_id','ctr_id',string=u'Ca Trực')
@@ -78,13 +78,14 @@ class CviSuCo(models.Model):
     def fields_view_get(self, view_id=None, view_type=False, toolbar=False, submenu=False):
         res = super(CviSuCo, self).fields_view_get(view_id=view_id, view_type=view_type, toolbar=toolbar, submenu=submenu)
         if view_type in ['tree','form']:
-            loai_record = self._context.get('default_loai_record')
-            if loai_record in [u'Sự Cố',u'Sự Vụ',u'Comment']:
+            loai_record_context = self._context.get('default_loai_record')
+            if loai_record_context in [u'Sự Cố',u'Sự Vụ',u'Comment']:
                 fields = res.get('fields')
-                fields['tvcv_id']['string'] =u'Loại ' + loai_record # ['|',('ctr_ids','=','active_id'),'&',('ctr_ids','!=',False),('gio_ket_thuc','=',False)]
-            elif loai_record == u'Công Việc':
+                fields['tvcv_id']['string'] =u'Loại ' + loai_record_context # ['|',('ctr_ids','=','active_id'),'&',('ctr_ids','!=',False),('gio_ket_thuc','=',False)]
+            elif loai_record_context == u'Công Việc':
                 fields = res.get('fields')
                 fields['tvcv_id']['string'] =u'Thư Viện Công Việc'
+                fields['user_id']['string'] =u'Nhân Viên Làm'
         return res
     @api.depends('loai_record')
     def tree_view_ref_(self):

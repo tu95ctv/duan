@@ -11,6 +11,7 @@ from time import sleep
 import pytz
 import logging
 from odoo import  fields
+import math
 _logger = logging.getLogger(__name__)
 from odoo.osv import expression
 from email.MIMEMultipart import MIMEMultipart
@@ -46,7 +47,8 @@ def fetch1(self,note=False,is_fetch_in_cron = False):
     'create_link_number' : 0,
     'existing_link_number' : 0,
     'begin':begin,
-    'so_page':so_page
+    'so_page':so_page,
+    'page_lists':page_lists
     }
     for page_int in page_lists:
         page_handle(self, page_int, url_id, number_notice_dict)
@@ -73,18 +75,25 @@ def get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_
         last_page_from_website =  get_last_page_from_bdsvn_website(url_id.url)
         self.web_last_page_number = last_page_from_website
     elif url_id_site_leech_name=='chotot':
-        last_page_from_website =6000
+#         last_page_from_website =6000
+        page_1_url = create_cho_tot_page_link(url_id.url, 1)
+        html = request_html(page_1_url)
+        html = json.loads(html)
+        total = int(html["total"])
+        last_page_from_website = math.ceil(total/20.0)
+        self.web_last_page_number = last_page_from_website
     elif url_id_site_leech_name=='lazada':
         last_page_from_website =5
-    if is_fetch_in_cron:
-        set_page_end = False
-    else:
-        set_page_end  =self.set_page_end
-        
-    if not set_page_end:
-        end_page = last_page_from_website
-    else:
-        end_page = set_page_end if set_page_end <= last_page_from_website else last_page_from_website
+#     if is_fetch_in_cron:
+#         set_page_end = False
+#     else:
+#         set_page_end  =self.set_page_end
+#         
+#     if not set_page_end:
+#         end_page = last_page_from_website
+#     else:
+#         end_page = set_page_end if set_page_end <= last_page_from_website else last_page_from_website
+    end_page = last_page_from_website
     begin = url_id.current_page + 1
     if begin > end_page:
         begin  = 1
@@ -95,6 +104,11 @@ def get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_
     page_lists = range(begin, end+1)
     so_page = end - begin + 1
     return end_page_number_in_once_fetch,page_lists, begin, so_page
+def create_cho_tot_page_link(url_input,page_int):
+    repl = 'o=%s'%(20*(page_int-1))
+    url_input = re.sub('o=\d+',repl,url_input)
+    url = url_input +  '&page=' +str(page_int)
+    return url
 def page_handle(self, page_int, url_id, number_notice_dict):
     links_per_page = []
     url_input = url_id.url
@@ -103,15 +117,19 @@ def page_handle(self, page_int, url_id, number_notice_dict):
         url = url_input + '/' + 'p' +str(page_int)
         html = request_html(url)
         soup = BeautifulSoup(html, 'html.parser')
-        title_soups = soup.select("div.p-title  a")
-        for a in title_soups:
-            l =a['href']
-            link = 'https://batdongsan.com.vn' + l
-            links_per_page.append(link)
+        title_and_icons = soup.select('div.search-productItem')
+        for title_and_icon in title_and_icons:
+            topic_dict_of_page = {}
+            title_soups = title_and_icon.select("div.p-title  a")
+            topic_dict_of_page['list_id'] = title_soups[0]['href']
+            icon_soup = title_and_icon.select('img.product-avatar-img')
+            topic_dict_of_page['thumb'] = icon_soup[0]['src']
+#         for a in title_soups:
+#             l =a['href']
+#             link = 'https://batdongsan.com.vn' + l
+            links_per_page.append(topic_dict_of_page)
     elif siteleech_id.name =='chotot':
-        repl = 'o=%s'%(20*(page_int-1))
-        url_input = re.sub('o=\d+',repl,url_input)
-        url = url_input +  '&page=' +str(page_int)
+        url = create_cho_tot_page_link(url_input,page_int)
         html = request_html(url)
         html = json.loads(html)
         html = html['ads']
@@ -129,6 +147,9 @@ def page_handle(self, page_int, url_id, number_notice_dict):
         if  siteleech_id.name =='chotot':
             topic_dict_of_page = link
             link  = 'https://gateway.chotot.com/v1/public/ad-listing/' + str(link['list_id'])
+        elif 'batdongsan' in siteleech_id.name:
+            topic_dict_of_page = link
+            link  = 'https://batdongsan.com.vn' +  link['list_id']
         number_notice_dict["link_number"] = number_notice_dict["link_number"] + 1
         deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page=topic_dict_of_page)
 #         while (True):
@@ -157,52 +178,54 @@ def deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page={}):
     elif siteleech_id.name =='chotot':
         price = get_chotot_topic_vals(self,update_dict,html,siteleech_id,only_return_price=True)
     search_link_existing= self.env['bds.bds'].search([('link','=',link)])
-    #print "topic_dict_of_page.get('image',False)",topic_dict_of_page.get('image',False)
     if search_link_existing:
         number_notice_dict["existing_link_number"] = number_notice_dict["existing_link_number"] + 1
-        
-        
         if self.update_field_of_existing_recorder ==u'giá':
             search_link_and_price_existing= self.env['bds.bds'].search([('link','=',link),('gia','=',price)])
-           
             if search_link_and_price_existing:
                 update_dict.update({'url_ids':[(4,url_id.id)]})
             else:
                 number_notice_dict['update_link_number'] = number_notice_dict['update_link_number'] + 1
                 update_dict.update({'gia':price,'url_ids':[(4,url_id.id)]})
             search_link_existing.write(update_dict)
-        
         elif self.update_field_of_existing_recorder ==u'all':
             if siteleech_id.name =='batdongsan':    
                 get_bds_dict_in_topic(self,update_dict,html,siteleech_id)
-                
+                update_dict['thumb'] = topic_dict_of_page.get('thumb',False)
+                print "***topic_dict_of_page.get('thumb',False)***",topic_dict_of_page.get('thumb',False)
             elif siteleech_id.name =='chotot':
                 get_chotot_topic_vals(self,update_dict,html,siteleech_id)
                 update_dict['thumb'] = topic_dict_of_page.get('image',False)
-            
             update_dict.update({'url_ids':[(4,url_id.id)]})
             search_link_existing.write(update_dict)
             number_notice_dict['update_link_number'] = number_notice_dict['update_link_number'] + 1
-            #print 'update all field a link' 
         else:
-            #print 'khong update existing linnk'
             pass
     else:
         if siteleech_id.name =='batdongsan':    
             get_bds_dict_in_topic(self,update_dict,html,siteleech_id)
+            update_dict['thumb'] = topic_dict_of_page.get('thumb',False)
         elif siteleech_id.name  =='chotot':
             get_chotot_topic_vals(self,update_dict,html,siteleech_id)
             update_dict['thumb'] = topic_dict_of_page.get('image',False)
         update_dict['link'] = link
         update_dict.update({'url_ids':[(4,url_id.id)]})
-        
         self.env['bds.bds'].create(update_dict)
         number_notice_dict['create_link_number'] = number_notice_dict['create_link_number'] + 1    
 #     update_dict.update({'url_ids':[(4,self.id)]})
-
-    #print number_notice_dict
+    print '***number_notice_dict***',number_notice_dict
+###get data one topic of bds site
+def get_images_for_bds_com_vn(soup):
+    rs = soup.select('meta[property="og:image"]')
+    images =  map(lambda i:i['content'],rs)
+    return images
 def get_bds_dict_in_topic(self,update_dict,html,siteleech_id,only_return_price=False):
+    def create_or_get_one_in_m2m_value(val):
+            val = val.strip()
+            if val:
+                return g_or_c_ss(self,'bds.images',{'url':val})
     update_dict['data'] = html
+    
     soup = BeautifulSoup(html, 'html.parser')
     try:
         gia = get_price(soup)
@@ -215,6 +238,15 @@ def get_bds_dict_in_topic(self,update_dict,html,siteleech_id,only_return_price=F
     update_dict['ngay_dang'] = get_ngay_dang(soup)
     update_dict['html'] = get_product_detail(soup)
     update_dict['siteleech_id'] = siteleech_id.id
+    images = get_images_for_bds_com_vn(soup)
+    if images:
+        update_dict['present_image_link'] = images[0]  
+        object_m2m_list = map(create_or_get_one_in_m2m_value, images)
+        m2m_ids = map(lambda x:x.id, object_m2m_list)
+        #print '**m2m_ids**',m2m_ids
+        if m2m_ids:
+            val = [(6, False, m2m_ids)]
+            update_dict['images_ids'] = val
     try:
         update_dict['area'] = get_dientich(soup)
     except:
@@ -304,6 +336,11 @@ def get_name_user(soup):
     return name
 
 def get_chotot_topic_vals(self,update_dict,html_big,siteleech_id,only_return_price=False):
+    def create_or_get_one_in_m2m_value(val):
+            val = val.strip()
+            if val:
+                return g_or_c_ss(self,'bds.images',{'url':val})
+            
     html=html_big['ad']
     try:
         price = float(html['price'])/1000000000
@@ -320,11 +357,8 @@ def get_chotot_topic_vals(self,update_dict,html_big,siteleech_id,only_return_pri
     images = html.get('images',False)
     if images:
         update_dict['present_image_link'] = images[0]  
-      
-        def create_or_get_one_in_m2m_value(val):
-            val = val.strip()
-            if val:
-                return g_or_c_ss(self,'bds.images',{'url':val})
+        
+        
         object_m2m_list = map(create_or_get_one_in_m2m_value, images)
         m2m_ids = map(lambda x:x.id, object_m2m_list)
         #print '**m2m_ids**',m2m_ids
@@ -436,7 +470,8 @@ def get_ngay_dang(soup):
     ngay_dang = datetime.datetime.strptime(ngay_dang_str,"%d-%m-%Y")
     return ngay_dang
 def get_product_detail(soup):
-    select = soup.select('div#product-detail')[0]
+#     select = soup.select('div#product-detail')[0]
+    select = soup.select('div.pm-desc')[0]
     return select
 def get_quan_list_in_big_page(self,column_name='bds_bds.phuong_id'):
     product_category_query = '''select  count(%s), %s from fetch_bds_relate inner join bds_bds on fetch_bds_relate.bds_id = bds_bds.id where fetch_id = %s group by %s'''%(column_name,column_name,self.id,column_name)

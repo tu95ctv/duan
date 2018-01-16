@@ -16,10 +16,11 @@ from odoo.tools import ustr
 from collections import deque
 # from tools import convert_odoo_datetime_to_vn_str
 from odoo.osv import expression
+from dateutil.relativedelta import relativedelta
 
 import pytz
 import string
-from odoo.addons.dai_tgg.mytools import  convert_date_odoo_to_str_vn_date
+from odoo.addons.dai_tgg.mytools import  convert_date_odoo_to_str_vn_date,convert_utc_to_gmt_7
 
 # from mytools import convert_date_odoo_to_str_vn_date
 # def convert_utc_to_gmt_7(utc_datetime_inputs):
@@ -79,8 +80,8 @@ class DownloadCvi(http.Controller):
         
         num2alpha = dict(zip(range(0, 26), string.ascii_uppercase))
         header_bold_style = xlwt.easyxf("font: bold on, name Times New Roman, height 240 ; pattern: pattern solid, fore_colour gray25;borders: left thin, right thin, top thin, bottom thin")
-        normal_border_style = xlwt.easyxf("borders: left thin,right thin, top thin, bottom thin")
-        cty_bold_style = xlwt.easyxf("font: bold on, height 256; align: horiz centre, vert centre, wrap 1; alignment: wrap 1")# align: horiz centre, vert centre
+        normal_border_style = xlwt.easyxf("font:  name Times New Roman, height 240 ;borders: left thin,right thin, top thin, bottom thin")
+        cty_bold_style = xlwt.easyxf("font: bold on, name Times New Roman, height 256; align: horiz centre, vert centre, wrap 1; alignment: wrap 1")# align: horiz centre, vert centre
         bold_style = xlwt.easyxf("font: bold on")
 #         borders":{'left':'thin', 'right': 'thin', 'top': 'thin', 'bottom': 'thin
         if not request.env.user.user_has_groups('base.group_erp_manager'):
@@ -89,9 +90,9 @@ class DownloadCvi(http.Controller):
             company_ids = dlcv_obj.company_ids.ids or [request.env.user.company_id.id]
             
         
-        records = request.env['cvi'].search([('company_id','in',company_ids),('loai_record','=',u'Công Việc')])
-        user_ids = records.mapped('user_id')
-        
+#         records = request.env['cvi'].search([('company_id','in',company_ids),('loai_record','=',u'Công Việc')])
+#         user_ids = records.mapped('user_id')
+        user_ids = request.env['res.users'].search([('company_id','in',company_ids)])
         
         workbook = xlwt.Workbook()
         adict = [
@@ -103,7 +104,7 @@ class DownloadCvi(http.Controller):
                  ('diemtc',{'sum':True})
                 # ,('diemld',{'sum':True})
                             ]
-        offset_column = 1
+        offset_column = 0
         ROW_TRUNG_TAM=0
         ROW_HO_TEN = ROW_TRUNG_TAM+ 1
         ROW_TRAM = ROW_TRUNG_TAM + 2
@@ -116,25 +117,43 @@ class DownloadCvi(http.Controller):
             worksheet = workbook.add_sheet(user_id.name,cell_overwrite_ok=True)
             cvi_fields = request.env['cvi']._fields
             domain = [('user_id','=',user_id.id),('loai_record','=',u'Công Việc')]
-            if dlcv_obj.ngay_bat_dau_filter:
-                domain = expression.AND([[('ngay_bat_dau','>=',fields.Datetime.from_string(dlcv_obj.ngay_bat_dau_filter))],domain])
-            if dlcv_obj.ngay_ket_thuc_filter:
-                domain = expression.AND([[('ngay_bat_dau','<=',fields.Datetime.from_string(dlcv_obj.ngay_ket_thuc_filter))],domain])
+            if dlcv_obj.chon_thang ==u'Tháng Này':
+                utc_time = datetime.datetime.now()
+                vn_time = convert_utc_to_gmt_7(utc_time)
+               
+                vn_thang_nay_date_begin = vn_time.strftime('%Y-%m-01')
+                vn_time_offset_thang_sau =  vn_time + relativedelta(months=1)
+                vn_thang_nay_date_end = vn_time_offset_thang_sau.strftime('%Y-%m-01')
+                domain = expression.AND([[('ngay_bat_dau','>=',vn_thang_nay_date_begin),('ngay_bat_dau','<',vn_thang_nay_date_end)],domain])
+             
+                pass
+            elif dlcv_obj.chon_thang ==u'Tháng Trước':
+                utc_time = datetime.datetime.now()
+                vn_time = convert_utc_to_gmt_7(utc_time)
+                thang_truoc_time = vn_time + relativedelta(months=-1)
+                thang_truoc_date_begin = thang_truoc_time.strftime('%Y-%m-01')
+                thang_truoc_date_end = vn_time.strftime('%Y-%m-01')
+                domain = expression.AND([[('ngay_bat_dau','>=',thang_truoc_date_begin),('ngay_bat_dau','<',thang_truoc_date_end)],domain])
+            else:
+                if dlcv_obj.ngay_bat_dau_filter:
+                    domain = expression.AND([[('ngay_bat_dau','>=',fields.Datetime.from_string(dlcv_obj.ngay_bat_dau_filter))],domain])
+                if dlcv_obj.ngay_ket_thuc_filter:
+                    domain = expression.AND([[('ngay_bat_dau','<=',fields.Datetime.from_string(dlcv_obj.ngay_ket_thuc_filter))],domain])
                 
                 
             person_records = request.env['cvi'].search(domain,order='ngay_bat_dau')
 #             worksheet.write(ROW_TRUNG_TAM, offset_column + 2,u'TRUNG TÂM HẠ TẦNG MẠNG MIỀN NAM',cty_bold_style)
 #             worksheet.write(ROW_TRUNG_TAM + 1, offset_column + 2,u'ĐÀI VIỄN THÔNG HỒ CHÍ MINH',cty_bold_style)
-            worksheet.write_merge(ROW_TRUNG_TAM, ROW_TRUNG_TAM, KEY_COL, VAL_COL, u'TRUNG TÂM HẠ TẦNG MẠNG MIỀN NAM\n ĐÀI VIỄN THÔNG HỒ CHÍ MINH',cty_bold_style)
+            worksheet.write_merge(ROW_TRUNG_TAM, ROW_TRUNG_TAM, 0, 4, u'TRUNG TÂM HẠ TẦNG MẠNG MIỀN NAM\n ĐÀI VIỄN THÔNG HỒ CHÍ MINH',cty_bold_style)
 #             worksheet.write(ROW_TRUNG_TAM + 1, offset_column + 2,u'ĐÀI VIỄN THÔNG HỒ CHÍ MINH',cty_bold_style)
             worksheet.row(ROW_TRUNG_TAM).height_mismatch = True
             worksheet.row(ROW_TRUNG_TAM).height = 256*5
             
-            worksheet.write(ROW_HO_TEN,KEY_COL,u'Họ và Tên')
+            worksheet.write(ROW_HO_TEN,KEY_COL,u'Họ và Tên',normal_border_style)
             worksheet.write(ROW_HO_TEN, VAL_COL,user_id.name,bold_style)
-            worksheet.write(ROW_TRAM,KEY_COL, u'Trạm')
+            worksheet.write(ROW_TRAM,KEY_COL, u'Trạm',normal_border_style)
             worksheet.write(ROW_TRAM,VAL_COL ,user_id.company_id.name,bold_style)
-            worksheet.write(ROW_SUM, KEY_COL,u'Điểm Tổng')
+            worksheet.write(ROW_SUM, KEY_COL,u'Điểm Tổng',normal_border_style)
             for title_column_index, field_from_my_adict in enumerate(adict):
                 title_column_index += offset_column
                 f_name,f_func_dict =  field_from_my_adict

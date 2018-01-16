@@ -225,17 +225,20 @@ class Cvi(models.Model):
                 cam_sua =  False
             else:
 #                 cam_sua = r.create_uid != self.env.user and  r.user_id != self.env.user
-                if r.user_id:
-                    if r.user_id != self.env.user:
-                        if r.create_uid == self.env.user:# and not het_time(r,TIME_ALLOW_SECONDS):
-                            cam_sua = False
-                        else:
-                            cam_sua = True
-                    else:
-                        cam_sua = False
-                else:# giai doan cha
-                    cam_sua = r.create_uid != self.env.user
-                
+#                 if r.user_id:
+                if ( r.user_id == self.env.user) or (r.create_uid == self.env.user):
+                    cam_sua = False
+                else:
+                    cam_sua = True
+#                     if r.user_id != self.env.user:
+#                         if r.create_uid == self.env.user:# and not het_time(r,TIME_ALLOW_SECONDS):
+#                             cam_sua = False
+#                         else:
+#                             cam_sua = True
+#                     else:
+#                         cam_sua = False
+#                 else:# giai doan cha
+#                     cam_sua = r.create_uid != self.env.user
                 if cam_sua:
                     r.ly_do_cam_sua_do_diff_user = u'Cấm do khác user'
                 else:
@@ -278,6 +281,15 @@ class Cvi(models.Model):
         for r in self:
             if r.tvcv_id:
                 r.is_has_tvcv_con = r.tvcv_id.is_has_children
+    @api.multi
+    def cam_sua_(self):
+        for r in self:
+            cam_sua = r.cam_sua_do_time or r.cam_sua_do_diff_user and not r.is_sep
+            r.cam_sua = cam_sua
+#             
+#             if cam_sua:
+#                 if r.is_sep:
+#                     cam_sua =  False
     @api.multi
     @skip_depends_if_not_congviec_decorator
     def is_sep_(self):

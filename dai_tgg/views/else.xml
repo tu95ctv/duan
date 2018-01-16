@@ -156,7 +156,7 @@
             </xpath>
             <xpath expr="//notebook" position="attributes">
                <attribute name="invisible">1</attribute>
-            </xpath>
+            </xpath> 
          </field>
       </record>
       <!--   !-->
@@ -259,8 +259,11 @@
                   <group>
                      <field name="ngay_bat_dau_filter" />
                      <field name="ngay_ket_thuc_filter" />
-                     <!-- <field name="log"></field>
-                            <field name="log2"></field> -->
+                      <field name="gio_utc" />
+                     <field name="gio_vn" />
+                     <field name="chon_thang" />
+                      <field name="log"></field>
+                            <field name="log2"></field>
                      <field name="company_ids" />
                      <field name="member_ids" />
                      <!--   <field name="rs_cvi_ids"></field> -->

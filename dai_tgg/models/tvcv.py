@@ -225,6 +225,13 @@ class TVCV(models.Model):
 #         return res
     @api.model
     def name_search(self, name, args=None, operator='ilike', limit=100):
+        all_loai_record = self._context.get('loai_record_more',[])
+        default_loai_record = self._context.get('default_loai_record')
+        if default_loai_record:
+            all_loai_record.append(default_loai_record)
+        if u'Công Việc' not in all_loai_record:
+            return super(TVCV,self).name_search(name, args=args, operator=operator, limit=limit)
+        
         limit=500
         try:
             id_int = int(name)

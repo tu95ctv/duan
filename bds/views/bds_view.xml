@@ -102,6 +102,7 @@
                 <form>
                     <header>
                         <button name="fetch" string="fetch ahaha" type="object" class="btn-primary" />
+                          <button name="test_something" string="test_something" type="object" class="btn-primary" />
                           <button name="fetch_lazada" string="fetch lazada" type="object" class="btn-primary" />
                         <button name="test_mail" string="mail" type="object" class="btn-primary" />
                         <button name="group_quan" string="group" type="object" class="btn-primary" />
@@ -113,17 +114,15 @@
                     <group>
                         <group>
                               <field name="lazada_url"></field>
-                              <field name="html_lazada"></field>
+                            <field name="input_text"></field>
                             <field name="html_lazada_thread_gia"></field>
-                            <field name="test_lazada"></field>
                             <field name="html_lazada_thread"></field>
                             <field name="last_fetched_url_id" />
                             <field name="name" />
                             <field name="update_field_of_existing_recorder" />
-                            <field name="link" />
                             <field name="web_last_page_number" />
-                            <field name="page_begin" />
-                            <field name="set_page_end" />
+                      <!--     <field name="page_begin" /> -->  
+                        <!--     <field name="set_page_end" /> -->
                             <field name="set_number_of_page_once_fetch" />
                         </group>
                         <group>
@@ -131,15 +130,10 @@
                             <field name="update_link_number" />
                             <field name="create_link_number" />
                             <field name="existing_link_number" />
-                            <field name="bds_ids_quantity" />
-                            <field name="per_page" />
                             <field name="note" />
+                            <field name="invisible_or_show_html_lazada"/>
+                             <field name="html_lazada" attrs="{'invisible':[('invisible_or_show_html_lazada','=',True)]}"></field>
                         </group>
-                    </group>
-                    <group>
-                        <field name="phuong_ids" />
-                        <field name="quan_ids" />
-                        <field name="bds_ids" />
                     </group>
                 </form>
             </field>
@@ -152,14 +146,10 @@
                     <field name="id" />
                     <field name="name" />
                     <field name="url_ids" />
-                    <field name="link" />
-                    <field name="set_page_end" />
                     <field name="link_number" />
                     <field name="update_link_number" />
                     <field name="create_link_number" />
                     <field name="existing_link_number" />
-                    <field name="bds_ids_quantity" />
-                    <field name="per_page" />
                     <field name="note" />
                 </tree>
             </field>
@@ -213,15 +203,15 @@
                             <group>
                             	 <field name="present_image_link" />
                                  <field name="present_image_link_show" widget="image" width="310" />
-                                <field name="name" />
+                                <!-- <field name="name" /> -->
                                 <field name="title" />
+                                <field name="link" />
                                 <field name="gia" />
                                 <field name="area" />
                                 <field name="ngay_dang" />
                                 <field name="address" />
                                 <field name="quan_id" />
                                 <field name="phuong_id" />
-                                <field name="link" />
                                 <field name="cho_tot_link_fake" />
                                 <field name="siteleech_id" />
                                 
@@ -236,9 +226,7 @@
                         <group>
                             <field name="images_ids" />
                         </group>
-                        <group>
-                            <field name="poster_m2m_fake_ids" />
-                        </group>
+           
                         <group>
                             <field name="post_ids_of_user" />
                         </group>
@@ -428,8 +416,10 @@
                             <field name="filter_sms_or_filter_sql" />
                             <field name="sms_id" />
                             <field name="nha_mang" />
-                            <field name="quan_id" />
+                            <field name="quan_ids" />
                             <field name="post_count_min" />
+                            <field name="loc_gian_tiep_quan_bds_topic" />
+                            <field name="gia_be_hon"  attrs="{'invisible':[('loc_gian_tiep_quan_bds_topic','!=','Qua BDS Object')]}"/>
                         </group>
                         <group>
                             <field name="len_poster" />
@@ -444,6 +434,7 @@
                         <field name="phuong_loc_ids" />
                         <field name="exclude_poster_ids" />
                         <field name="poster_ids" />
+                        <field name="bds_ids" />
                     </group>
                 </form>
             </field>

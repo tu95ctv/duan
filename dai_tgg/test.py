@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import string
 import datetime
+from dateutil.relativedelta import relativedelta
+
+# from mytools import convert_utc_to_gmt_7
 # def decorator(f):
 #     print 'out wrapper'
 #     def wrapper(x):
@@ -72,4 +75,10 @@ import datetime
 
 # adict = {'a':1}
 # print u' %(a)s noi di %(a)s'%adict
-print datetime.date.today().strftime('%d/%m/%Y')
+# vn_time = datetime.datetime.now()
+vn_time= datetime.datetime(2011, 1, 3, 20, 0)
+print vn_time
+# vn_time = convert_utc_to_gmt_7(utc_time)
+vn_time = vn_time + relativedelta(month=1)
+str_dau_thang = vn_time.strftime('%Y-%m-%d')
+print str_dau_thang
