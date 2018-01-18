@@ -38,7 +38,9 @@ class ImportThuVien(models.Model):
     skipupdate_number=fields.Integer()
     thong_bao_khac = fields.Char()
     trigger_model = fields.Selection([(u'kiemke',u'kiemke'),
-                                    (u'vattu',u'vattu'),(u'kknoc',u'kknoc')])
+                                    (u'vattu',u'vattu'),(u'kknoc',u'kknoc'),
+                                    (u'cvi',u'cvi')
+                                    ])
     log = fields.Text()
 #     f1 = fields.Boolean()
 #     f2 = fields.Boolean()

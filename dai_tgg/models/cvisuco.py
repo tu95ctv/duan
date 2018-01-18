@@ -37,8 +37,7 @@ class CviSuCo(models.Model):
 #     comment_ids = fields.One2many('comment','cvi_id',string=u'Comments/Ghi Chú/Tiến Độ')
     comment_ids = fields.One2many('cvi','cvi_id',string=u'Comments/Ghi Chú/Tiến Độ')
     comments_show = fields.Char(compute='comments_show_',string=u'Comments/Ghi Chú/Tiến Độ')
-    
-    
+    trig_field = fields.Boolean()
     
                 
                 

@@ -120,10 +120,8 @@ class Cvi(models.Model):
     ALLOW_WRITE_FIELDS_CHOT = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids',]
     ALLOW_WRITE_FIELDS_DIFF_USER = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids','percent_diemtc']
     IS_CAM_SUA_DO_CHOT = True
-    
-   
-                
-    @api.depends('user_id','create_uid')
+
+    @api.depends('user_id','create_uid','trig_field')
     def department_id_(self):
         for r in self:
             if r.user_id:
