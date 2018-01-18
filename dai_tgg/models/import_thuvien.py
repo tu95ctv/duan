@@ -18,8 +18,8 @@ class ImportThuVien(models.Model):
     _name = 'importthuvien' 
     type_choose = fields.Selection([(u'Thư viện công việc',u'Thư viện công việc'),
                                     (u'User',u'User')
-                                    ,(u'Công Ty',u'Công Ty')
-                                    ,(u'Công Ty',u'Công Ty')
+                                    #,(u'Công Ty',u'Công Ty')
+                                    ,(u'Department',u'Department')
                                     ,(u'Kiểm Kê',u'Kiểm Kê'),(u'Vật Tư LTK',u'Vật Tư LTK')
                                     ,(u'x',u'x'),(u'640',u'640G 1850 ')
                                     ,(u'INVENTORY_240G',u'INVENTORY_240G')
@@ -63,13 +63,10 @@ class ImportThuVien(models.Model):
 #         _sql = "select 1 + 1"
 #         self._cr.execute(_sql)
 #         kq_fetch =  self._cr.fetchall()
-#         one = self.env['res.company'].search([('id','parent_of',[8])])#self.env.user.company_id
-#         tong += u'%s'%one + '\n'
 #         _sql = "select 2 + 2"
 #         self._cr.execute(_sql)
 #         kq_fetch = self._cr.fetchall()
-#         three = self.env['res.company'].search([('id','child_of',[9])])#self.env.user.company_id
-#         four = self.env['res.company'].search([('id','child_of',[8])])#self.env.user.company_id
+#       
 # 
 # 
 #         _logger.info('***22222222222222222****'*20 + u'%s'%kq_fetch)

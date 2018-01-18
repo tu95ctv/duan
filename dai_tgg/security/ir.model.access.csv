@@ -14,3 +14,4 @@ access_dai_tgg_file,dai_tgg.file,model_dai_tgg_file,base.group_user,1,1,1,1
 access_dai_tgg_res_partner1,dai_tgg res partner,base.model_res_partner,base.group_user,1,1,1,1
 access_dai_tgg_res_company,dai_tgg res partner,base.model_res_company,base.group_user,1,1,1,1
 access_dai_tgg_dlcv,dai_tgg.dlcv,model_dlcv,base.group_user,1,1,1,1
+access_dai_tgg_department,dai_tgg.department,hr.model_hr_department,base.group_user,1,1,1,1

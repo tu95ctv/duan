@@ -9,9 +9,9 @@
          <field name="model">res.users</field>
          <field name="arch" type="xml">
             <search string="Search user">
-               <field name="name" string="Name hoặc Mail hoặc Đơn Vị" filter_domain="['|','|',('name','ilike',self),('login','ilike',self),('company_id','ilike',self)]" />
+               <field name="name" string="Name hoặc Mail hoặc Đơn Vị" filter_domain="['|','|',('name','ilike',self),('login','ilike',self),('department_id','ilike',self)]" />
                <group string="Group By Đơn vị">
-                  <filter string="Đơn Vị" context="{'group_by' : 'company_id'}" />
+                  <filter string="Đơn Vị" context="{'group_by' : 'department_id'}" />
                </group>
             </search>
          </field>
@@ -33,7 +33,7 @@
                      <group>
                         <!--   <field name="contact_address" string="Địa chỉ" /> -->
                         <field name="phone" />
-                        <field name="company_id" />
+                        <field name="department_id" />
                         <field name="groups_id" />
                      </group>
                   </group>
@@ -58,7 +58,7 @@
                <field name="date" string="Ngày sinh" />
                <!--   <field name="contact_address" string="Địa chỉ" /> -->
                <field name="phone" />
-               <field name="company_id" />
+               <field name="department_id" />
             </tree>
          </field>
       </record>
@@ -179,7 +179,7 @@
             
             <!-- 
             <xpath expr="//field[@name='parent_id']" position="before">
-          		  <field name="company_id"></field>
+          		  <field name="department_id"></field>
             </xpath>
              -->
          </field>
@@ -264,7 +264,7 @@
                      <field name="chon_thang" />
                       <field name="log"></field>
                             <field name="log2"></field>
-                     <field name="company_ids" />
+                     <field name="department_ids" />
                      <field name="member_ids" />
                      <!--   <field name="rs_cvi_ids"></field> -->
                   </group>
@@ -273,15 +273,23 @@
          </field>
       </record>
       <record model="ir.actions.act_window" id="dlcv_action">
-         <field name="name">dlcv</field>
+         <field name="name">Download P3</field>
          <field name="res_model">dlcv</field>
          <field name="view_mode">tree,form</field>
       </record>
+      <record model="ir.actions.act_window" id="department_action">
+         <field name="name">Phòng Ban</field>
+         <field name="res_model">hr.department</field>
+         <field name="view_mode">tree,form</field>
+      </record>
+      
       <menuitem name="Menu Khác" id="else_more_menu" parent="ctrtvcv_icon" sequence="2" />
       <menuitem name="Cấu hình" id="config_menu" parent="else_more_menu" action="ltk_config_settings_action" sequence="3" />
       <menuitem name="Users(Nhân viên)" id="users_menu" parent="else_more_menu" action="users_action" sequence="3" />
-      <menuitem id="company_menu" parent="else_more_menu" action="company_action" sequence="4" />
-      <menuitem name="Partner(Đối tác))" id="partner_menu" parent="else_more_menu" action="partner_action" sequence="3" />
+      <!-- <menuitem id="company_menu" parent="else_more_menu" action="company_action" sequence="4" /> -->
+      
+      <menuitem id="department_menu" parent="else_more_menu" action="department_action" sequence="4" />
+      <menuitem name="Partner(Đối tác)" id="partner_menu" parent="else_more_menu" action="partner_action" sequence="3" />
       <menuitem id="file_menu" parent="else_more_menu" action="file_action" sequence="6" />
       <menuitem id="comment_menu" parent="else_more_menu" action="comment_action" sequence="6" />
       <menuitem id="dlcv_menu" parent="else_more_menu" action="dlcv_action" sequence="7" />

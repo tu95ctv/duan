@@ -255,8 +255,10 @@ def importthuvien(odoo_or_self_of_wizard):
                          #('parent_id',{'model':'res.users','func':None,'xl_title':u'Cấp trên','key':False,'key_name':'login','split_first_item_if_comma':True}),
                          ('cac_sep_ids',{'model':'res.users','func':None,'xl_title':u'Cấp trên','key':False,'key_name':'login','m2m':True}),
 #                         ('company_id',{'model':'congty','func':None,'xl_title':u'Bộ Phận','key':False}),
-                        ('company_ids',{'model':'res.company','func':None,'xl_title':u'Bộ Phận','key':False,'m2m':True}),
-                        ('company_id',{'model':'res.company','func':None,'xl_title':u'Bộ Phận','key':False}),
+#                         ('company_ids',{'model':'res.company','func':None,'xl_title':u'Bộ Phận','key':False,'m2m':True}),
+#                         ('company_id',{'model':'res.company','func':None,'xl_title':u'Bộ Phận','key':False}),
+                        ('department_id',{'model':'hr.department','func':None,'xl_title':u'Bộ Phận','key':False}),
+
                         )
                 title_rows = [1]
 #             elif r.type_choose ==u'Công Ty':
@@ -279,6 +281,19 @@ def importthuvien(odoo_or_self_of_wizard):
 #                           ('cong_ty_type',{'model':'congtytype','func':None,'xl_title':u'cong_ty_type','key':False}),
                         )
                 title_rows = [1]
+                
+            elif r.type_choose ==u'Department':
+                model_name = 'hr.department'
+#                 model_name = 'congty'
+                sheet_names = [u'Công Ty']
+                field_dict= (
+                        ('name',{'func':None,'xl_title':u'công ty','key':True}),
+                       ('parent_id',{'model':'hr.department','func':None,'xl_title':u'parent_id','key':False}),
+#                           ('cong_ty_type',{'model':'congtytype','func':None,'xl_title':u'cong_ty_type','key':False}),
+                        )
+                title_rows = [1]
+                
+                
             elif r.type_choose ==u'Kiểm Kê':
                 sheet_names = [u'web']
                 begin_row_offset = 2               
@@ -437,11 +452,16 @@ def importthuvien(odoo_or_self_of_wizard):
                         cong_viec_cate_id = get_or_create_object_sosanh(self,'tvcvcate',{'name':sheet_name},{} )
                         update_dict['cong_viec_cate_id'] = cong_viec_cate_id.id
                         update_dict['loai_record'] = u'Công Việc'
+                    if r.type_choose==u'Department':
+                        update_dict['company_id'] = self.env['res.company'].search([],limit=1,order='id asc')[0].id
                     elif r.type_choose==u'User':
                         group_id = self.env.ref('base.group_user').id
                         update_dict['groups_id'] = [(4,group_id)]
                         update_dict['password'] = '123456'
                         update_dict['lang'] = 'vi_VN'
+                        company_id = self.env['res.company'].search([],limit=1,order='id asc')[0].id
+                        update_dict['company_ids'] =[(4,company_id )]
+                        update_dict['company_id'] = company_id
                     elif r.type_choose==u'INVENTORY_240G':
                         update_dict['sheet_name'] = sheet_name
                         update_dict['file_name'] = r.type_choose

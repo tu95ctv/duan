@@ -8,7 +8,7 @@ class User(models.Model):
     cac_linh_ids = fields.Many2many('res.users','user_sep_relate','sep_id', 'user_id',string=u'Các Nhân Viên')
     is_admin = fields.Boolean(compute='is_admin_')
     all_sep_ids = fields.Many2many('res.users','user_sep_relate','user_id','sep_id', string=u'Tất cả Lãnh Đạo',compute='all_sep_ids')
-    
+    department_id = fields.Many2one('hr.department')
     @api.depends('cac_sep_ids')
     def all_sep_ids_(self):
         for r in self:
@@ -17,8 +17,6 @@ class User(models.Model):
                 all_sep.append(sep.id)
                 for sep_lon in sep.cac_sep_ids:
                     all_sep.append(sep_lon.id)
-                
-    
     @api.model
     def create(self, vals):
         user = super(User, self).create(vals)

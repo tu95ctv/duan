@@ -9,9 +9,9 @@
          <field name="model">res.users</field>
          <field name="arch" type="xml">
             <search string="Search user">
-               <field name="name" string="Name hoặc Mail hoặc Đơn Vị" filter_domain="['|','|',('name','ilike',self),('login','ilike',self),('company_id','ilike',self)]" />
+               <field name="name" string="Name hoặc Mail hoặc Đơn Vị" filter_domain="['|','|',('name','ilike',self),('login','ilike',self),('department_id','ilike',self)]" />
                <group string="Group By Đơn vị">
-                  <filter string="Đơn Vị" context="{'group_by' : 'company_id'}" />
+                  <filter string="Đơn Vị" context="{'group_by' : 'department_id'}" />
                </group>
             </search>
          </field>
@@ -32,7 +32,7 @@
                      </group>
                      <group>
                         <field name="phone" />
-                        <field name="company_id" />
+                        <field name="department_id" />
                         <field name="groups_id" />
                      </group>
                   </group>
@@ -56,7 +56,7 @@
                <field name="login" />
                <field name="date" string="Ngày sinh" />
                <field name="phone" />
-               <field name="company_id" />
+               <field name="department_id" />
             </tree>
          </field>
       </record>
@@ -204,7 +204,7 @@
                         <group>
                             <field name="ngay_bat_dau_filter"></field>
                             <field name="ngay_ket_thuc_filter"></field>
-                            <field name="company_ids"></field>
+                            <field name="department_ids"></field>
                             <field name="member_ids"></field>
                         </group>
                     </sheet>

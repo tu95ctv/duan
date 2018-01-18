@@ -10,8 +10,8 @@ class CTR(models.Model):
     date = fields.Date(string=u'Ngày',default= convert_utc_to_gmt_7(datetime.datetime.now()).date() )#readonly = True
     gio_bat_dau_ca = fields.Datetime(u'Giờ bắt đầu ca ',default=lambda self: self.gio_bat_dau_defaut_or_ket_thuc_())
     gio_ket_thuc_ca = fields.Datetime(u'Giờ Kết Thúc ca',default=lambda self: self.gio_bat_dau_defaut_or_ket_thuc_(is_tinh_gio_bat_dau_or_ket_thuc = 'gio_ket_thuc'))#
-    company_id = fields.Many2one('res.company',string=u'Đơn vị',default=lambda self:self.env.user.company_id, readonly=True,required=True)
-    member_ids = fields.Many2many('res.users', string=u'Những thành viên trực',default =  lambda self : [self.env.user.id])
+    department_id = fields.Many2one('hr.department',string=u'Đơn vị',default=lambda self:self.env.user.department_id, readonly=True,required=True)
+    member_ids = fields.Many2many('res.users', string=u'Những thành viên trực',default =  lambda self : [self.env.user.id],required=True)
     cvi_ids = fields.Many2many('cvi','ctr_cvi_relate','ctr_id','cvi_id',string=u'Công Việc/Sự Cố/Sự Vụ')
 #     su_co_ids = fields.Many2many('suco','ctr_suco_rel','ctr_id','suco_id',string=u'Sự Cố')
 #     su_vu_ids = fields.Many2many('suvu','ctr_suvu_rel','ctr_id','suvu_id',string=u'Sự Vụ')
@@ -20,10 +20,10 @@ class CTR(models.Model):
     giao_ca_ids = fields.One2many('cvi','giao_ca_id',string=u'Giao Ca Sau')
     giao_ca_truoc_ids = fields.Many2many('cvi', compute='nhan_ca_ids_',string=u'Ca Trước Giao')
     #cvi_loc   = fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')], string = u'Lọc loại record',)
-    @api.depends('name','company_id')
+    @api.depends('name','department_id')
     def nhan_ca_ids_(self):
         for r in self:
-            domain = [('giao_ca_id','!=',False),('company_id','=',r.company_id.id)]
+            domain = [('giao_ca_id','!=',False),('department_id','=',r.department_id.id)]
             if r.id:
                 domain.append(('giao_ca_id','<',r.id))
             giao_ca_truoc_ids = self.env['cvi'].search(domain,limit=10,order='giao_ca_id desc')
@@ -55,8 +55,6 @@ class CTR(models.Model):
             return name
     @api.multi
     def name_get(self):
-        
-             
         return [(r.id, r.get_names()) for r in self]
 #     @api.model
 #     def fields_view_get(self, view_id=None, view_type=False, toolbar=False, submenu=False):
@@ -78,8 +76,6 @@ class CTR(models.Model):
 #         for r in self:
 #             if r.gio_bat_dau:
 #                 r.date = convert_odoo_datetime_to_vn_datetime(r.gio_bat_dau).date()
-    
-    
     def buoi_ca_now_default_(self,gio_bat_dau_vn_return = False):
         now_vn_datetime = convert_utc_to_gmt_7(datetime.datetime.now())
         now_hour = now_vn_datetime.hour
@@ -95,7 +91,7 @@ class CTR(models.Model):
         adict = {u'Sáng':'sang',u'Chiều':'chieu',u'Đêm':'dem'}
         buoi_ca,now_vn_datetime =  self.buoi_ca_now_default_(gio_bat_dau_vn_return = True)
         ca_x_bat_dau_key = 'ca_' + adict[buoi_ca] + '_bat_dau'
-        get_ca_x_bat_dau_from_congty = getattr(self.env.user.company_id,ca_x_bat_dau_key)
+        get_ca_x_bat_dau_from_congty = getattr(self.env.user.department_id,ca_x_bat_dau_key)
         if get_ca_x_bat_dau_from_congty==False:
             return datetime.datetime.now()
         x =  now_vn_datetime.strftime('%d-%m-%Y')
@@ -106,7 +102,7 @@ class CTR(models.Model):
             return gio_bat_dau_in_utc   
         else:
             ca_x_duration_key = 'ca_' + adict[buoi_ca] + '_duration'
-            duration_hours = getattr(self.env.user.company_id,ca_x_duration_key)
+            duration_hours = getattr(self.env.user.department_id,ca_x_duration_key)
             if duration_hours:
                 gio_ket_thuc_utc = gio_bat_dau_in_utc + datetime.timedelta(hours=duration_hours,seconds=-1)
                 return gio_ket_thuc_utc
@@ -115,7 +111,7 @@ class CTR(models.Model):
     @api.model
     def default_get(self, fields):
         res = super(CTR, self).default_get(fields)
-        adict = {'cvi_ids':{'model':'cvi','domain':[('gio_ket_thuc','=',False),('ctr_ids','!=',False),('company_ids','=',self.env.user.company_id.id)]},
+        adict = {'cvi_ids':{'model':'cvi','domain':[('gio_ket_thuc','=',False),('ctr_ids','!=',False),('department_ids','=',self.env.user.department_id.id)]},
 #                  'su_co_ids':{'model':'suco','add_domain':[('ctr_ids','!=',False)]},
 #                  'su_vu_ids':{'model':'suvu','add_domain':[('ctr_ids','!=',False)]}
               

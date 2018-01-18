@@ -33,7 +33,7 @@
             <tree string="comment">
                <field name="noi_dung" />
                <field name="loai_record" />
-               <field name="company_id" />
+               <field name="department_id" />
                <field name="create_uid" string="Người comment" />
                <field name="create_date" string="Thời gian" />
             </tree>
@@ -51,7 +51,7 @@
           <!--   <tree string="comment">
                <field name="noi_dung" />
                <field name="loai_record" />
-               <field name="company_id" />
+               <field name="department_id" />
                <field name="create_uid" string="Người comment" />
                <field name="create_date" string="Thời gian" />
             </tree>-->
@@ -71,7 +71,7 @@
          <field name="inherit_id" ref="dai_tgg.comment_list"></field>
          <field name="mode">primary</field>
          <field name="arch" type="xml">
-         <xpath expr="//field[@name='company_id']" position="after">
+         <xpath expr="//field[@name='department_id']" position="after">
                      	<field name="giao_ca_id"></field>
          
          </xpath>

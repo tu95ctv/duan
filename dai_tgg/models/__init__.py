@@ -8,4 +8,4 @@ from . import models
 #from . import adaptor
 #from . import imports
 from . import tao_instance
-from . import cvisuco, cvi,ctr,conf,tvcv,users,company,comment,dlcv,import_thuvien
+from . import cvisuco, cvi,ctr,conf,tvcv,users,company,dlcv,import_thuvien

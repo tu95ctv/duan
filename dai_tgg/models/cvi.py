@@ -121,13 +121,15 @@ class Cvi(models.Model):
     ALLOW_WRITE_FIELDS_DIFF_USER = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids','percent_diemtc']
     IS_CAM_SUA_DO_CHOT = True
     
+   
+                
     @api.depends('user_id','create_uid')
-    def company_id_(self):
+    def department_id_(self):
         for r in self:
             if r.user_id:
-                r.company_id = r.user_id.company_id
+                r.department_id = r.user_id.department_id
             else:
-                r.company_id = r.create_uid.company_id
+                r.department_id = r.create_uid.department_id
    
 #     loai_record = fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ')], string = u'Loại Record')
 #     name = fields.Char(compute='name_',store=True)
@@ -137,8 +139,8 @@ class Cvi(models.Model):
 #     duration = fields.Float(digits=(6, 1), help='Duration in Hours',compute = '_get_duration', store = True,string=u'Thời lượng (giờ)')
 #     
 #     user_id = fields.Many2one('res.users',default =  lambda self: self.env.uid, string=u'Nhân viên làm')   
-#     company_id = fields.Many2one('res.company',string=u'Đơn vị tạo',compute='company_id_',store=True)
-#     company_ids = fields.Many2many('res.company',string=u'Đơn vị liên quan',default=lambda self:[self.env.user.company_id.id],required=True)
+#     department_id = fields.Many2one('hr.department',string=u'Đơn vị tạo',compute='department_id_',store=True)
+#     department_ids = fields.Many2many('hr.department',string=u'Đơn vị liên quan',default=lambda self:[self.env.user.department_id.id],required=True)
 #     noi_dung = fields.Text(string=u'Nội dung') 
 #     noi_dung_trich_dan = fields.Char(compute='noi_dung_trich_dan_',store=True)
 #     comment_ids = fields.One2many('comment','cvi_id',string=u'Comments/Ghi Chú/Tiến Độ')
@@ -546,11 +548,11 @@ class Cvi(models.Model):
                     update_dict[field] =getattr(r,field)
         return update_dict
  
-    @api.constrains('so_luong','so_lan','company_ids')
+    @api.constrains('so_luong','so_lan','department_ids')
     def gd_parent_constrains(self):
         for r in self:
             if r.gd_children_ids:
-                update_field_list = ['so_luong','so_lan','company_ids']
+                update_field_list = ['so_luong','so_lan','department_ids']
                 update_dict = self.update_dict_for_child_when_update_parent(r,update_field_list)
                 for child in r.gd_children_ids:
                     child.write(update_dict)        
@@ -559,16 +561,16 @@ class Cvi(models.Model):
     def gd_children_constrains(self):
         for r in self:
             if r.gd_parent_id:
-                update_field_list = ['so_luong','so_lan', 'company_ids']
+                update_field_list = ['so_luong','so_lan', 'department_ids']
                 update_dict = self.get_parent_value_for_child(r,update_field_list,'gd_parent_id')
                 r.write(update_dict)
 #                 
     ## CONSTRAINS của chia điểm
-    @api.constrains('tvcv_id','so_luong','so_lan','gio_ket_thuc','gio_bat_dau','company_ids','noi_dung')
+    @api.constrains('tvcv_id','so_luong','so_lan','gio_ket_thuc','gio_bat_dau','department_ids','noi_dung')
     def cd_parent_constrains(self):
         for r in self:
             if r.cd_children_ids:
-                update_field_list = ['tvcv_id','so_luong','gio_ket_thuc','gio_bat_dau','so_lan','company_ids','noi_dung']
+                update_field_list = ['tvcv_id','so_luong','gio_ket_thuc','gio_bat_dau','so_lan','department_ids','noi_dung']
                 update_dict_of_child = self.update_dict_for_child_when_update_parent(r,update_field_list)
                 for cd_child in r.cd_children_ids:
                     cd_child.write(update_dict_of_child)
@@ -577,18 +579,18 @@ class Cvi(models.Model):
     def cd_children_constrains(self):
         for r in self:
             if r.cd_parent_id:
-                update_field_list = ['tvcv_id','so_luong','gio_ket_thuc','gio_bat_dau','so_lan', 'company_ids','noi_dung']
+                update_field_list = ['tvcv_id','so_luong','gio_ket_thuc','gio_bat_dau','so_lan', 'department_ids','noi_dung']
                 update_dict = self.get_parent_value_for_child(r,update_field_list,'cd_parent_id')
                 r.write(update_dict)
         
     ### chung điểm
     
-    @api.constrains('tvcv_id','so_luong','so_lan','gio_ket_thuc','gio_bat_dau','company_ids','noi_dung')
+    @api.constrains('tvcv_id','so_luong','so_lan','gio_ket_thuc','gio_bat_dau','department_ids','noi_dung')
     def chd_parent_constrains(self):
         for r in self:
             try:
                 if r.hd_children_ids:
-                    update_field_list = ['tvcv_id','so_luong','gio_ket_thuc','gio_bat_dau','so_lan','company_ids','noi_dung']
+                    update_field_list = ['tvcv_id','so_luong','gio_ket_thuc','gio_bat_dau','so_lan','department_ids','noi_dung']
                     update_dict_of_child = self.update_dict_for_child_when_update_parent(r,update_field_list)
                     for cd_child in r.hd_children_ids:
                         cd_child.write(update_dict_of_child)
@@ -600,7 +602,7 @@ class Cvi(models.Model):
         try:
             for r in self:
                 if r.hd_parent_id:
-                    update_field_list = ['tvcv_id','so_luong','gio_ket_thuc','gio_bat_dau','so_lan', 'company_ids','noi_dung']
+                    update_field_list = ['tvcv_id','so_luong','gio_ket_thuc','gio_bat_dau','so_lan', 'department_ids','noi_dung']
                     update_dict = self.get_parent_value_for_child(r,update_field_list,'hd_parent_id')
                     r.write(update_dict)
         except exceptions as e:
@@ -711,14 +713,14 @@ class Cvi(models.Model):
 #         action = self.env.ref('dai_tgg.cvi_action').read()[0]
 # #         print "action['domain']",action['domain']
 #      
-#         domain = ['|',('company_id','child_of',self.env.user.company_id.id),('company_ids','child_of',[self.env.user.company_id.id])]
+#         domain = ['|',('department_id','child_of',self.env.user.department_id.id),('department_ids','child_of',[self.env.user.department_id.id])]
 #         action['domain'] = domain
 #         return action
 #    
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
         # TDE NOTE: WHAAAAT ??? is this because inventory_value is not stored ?
-        # TDE FIXME: why not storing the inventory_value field ? company_id is required, stored, and should not create issues
+        # TDE FIXME: why not storing the inventory_value field ? department_id is required, stored, and should not create issues
         res = super(Cvi, self).read_group(domain, fields, groupby, offset=offset, limit=limit, orderby=orderby, lazy=lazy)
 #         print 'res...',res
 #         print 'len(res)',len(res)

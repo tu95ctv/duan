@@ -14,7 +14,7 @@
                <field name="su_vu_ids" filter_domain="['|',('su_vu_ids.loai_su_vu_id.name','ilike',self),('su_vu_ids.noi_dung','ilike',self)]" />
                 -->
                <group string="Group By Đơn vị">
-                  <filter string="Đơn Vị" context="{'group_by' : 'company_id'}" />
+                  <filter string="Đơn Vị" context="{'group_by' : 'department_id'}" />
                </group>
             </search>
          </field>
@@ -28,7 +28,7 @@
                   <group>
                      <group>
                         <field name="name" />
-                        <field name="company_id" />
+                        <field name="department_id" />
                         <field name="date" />
                         <field name="ca" />
                         <field name="gio_bat_dau_ca" invisible="1" />
@@ -37,11 +37,11 @@
                      </group>
                      <group>
                         <field name="member_ids"        
-                        domain="['|',('company_id','child_of',company_id),('company_id','parent_of',company_id)]"
+                        domain="['|',('department_id','child_of',department_id),('department_id','parent_of',department_id)]"
                        >
                            <tree>
                               <field name="name" string="Tên người Trực" />
-                              <field name="company_id" />
+                              <field name="department_id" />
                            </tree>
                         </field>
                      </group>
@@ -50,7 +50,7 @@
                   <notebook>
                      <page string="Công Việc/Sự Cố/Sự Vụ">
                         <field name="cvi_ids" context="{'active_ctr_id':active_id,'tree_view_ref':'dai_tgg.cvi_list_sample'}" 
-                        domain="[('ctr_ids','!=',False),('gio_ket_thuc','=',False),('company_ids','=',company_id)]" />
+                        domain="[('ctr_ids','!=',False),('gio_ket_thuc','=',False),('department_ids','=',department_id)]" />
                      </page>
                      <page string="Nhận Ca, Giao Ca">
                      			<group>
@@ -107,7 +107,7 @@
                <field name="su_vu_ids" />
                 -->
                <field name="member_ids" />
-               <field name="company_id" />
+               <field name="department_id" />
                
                     <field name="create_uid" string="Người tạo" groups="dai_tgg.show_thong_tin_create_write"></field>
                     <field name="write_uid" string="Người sửa" groups="dai_tgg.show_thong_tin_create_write"></field>

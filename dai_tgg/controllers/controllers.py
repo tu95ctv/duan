@@ -80,19 +80,20 @@ class DownloadCvi(http.Controller):
         
         num2alpha = dict(zip(range(0, 26), string.ascii_uppercase))
         header_bold_style = xlwt.easyxf("font: bold on, name Times New Roman, height 240 ; pattern: pattern solid, fore_colour gray25;borders: left thin, right thin, top thin, bottom thin")
+        normal_border_style_not_border = xlwt.easyxf("font:  name Times New Roman, height 240")
         normal_border_style = xlwt.easyxf("font:  name Times New Roman, height 240 ;borders: left thin,right thin, top thin, bottom thin")
-        cty_bold_style = xlwt.easyxf("font: bold on, name Times New Roman, height 256; align: horiz centre, vert centre, wrap 1; alignment: wrap 1")# align: horiz centre, vert centre
+        cty_bold_style = xlwt.easyxf("font: bold on, name Times New Roman, height 256; align: horiz left, vert centre, wrap 1; alignment: wrap 1")# align: horiz centre, vert centre
         bold_style = xlwt.easyxf("font: bold on")
 #         borders":{'left':'thin', 'right': 'thin', 'top': 'thin', 'bottom': 'thin
         if not request.env.user.user_has_groups('base.group_erp_manager'):
-            company_ids = [request.env.user.company_id.id]
+            department_ids = [request.env.user.department_id.id]
         else:
-            company_ids = dlcv_obj.company_ids.ids or [request.env.user.company_id.id]
+            department_ids = dlcv_obj.department_ids.ids or [request.env.user.department_id.id]
             
         
-#         records = request.env['cvi'].search([('company_id','in',company_ids),('loai_record','=',u'Công Việc')])
+#         records = request.env['cvi'].search([('department_id','in',department_ids),('loai_record','=',u'Công Việc')])
 #         user_ids = records.mapped('user_id')
-        user_ids = request.env['res.users'].search([('company_id','in',company_ids)])
+        user_ids = request.env['res.users'].search([('department_id','in',department_ids)])
         
         workbook = xlwt.Workbook()
         adict = [
@@ -149,11 +150,11 @@ class DownloadCvi(http.Controller):
             worksheet.row(ROW_TRUNG_TAM).height_mismatch = True
             worksheet.row(ROW_TRUNG_TAM).height = 256*5
             
-            worksheet.write(ROW_HO_TEN,KEY_COL,u'Họ và Tên',normal_border_style)
+            worksheet.write(ROW_HO_TEN,KEY_COL,u'Họ và Tên',normal_border_style_not_border)
             worksheet.write(ROW_HO_TEN, VAL_COL,user_id.name,bold_style)
-            worksheet.write(ROW_TRAM,KEY_COL, u'Trạm',normal_border_style)
-            worksheet.write(ROW_TRAM,VAL_COL ,user_id.company_id.name,bold_style)
-            worksheet.write(ROW_SUM, KEY_COL,u'Điểm Tổng',normal_border_style)
+            worksheet.write(ROW_TRAM,KEY_COL, u'Trạm',normal_border_style_not_border)
+            worksheet.write(ROW_TRAM,VAL_COL ,user_id.department_id.name,bold_style)
+            worksheet.write(ROW_SUM, KEY_COL,u'Điểm Tổng',normal_border_style_not_border)
             for title_column_index, field_from_my_adict in enumerate(adict):
                 title_column_index += offset_column
                 f_name,f_func_dict =  field_from_my_adict
@@ -208,7 +209,7 @@ class DownloadCvi(http.Controller):
         
         response = request.make_response(None,
             headers=[('Content-Type', 'application/vnd.ms-excel'),
-                    ('Content-Disposition', 'attachment; filename=table_cv_%s_%s.xls;'%(user_id.company_id.name,datetime.datetime.now().strftime('%d_%m_%H_%M')))],
+                    ('Content-Disposition', 'attachment; filename=table_cv_%s_%s.xls;'%(user_id.department_id.name,datetime.datetime.now().strftime('%d_%m_%H_%M')))],
            # cookies={'fileToken': token}
             )
         workbook.save(response.stream)

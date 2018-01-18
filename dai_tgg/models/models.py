@@ -130,7 +130,7 @@ from odoo.addons.dai_tgg.mytools import  convert_utc_to_gmt_7,name_compute,conve
 # class DoiTac(models.Model):
 #     _name = 'doitac'
 #     name = fields.Char(string=u'Tên đối tác')
-#     company_id = fields.Many2one('congty',string=u'Đơn vị')
+#     department_id = fields.Many2one('congty',string=u'Đơn vị')
 #     chuc_vu = fields.Char(string=u'Chức vụ')
 
     
@@ -151,7 +151,7 @@ from odoo.addons.dai_tgg.mytools import  convert_utc_to_gmt_7,name_compute,conve
 
     
     
-#     nhan_vien_ids = fields.One2many('res.users','company_id')
+#     nhan_vien_ids = fields.One2many('res.users','department_id')
     
 # class CongTy(models.Model):
 #     _name = 'congty'
@@ -166,7 +166,7 @@ from odoo.addons.dai_tgg.mytools import  convert_utc_to_gmt_7,name_compute,conve
 #     ca_sang_duration = fields.Float(digits=(6,1),default=7, string = u'Ca sáng ')
 #     ca_chieu_duration = fields.Float(digits=(6,1),default=8.5)
 #     ca_dem_duration = fields.Float(digits=(6,1),default=8.5)
-#     nhan_vien_ids = fields.One2many('res.users','company_id')
+#     nhan_vien_ids = fields.One2many('res.users','department_id')
 #     @api.constrains('parent_id')
 #     def _check_category_recursion_check_category_recursion(self):
 #         if not self._check_recursion():

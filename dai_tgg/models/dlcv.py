@@ -13,7 +13,7 @@ class DLCV(models.Model):
     ngay_bat_dau_filter = fields.Date()
     ngay_ket_thuc_filter = fields.Date()
     chon_thang = fields.Selection([(u'Tháng Trước',u'Tháng Trước'),(u'Tháng Này',u'Tháng Này')])
-    company_ids = fields.Many2many('res.company')
+    department_ids = fields.Many2many('hr.department')
     member_ids = fields.Many2many('res.users')
     gio_utc = fields.Datetime()
     gio_vn = fields.Datetime()
@@ -83,7 +83,7 @@ class DLCV(models.Model):
 #             '''SELECT "cvi".id FROM "cvi" WHERE (("cvi"."ngay_bat_dau" >= '2018-01-08 00:00:00')  AND  ("cvi"."loai_record" = 'Công Việc')) ORDER BY "cvi"."id" DESC '''
 #             domain = [('loai_record','=',u'Công Việc')]
 #             domain = expression.AND([[('ngay_bat_dau','>=',fields.Datetime.from_string(self.ngay_bat_dau_filter))],domain])
-#         args = [('company_id.name','ilike',u'ltk'),('loai_record','=',u'Công Việc')]
+#         args = [('department_id.name','ilike',u'ltk'),('loai_record','=',u'Công Việc')]
 #         domain = args
 # #         rs = self.env['cvi'].search(args)
 # #         self.rs_cvi_ids = rs
