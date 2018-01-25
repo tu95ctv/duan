@@ -48,6 +48,11 @@
             <field name="category_id" ref="module_category_dai_tgg" />
         </record>
         
+        <record id="cho_xoa_cvi_cua_minh" model="res.groups">
+            <field name="name">Cho xóa công việc của mình</field>
+            <field name="category_id" ref="module_category_dai_tgg" />
+        </record>
+        
         
         <!-- end group -->
         <!-- GHI CHÚ CV -->

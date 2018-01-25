@@ -33,6 +33,7 @@
                      <field name="group_show_thong_tin_create_write" widget="radio" />
                      <field name="group_show_loai_record" widget="radio" />
                      <field name="group_show_thong_tin_admin_sep" widget="radio" />
+                     <field name="group_cho_xoa_cvi_cua_minh" widget="radio" />
                   </group>
                </sheet>
             </form>

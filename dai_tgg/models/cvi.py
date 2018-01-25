@@ -104,6 +104,8 @@ class CamSua(models.Model):
     @api.multi
     def unlink(self):
         for r in self:
+            if not self.user_has_groups('dai_tgg.cho_xoa_cvi_cua_minh'):
+                raise UserError(u'Không được delete CV của mình')
             if r.cam_sua_do_time:
                 raise UserError(u'Không được delete do quá thời gian qui định')
             elif r.cam_sua_do_diff_user:
@@ -113,7 +115,8 @@ class CamSua(models.Model):
 class Cvi(models.Model):
     _name = 'cvi'
     _parent_name = 'gd_parent_id'
-    _inherit = ['camsua','cvisuco']
+#         _inherit = ['mail.thread']
+    _inherit = ['mail.thread','camsua','cvisuco']
     _auto = True
     _order = "id desc"
     ALLOW_WRITE_FIELDS_TIME = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids','percent_diemtt']

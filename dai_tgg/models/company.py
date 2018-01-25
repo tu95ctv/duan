@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api,exceptions,tools,_
 
+
 class CongTyType(models.Model):
     _name = 'congtytype'
     name = fields.Char()   
@@ -13,7 +14,9 @@ class Department(models.Model):
     ca_sang_duration = fields.Float(digits=(6,1),default=7, string = u'Ca sáng ')
     ca_chieu_duration = fields.Float(digits=(6,1),default=8.5)
     ca_dem_duration = fields.Float(digits=(6,1),default=8.5)
-    
+#     location_ids = fields.One2many('stock.location','department_id')
+    partner_id = fields.Many2one('res.partner')
+    get_department_name_for_report = fields.Char(compute='get_department_name_for_report_')
 #     @api.model
 # #     @api.returns('self', lambda value: value.id)
 #     def _company_default_get(self, object=False, field=False):
@@ -28,4 +31,11 @@ class Department(models.Model):
 #         print "***company***",res,'**object**',object
 #         return res
     
-    
+    def get_department_name_for_report_(self):
+        for r in self:
+            names = []
+            if r.cong_ty_type.name:
+                names.append(r.cong_ty_type.name)
+            names.append(r.name)
+            r.get_department_name_for_report =  u' '.join(names)
+            

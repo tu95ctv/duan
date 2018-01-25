@@ -2,7 +2,31 @@
 # -*- coding: utf-8 -*-
 import pytz
 from odoo import models, fields, api,exceptions,tools,_
+import re
+from unidecode import unidecode
 
+
+
+def viet_tat(string):
+    string = string.strip()
+    ns = re.sub('\s{2,}', ' ', string)
+    ns = re.sub('[^\w ]','', ns,flags = re.UNICODE)
+    slit_name = ns.split(' ')
+    slit_name = filter(lambda w : True if w else False, slit_name)
+    one_char_slit_name = map(lambda w: w[0],slit_name)
+    rs = ''.join(one_char_slit_name).upper()
+    return rs
+def name_khong_dau_compute(self_):
+    for r  in self_:
+        if r.name:
+            name = r.name
+            if name:
+                try:
+                    name_khong_dau = unidecode(name)
+                except:
+                    raise ValueError(name)
+                r.name_khong_dau = name_khong_dau
+                r.name_viet_tat = viet_tat(name_khong_dau)
 def convert_utc_to_gmt_7(utc_datetime_inputs):
     local = pytz.timezone('Etc/GMT-7')
     utc_tz =pytz.utc

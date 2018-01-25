@@ -28,6 +28,11 @@ class LTKSetting(models.TransientModel):
         (1, u'Show thông tin create và  show thông tin write')
         ], u"Show thông tin create, write", implied_group='dai_tgg.show_thong_tin_create_write')
     
+    group_cho_xoa_cvi_cua_minh = fields.Selection([
+        (0, u'Không Cho xóa CVI của mình'),
+        (1, u'Cho Xóa CVI của mình')
+        ], u"Cho Xóa CVI của mình", implied_group='dai_tgg.cho_xoa_cvi_cua_minh')
+    
     group_show_loai_record = fields.Selection([
         (0, u'Không Show loại record'),
         (1, u'Show loại record')

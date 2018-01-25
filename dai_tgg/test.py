@@ -76,9 +76,20 @@ from dateutil.relativedelta import relativedelta
 # adict = {'a':1}
 # print u' %(a)s noi di %(a)s'%adict
 # vn_time = datetime.datetime.now()
-vn_time= datetime.datetime(2011, 1, 3, 20, 0)
-print vn_time
-# vn_time = convert_utc_to_gmt_7(utc_time)
-vn_time = vn_time + relativedelta(month=1)
-str_dau_thang = vn_time.strftime('%Y-%m-%d')
-print str_dau_thang
+# vn_time= datetime.datetime(2011, 1, 3, 20, 0)
+# print vn_time
+# # vn_time = convert_utc_to_gmt_7(utc_time)
+# vn_time = vn_time + relativedelta(month=1)
+# str_dau_thang = vn_time.strftime('%Y-%m-%d')
+# print str_dau_thang
+# str = 'anh yeu  em'
+# array  = str.split(' ')
+# print array
+import re
+rs = re.findall('(\W+)', 'Words, words, words.')
+print rs
+# rs = re.split('(\W+)', 'Words, words, words.')
+# print rs
+
+
+

@@ -5,34 +5,52 @@ from odoo.exceptions import UserError
 from odoo.tools.translate import _
 from odoo.tools.float_utils import float_compare
 
-# class tonkho(models.Model):
-#     _name = 'tonkho.tonkho'
-
-#     name = fields.Char()
-#     value = fields.Integer()
-#     value2 = fields.Float(compute="_value_pc", store=True)
-#     description = fields.Text()
-#
-#     @api.depends('value')
-#     def _value_pc(self):
-#         self.value2 = float(self.value) / 100
-class PickingType(models.Model):
+class StockPicking(models.Model):
     _inherit = "stock.picking"
+#     source_department_id = fields.Many2one('res.partner')
+#     dest_department_id = fields.Many2one('res.partner')
+    source_member_ids = fields.Many2many('res.partner')
+    dest_member_ids = fields.Many2many('res.partner')
+    don_vi_nhan = fields.Char(compute='don_vi_nhan_')
+    don_vi_giao = fields.Char(compute='don_vi_giao_')
+    pack_operation_product_ids = fields.One2many(
+        'stock.pack.operation', 'picking_id', 'Non pack',
+        domain=[('product_id', '!=', False)],
+        )
+    def don_vi_nhan_(self):
+        self.don_vi_nhan = self.location_dest_id.partner_id.name if self.location_dest_id.partner_id.name else self.location_dest_id.name
+    def don_vi_giao_(self):
+        self.don_vi_giao = self.location_id.partner_id.name if self.location_id.partner_id.name else self.location_id.name
+    @api.multi
+    def write(self,vals):
+        pack_operation_product_ids = vals.get('pack_operation_product_ids')
+        if pack_operation_product_ids:
+            check_list = any(map(lambda i:i[0]==0,pack_operation_product_ids))
+            if check_list:#'pack_operation_product_ids' in vals:
+                raise UserWarning(u'Ban khong duoc sua fields pack_operation_product_ids')
+        res = super(StockPicking,self).write(vals)
+        return res
     
-    company_id = fields.Many2one(
-        'res.company', 'Company',
-        index=True, readonly=True, required=True,
-        default=lambda self: self.env['res.company']._company_default_get('stock.quant'),
-        help="The company to which the quants belong")
-    
-    
+    def _create_lots_for_picking(self):
+        Lot = self.env['stock.production.lot']
+        for pack_op_lot in self.mapped('pack_operation_ids').mapped('pack_lot_ids'):
+            if not pack_op_lot.lot_id:
+                lot = Lot.create({'name': pack_op_lot.lot_name, 
+                                  'product_id': pack_op_lot.operation_id.product_id.id,
+                                  #moi them
+                                  'pn':pack_op_lot.pn_for_create,
+                                  'ghi_chu':pack_op_lot.ghi_chu_for_create,
+                                  })
+                pack_op_lot.write({'lot_id': lot.id})
+        # TDE FIXME: this should not be done here
+        self.mapped('pack_operation_ids').mapped('pack_lot_ids').filtered(lambda op_lot: op_lot.qty == 0.0).unlink()
+        
     @api.multi
     def do_transfer(self):
         """ If no pack operation, we do simple action_done of the picking.
         Otherwise, do the pack operations. """
         # TDE CLEAN ME: reclean me, please
         self._create_lots_for_picking()
-
         no_pack_op_pickings = self.filtered(lambda picking: not picking.pack_operation_ids)
         no_pack_op_pickings.action_done()
         other_pickings = self - no_pack_op_pickings
@@ -166,7 +184,6 @@ class PickingType(models.Model):
         also impact the state of the picking as it is computed based on move's states.
         @return: True
         """
-        print "**self.state**",self.state
         self.filtered(lambda picking: picking.state == 'draft').action_confirm()
         moves = self.mapped('move_lines').filtered(lambda move: move.state not in ('draft', 'cancel', 'done'))
         if not moves:
@@ -175,76 +192,3 @@ class PickingType(models.Model):
         print ' after moves.action_assign()',moves.action_assign()
         return True
     
-class Quant(models.Model):
-    """ Quants are the smallest unit of stock physical instances """
-    _inherit = "stock.quant"
-#     company_id = fields.Many2one(
-#         'res.company', 'Company',
-#         index=True, readonly=True, required=True,
-#         default=lambda self: self.env['res.company'].search([('name','=',u'Đài HCM')])[0],#_company_default_get('stock.quant'),
-#         help="The company to which the quants belong")
-    @api.model
-    def quants_move(self, quants, move, location_to, location_from=False, lot_id=False, owner_id=False, src_package_id=False, dest_package_id=False, entire_pack=False):
-        """Moves all given stock.quant in the given destination location.  Unreserve from current move.
-        :param quants: list of tuple(browse record(stock.quant) or None, quantity to move)
-        :param move: browse record (stock.move)
-        :param location_to: browse record (stock.location) depicting where the quants have to be moved
-        :param location_from: optional browse record (stock.location) explaining where the quant has to be taken
-                              (may differ from the move source location in case a removal strategy applied).
-                              This parameter is only used to pass to _quant_create_from_move if a negative quant must be created
-        :param lot_id: ID of the lot that must be set on the quants to move
-        :param owner_id: ID of the partner that must own the quants to move
-        :param src_package_id: ID of the package that contains the quants to move
-        :param dest_package_id: ID of the package that must be set on the moved quant
-        """
-        # TDE CLEANME: use ids + quantities dict
-        print '***quants**',quants
-        if location_to.usage == 'view':
-            raise UserError(_('You cannot move to a location of type view %s.') % (location_to.name))
-
-        quants_reconcile_sudo = self.env['stock.quant'].sudo()
-        quants_move_sudo = self.env['stock.quant'].sudo()
-        check_lot = False
-        for quant, qty in quants:
-            if not quant:
-                #If quant is None, we will create a quant to move (and potentially a negative counterpart too)
-                quant = self._quant_create_from_move(
-                    qty, move, lot_id=lot_id, owner_id=owner_id, src_package_id=src_package_id, dest_package_id=dest_package_id, force_location_from=location_from, force_location_to=location_to)
-                check_lot = True
-            else:
-                quant._quant_split(qty)
-                quants_move_sudo |= quant
-            quants_reconcile_sudo |= quant
-
-        if quants_move_sudo:
-            moves_recompute = quants_move_sudo.filtered(lambda self: self.reservation_id != move).mapped('reservation_id')
-            quants_move_sudo._quant_update_from_move(move, location_to, dest_package_id, lot_id=lot_id, entire_pack=entire_pack)
-            moves_recompute.recalculate_move_state()
-
-        if location_to.usage == 'internal':
-            # Do manual search for quant to avoid full table scan (order by id)
-            self._cr.execute("""
-                SELECT 0 FROM stock_quant, stock_location WHERE product_id = %s AND stock_location.id = stock_quant.location_id AND
-                ((stock_location.parent_left >= %s AND stock_location.parent_left < %s) OR stock_location.id = %s) AND qty < 0.0 LIMIT 1
-            """, (move.product_id.id, location_to.parent_left, location_to.parent_right, location_to.id))
-            if self._cr.fetchone():
-                quants_reconcile_sudo._quant_reconcile_negative(move)
-
-        # In case of serial tracking, check if the product does not exist somewhere internally already
-        # Checking that a positive quant already exists in an internal location is too restrictive.
-        # Indeed, if a warehouse is configured with several steps (e.g. "Pick + Pack + Ship") and
-        # one step is forced (creates a quant of qty = -1.0), it is not possible afterwards to
-        # correct the inventory unless the product leaves the stock.
-        picking_type = move.picking_id and move.picking_id.picking_type_id or False
-        if check_lot and lot_id and move.product_id.tracking == 'serial' and (not picking_type or (picking_type.use_create_lots or picking_type.use_existing_lots)):
-            other_quants = self.search([('product_id', '=', move.product_id.id), ('lot_id', '=', lot_id),
-                                        ('qty', '>', 0.0), ('location_id.usage', '=', 'internal')])
-            print '**other_quants**',other_quants
-            if other_quants:
-                # We raise an error if:
-                # - the total quantity is strictly larger than 1.0
-                # - there are more than one negative quant, to avoid situations where the user would
-                #   force the quantity at several steps of the process
-                if sum(other_quants.mapped('qty')) > 1.0 or len([q for q in other_quants.mapped('qty') if q < 0]) > 1:
-                    lot_name = self.env['stock.production.lot'].browse(lot_id).name
-                    raise UserError(_('The serial skjdflkasdjfld number %s is already in stock.') % lot_name + _("Otherwise make sure the right stock/owner is set."))

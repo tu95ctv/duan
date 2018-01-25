@@ -7,8 +7,8 @@ from odoo.exceptions import ValidationError,UserError
 from odoo.osv import expression
 import logging
 import json
-from unidecode import unidecode
-from odoo.addons.dai_tgg.mytools import  name_compute
+# from unidecode import unidecode
+from odoo.addons.dai_tgg.mytools import  name_compute,name_khong_dau_compute
 
 
 
@@ -19,23 +19,36 @@ def skip_depends_if_not_congviec_decorator(depend_func):
             if r.loai_record ==u'Công Việc':
                 depend_func(r)
     return wrapper
-def viet_tat(string):
-    print '***string***',string
-    string = string.strip()
-    ns = re.sub('\s{2,}', ' ', string)
-    ns = re.sub('[^\w ]','', ns,flags = re.UNICODE)
-    slit_name = ns.split(' ')
-    slit_name = filter(lambda w : True if w else False, slit_name)
-    one_char_slit_name = map(lambda w: w[0],slit_name)
-    rs = ''.join(one_char_slit_name).upper()
-    return rs
+# def viet_tat(string):
+#     string = string.strip()
+#     ns = re.sub('\s{2,}', ' ', string)
+#     ns = re.sub('[^\w ]','', ns,flags = re.UNICODE)
+#     slit_name = ns.split(' ')
+#     slit_name = filter(lambda w : True if w else False, slit_name)
+#     one_char_slit_name = map(lambda w: w[0],slit_name)
+#     rs = ''.join(one_char_slit_name).upper()
+#     return rs
 # rs = viet_tat(string)
+
+class KhongDauModel(models.Model):
+    _name = 'khongdaumodel'
+    _auto = False
+    name = fields.Char()
+    name_khong_dau = fields.Char(compute='name_khong_dau_', store=True)
+    name_viet_tat =  fields.Char(compute='name_khong_dau_', store=True)
+    @api.depends('name')
+    def name_khong_dau_(self):
+        name_khong_dau_compute(self)
+        
 class TVCV(models.Model):
     _name = 'tvcv'
     _parent_name = 'parent_id'
+    _inherit = ['khongdaumodel']
+    _auto = True
+
     name = fields.Char(string=u'Tên công việc')
-    name_khong_dau = fields.Char(compute='name_khong_dau_', store=True)
-    name_viet_tat =  fields.Char(compute='name_khong_dau_', store=True)
+#     name_khong_dau = fields.Char(compute='name_khong_dau_', store=True)
+#     name_viet_tat =  fields.Char(compute='name_khong_dau_', store=True)
     loai_record = fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ'),(u'Comment',u'Comment')], string = u'Loại Record')
 #     loai_record_show =  fields.Selection([(u'Công Việc',u'Công Việc'),(u'Sự Cố',u'Sự Cố'),(u'Sự Vụ',u'Sự Vụ'),(u'Comment',u'Comment')], string = u'Loại Record',compute='loai_record_show_')
     code = fields.Char(string=u'Mã công việc')
@@ -64,21 +77,20 @@ class TVCV(models.Model):
 #             fields['loai_su_co']['domain'] ='''[('l','!=',False)]'''
 #         return res
 
-    @api.depends('name')
-    def name_khong_dau_(self):
-        for r  in self:
-            print 'in name khong dau'
-            if r.name:
-#                 name = r.name.strip(' ')
-                name = r.name
-                if name:
-                    try:
-                        name_khong_dau = unidecode(name)
-                    except:
-                        raise ValueError(name)
-                    r.name_khong_dau = name_khong_dau
-                    r.name_viet_tat = viet_tat(name_khong_dau)
-        
+#     @api.depends('name')
+#     def name_khong_dau_(self):
+#         for r  in self:
+#             print 'in name khong dau'
+#             if r.name:
+#                 name = r.name
+#                 if name:
+#                     try:
+#                         name_khong_dau = unidecode(name)
+#                     except:
+#                         raise ValueError(name)
+#                     r.name_khong_dau = name_khong_dau
+#                     r.name_viet_tat = viet_tat(name_khong_dau)
+#         
     @api.model
     def fields_view_get(self, view_id=None, view_type=False, toolbar=False, submenu=False):
         res = super(TVCV, self).fields_view_get(view_id=view_id, view_type=view_type, toolbar=toolbar, submenu=submenu)

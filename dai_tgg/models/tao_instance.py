@@ -221,6 +221,8 @@ def importthuvien(odoo_or_self_of_wizard):
             begin_row_offset = 1
             not_active_include_search  =False
             
+            loop_list = ['main']
+            
             if r.type_choose==u'Thư viện công việc':
                 not_active_include_search  =True
                 sheet_names = xl_workbook.sheet_names()
@@ -257,6 +259,7 @@ def importthuvien(odoo_or_self_of_wizard):
 #                         ('company_id',{'model':'congty','func':None,'xl_title':u'Bộ Phận','key':False}),
 #                         ('company_ids',{'model':'res.company','func':None,'xl_title':u'Bộ Phận','key':False,'m2m':True}),
 #                         ('company_id',{'model':'res.company','func':None,'xl_title':u'Bộ Phận','key':False}),
+                        ('job_id',{'model':'hr.job','func':lambda val: u'Nhân Viên' if val==False else val,'xl_title':u'Chức vụ','key':False,'use_fnc_even_cell_is_False':True}),
                         ('department_id',{'model':'hr.department','func':None,'xl_title':u'Bộ Phận','key':False}),
 
                         )
@@ -288,12 +291,22 @@ def importthuvien(odoo_or_self_of_wizard):
                 sheet_names = [u'Công Ty']
                 field_dict= (
                         ('name',{'func':None,'xl_title':u'công ty','key':True}),
+                        ('cong_ty_type',{'func':None,'xl_title':u'cong_ty_type','key':False,'for_excel_readonly':True}),
                        ('parent_id',{'model':'hr.department','func':None,'xl_title':u'parent_id','key':False}),
+                       ('partner_id',{'model':'res.partner','func':lambda val: xcel_data_of_a_row['cong_ty_type'] + u' '  +  xcel_data_of_a_row['name'] ,'xl_title':u'công ty','key':False}),
 #                           ('cong_ty_type',{'model':'congtytype','func':None,'xl_title':u'cong_ty_type','key':False}),
                         )
                 title_rows = [1]
-                
-                
+            elif r.type_choose ==u'Stock Location':
+                model_name = 'stock.location'
+                sheet_names = [u'Công Ty']
+                loop_list = [u'Dự Phòng',u'Đang Chạy']
+                field_dict= (
+                        ('name',{'func':lambda val: val + u' ' +  loop_instance,'xl_title':u'công ty','key':True}),
+                        ('cong_ty_type',{'func':None,'xl_title':u'cong_ty_type','key':False,'for_excel_readonly':True}),
+                       ('partner_id',{'model':'res.partner','func':lambda val: xcel_data_of_a_row['cong_ty_type'] + u' '  +  xcel_data_of_a_row['name'] ,'xl_title':u'công ty','key':False}),
+                        )
+                title_rows = [1]  
             elif r.type_choose ==u'Kiểm Kê':
                 sheet_names = [u'web']
                 begin_row_offset = 2               
@@ -418,163 +431,176 @@ def importthuvien(odoo_or_self_of_wizard):
                 title_rows = [0]
                 sheet_names = xl_workbook.sheet_names()
                 begin_row_offset = 1
-            for sheet_name in sheet_names:
-                if r.type_choose==u'Thư viện công việc':
-                    field_dict = deepcopy(field_dict_goc)
-                    
-                sheet = xl_workbook.sheet_by_name(sheet_name)
-                row_title_index =None
-                for row in title_rows:
-                    for col in range(0,sheet.ncols):
-                        try:
-                            value = unicode(sheet.cell_value(row,col))
-                        except Exception as e:
-                            raise ValueError(str(e),'row',row,'col',col,sheet_name)
-                       
-                        for field,field_attr in field_dict:
-                            if field_attr['xl_title'] ==None and field_attr['col_index'] !=None:
-                                continue# cos col_index
-                            if isinstance(field_attr['xl_title'],unicode) or  isinstance(field_attr['xl_title'],str):
-                                xl_title_s = [field_attr['xl_title']]
-                            else:
-                                xl_title_s =  field_attr['xl_title']
-                            for xl_title in xl_title_s:
-                                if xl_title == value:
-                                    field_attr['col_index'] = col
-                                    if row_title_index ==None or  row > row_title_index:
-                                        row_title_index = row
-                                    break
-                for row in range(row_title_index+begin_row_offset,sheet.nrows):
-                    #print 'row_number',row,'sh',sheet_name
-                    key_search_dict = {}
-                    update_dict = {}
+            
+            for loop_instance in loop_list:
+                for sheet_name in sheet_names:
                     if r.type_choose==u'Thư viện công việc':
-                        cong_viec_cate_id = get_or_create_object_sosanh(self,'tvcvcate',{'name':sheet_name},{} )
-                        update_dict['cong_viec_cate_id'] = cong_viec_cate_id.id
-                        update_dict['loai_record'] = u'Công Việc'
-                    if r.type_choose==u'Department':
-                        update_dict['company_id'] = self.env['res.company'].search([],limit=1,order='id asc')[0].id
-                    elif r.type_choose==u'User':
-                        group_id = self.env.ref('base.group_user').id
-                        update_dict['groups_id'] = [(4,group_id)]
-                        update_dict['password'] = '123456'
-                        update_dict['lang'] = 'vi_VN'
-                        company_id = self.env['res.company'].search([],limit=1,order='id asc')[0].id
-                        update_dict['company_ids'] =[(4,company_id )]
-                        update_dict['company_id'] = company_id
-                    elif r.type_choose==u'INVENTORY_240G':
-                        update_dict['sheet_name'] = sheet_name
-                        update_dict['file_name'] = r.type_choose
-                    elif r.type_choose==u'INVENTORY_RING_NAM_CIENA':
-                        update_dict['file_name'] = r.type_choose
-                    elif r.type_choose==u'Inventory-120G':
-                        update_dict['file_name'] = r.type_choose
-                    elif r.type_choose==u'Inventory-330G':
-                        update_dict['file_name'] = r.type_choose
-                    elif r.type_choose==u'INVENTORY-FW4570':
-                        key_search_dict['sheet_name'] = sheet_name
-                        update_dict['file_name'] = r.type_choose
-                    elif r.type_choose==u'INVETORY 1670':
-                        update_dict['file_name'] = r.type_choose
-                    elif r.type_choose==u'iventory hw8800':
-                        update_dict['file_name'] = r.type_choose
-                    elif r.type_choose==u'iventory7500':
-                        update_dict['file_name'] = r.type_choose
-                    continue_row = False
-                    for field,field_attr in field_dict:
-                        try:
-                            if field_attr['col_index'] =='skip_field_if_not_found_column_in_some_sheet':
-                                continue
-                        except KeyError as e:
-                            raise KeyError (u'Ko co col_index của field %s'% field)
-                        #print 'row,col',row,col
-                        col = field_attr['col_index']
-                        val = sheet.cell_value(row,col)
-                        #print 'val',val
-                        if isinstance(val, unicode):
-                            val = val.strip()
-                        if not check_variable_is_not_empty_string(val):
-                            val = False
-#                         else:
-#                             func_for_skip_cell_f = field_attr.get('func_for_skip_cell',False)
-#                             if func_for_skip_cell_f:
-#                                 if func_for_skip_cell_f(val) :
-#                                     row_log = sheet_name + u' ' +  str(row) + u' ' +  str(col)
-#                                     log += row_log + 'xxx'  + str(len(val)) + ' ' +  str(type(val)) + str(val=='') + str(val==u'')+ '\n'
-#                                     val = False    
-#                         func_write_log  = field_attr.get('func_write_log',False)
-#                         if func_write_log:
-#                             #if func_write_log(val) :
-#                                 row_log = sheet_name + u' ' +  str(row) + u' ' +  str(col)
-#                                 log += row_log + 'xxx'  + str(len(val)) + ' ' +  str(type(val)) + str(val=='') + str(val==u'')+ '\n'
-#                                 #val = False 
-                                
-                                        
-                        if 'break_when_xl_field_empty' in field_attr and val==False:
-                            continue_row = True
-                            break
-                        dung_ham_de_tao_val_rieng = field_attr.get('dung_ham_de_tao_val_rieng',False)
-                        if dung_ham_de_tao_val_rieng and val != False:
-                            val = dung_ham_de_tao_val_rieng(self, val, field_attr, key_search_dict,update_dict,noti_dict)
-#                             alist = val.split(',')
-#                             alist = filter(check_variable_is_not_empty_string,alist)
-#                             len_alist = len(alist)
-#                             diem_percent = 100/len(alist)
-#                             key_name = field_attr.get('key_name','name')
-#                             parent_id_name = key_search_dict['name']
-#                             def tao_thu_vien_childrens(val):
-#                                 i = val[0]
-#                                 val = val[1]
-#                                 val = val.strip().capitalize()
-#                                 name_tv_con = val  # + u'|Công Việc Cha: '  + key_search_dict['name']
-#                                 parent_id = get_or_create_object_sosanh (self,'tvcv',{'name':parent_id_name},noti_dict=noti_dict)
-#                                 if i ==len_alist-1:
-#                                     diem_percent_l =100- (len_alist-1)*diem_percent
-#                                 else:
-#                                     diem_percent_l = diem_percent
-#                                     
-#                                 return get_or_create_object_sosanh(self,field_attr['model'],{key_name:name_tv_con,'parent_id':parent_id.id},{'diem_percent':diem_percent_l,
-#                                                                                                                                              #'diem':diem,
-#                                                                                                                                              'don_vi':update_dict['don_vi'],
-#                                                                                                                                              'cong_viec_cate_id':update_dict['cong_viec_cate_id'],
-#                                                                                                                                              'parent_id':parent_id.id
-#                                                                                                                                              } )
-#                             a_object_list = map(tao_thu_vien_childrens,enumerate(alist))
-#                             a_object_list = map(lambda x:x.id,a_object_list)
-#                             val = [(6, False, a_object_list)]
-                        else:
-                            if 'func' in field_attr and field_attr['func']:
-                                if val !=False or field_attr.get('use_fnc_even_cell_is_False',False):
-                                    val = field_attr['func'](val)
-                            if 'model' in field_attr  and field_attr['model'] and val !=False  :
-                                key_name = field_attr.get('key_name','name')
-                                if 'm2m' not in field_attr or not field_attr['m2m']:
-                                    if ',' in val and field_attr.get('split_first_item_if_comma',False):
-                                        val = val.split(',')[0]
-                                    any_obj = get_or_create_object_sosanh(self,field_attr['model'],{key_name:val})
-                                    val = any_obj.id
+                        field_dict = deepcopy(field_dict_goc)
+                        
+                    sheet = xl_workbook.sheet_by_name(sheet_name)
+                    row_title_index =None
+                    for row in title_rows:
+                        for col in range(0,sheet.ncols):
+                            try:
+                                value = unicode(sheet.cell_value(row,col))
+                            except Exception as e:
+                                raise ValueError(str(e),'row',row,'col',col,sheet_name)
+                           
+                            for field,field_attr in field_dict:
+                                if field_attr['xl_title'] ==None and field_attr['col_index'] !=None:
+                                    continue# cos col_index
+                                if isinstance(field_attr['xl_title'],unicode) or  isinstance(field_attr['xl_title'],str):
+                                    xl_title_s = [field_attr['xl_title']]
                                 else:
-                                    unicode_m2m_list = val.split(',')
-                                    unicode_m2m_list = map(lambda i: i.strip(),unicode_m2m_list)
-                                    unicode_m2m_list = filter(check_variable_is_not_empty_string, unicode_m2m_list)
-                                    def create_or_get_one_in_m2m_value(val):
-                                        val = val.strip()
-                                        if val:
-                                            return get_or_create_object_sosanh(self,field_attr['model'],{key_name:val},noti_dict=noti_dict,model_effect_noti_dict='tvcv')
-                                    object_m2m_list = map(create_or_get_one_in_m2m_value, unicode_m2m_list)
-                                    m2m_ids = map(lambda x:x.id, object_m2m_list)
-                                    val = [(6, False, m2m_ids)]
-                        if field_attr['key']==True:
-                            key_search_dict[field] = val
-                        elif  field_attr['key']=='Both':
-                            key_search_dict[field] = val
-                            update_dict[field] = val
-                        else:
-                            update_dict[field] = val
-                    if continue_row:
-                        continue
-                    if key_search_dict:
-                            get_or_create_object_sosanh(self,model_name,key_search_dict,update_dict,is_must_update=True,noti_dict=noti_dict,not_active_include_search  =not_active_include_search)
+                                    xl_title_s =  field_attr['xl_title']
+                                for xl_title in xl_title_s:
+                                    if xl_title == value:
+                                        field_attr['col_index'] = col
+                                        if row_title_index ==None or  row > row_title_index:
+                                            row_title_index = row
+                                        break
+                    
+                    
+                    for row in range(row_title_index+begin_row_offset,sheet.nrows):
+                        #print 'row_number',row,'sh',sheet_name
+                        key_search_dict = {}
+                        update_dict = {}
+                        xcel_data_of_a_row = {}
+                        if r.type_choose==u'Thư viện công việc':
+                            cong_viec_cate_id = get_or_create_object_sosanh(self,'tvcvcate',{'name':sheet_name},{} )
+                            update_dict['cong_viec_cate_id'] = cong_viec_cate_id.id
+                            update_dict['loai_record'] = u'Công Việc'
+                        elif r.type_choose==u'Department':
+                            update_dict['company_id'] = self.env['res.company'].search([],limit=1,order='id asc')[0].id
+                        elif r.type_choose==u'Stock Location':
+                            parent_id= self.env['stock.location'].search([('name','=',u'DHCM')],limit=1,order='id asc')[0].id
+                            print '***parent_id***',parent_id
+                            update_dict['location_id'] =  parent_id
+                        elif r.type_choose==u'User':
+                            group_id = self.env.ref('base.group_user').id
+                            update_dict['groups_id'] = [(4,group_id)]
+                            update_dict['password'] = '123456'
+                            update_dict['lang'] = 'vi_VN'
+                            company_id = self.env['res.company'].search([],limit=1,order='id asc')[0].id
+                            update_dict['company_ids'] =[(4,company_id )]
+                            update_dict['company_id'] = company_id
+                        elif r.type_choose==u'INVENTORY_240G':
+                            update_dict['sheet_name'] = sheet_name
+                            update_dict['file_name'] = r.type_choose
+                        elif r.type_choose==u'INVENTORY_RING_NAM_CIENA':
+                            update_dict['file_name'] = r.type_choose
+                        elif r.type_choose==u'Inventory-120G':
+                            update_dict['file_name'] = r.type_choose
+                        elif r.type_choose==u'Inventory-330G':
+                            update_dict['file_name'] = r.type_choose
+                        elif r.type_choose==u'INVENTORY-FW4570':
+                            key_search_dict['sheet_name'] = sheet_name
+                            update_dict['file_name'] = r.type_choose
+                        elif r.type_choose==u'INVETORY 1670':
+                            update_dict['file_name'] = r.type_choose
+                        elif r.type_choose==u'iventory hw8800':
+                            update_dict['file_name'] = r.type_choose
+                        elif r.type_choose==u'iventory7500':
+                            update_dict['file_name'] = r.type_choose
+                        continue_row = False
+                        for field,field_attr in field_dict:
+                            try:
+                                if field_attr['col_index'] =='skip_field_if_not_found_column_in_some_sheet':
+                                    continue
+                            except KeyError as e:
+                                raise KeyError (u'Ko co col_index của field %s'% field)
+                            #print 'row,col',row,col
+                            col = field_attr['col_index']
+                            val = sheet.cell_value(row,col)
+                            #print 'val',val
+                            xcel_data_of_a_row[field] = val
+                            if isinstance(val, unicode):
+                                val = val.strip()
+                            if not check_variable_is_not_empty_string(val):
+                                val = False
+    #                         else:
+    #                             func_for_skip_cell_f = field_attr.get('func_for_skip_cell',False)
+    #                             if func_for_skip_cell_f:
+    #                                 if func_for_skip_cell_f(val) :
+    #                                     row_log = sheet_name + u' ' +  str(row) + u' ' +  str(col)
+    #                                     log += row_log + 'xxx'  + str(len(val)) + ' ' +  str(type(val)) + str(val=='') + str(val==u'')+ '\n'
+    #                                     val = False    
+    #                         func_write_log  = field_attr.get('func_write_log',False)
+    #                         if func_write_log:
+    #                             #if func_write_log(val) :
+    #                                 row_log = sheet_name + u' ' +  str(row) + u' ' +  str(col)
+    #                                 log += row_log + 'xxx'  + str(len(val)) + ' ' +  str(type(val)) + str(val=='') + str(val==u'')+ '\n'
+    #                                 #val = False 
+                                    
+                                            
+                            if 'break_when_xl_field_empty' in field_attr and val==False:
+                                continue_row = True
+                                break
+                            dung_ham_de_tao_val_rieng = field_attr.get('dung_ham_de_tao_val_rieng',False)
+                            if dung_ham_de_tao_val_rieng and val != False:
+                                val = dung_ham_de_tao_val_rieng(self, val, field_attr, key_search_dict,update_dict,noti_dict)
+    #                             alist = val.split(',')
+    #                             alist = filter(check_variable_is_not_empty_string,alist)
+    #                             len_alist = len(alist)
+    #                             diem_percent = 100/len(alist)
+    #                             key_name = field_attr.get('key_name','name')
+    #                             parent_id_name = key_search_dict['name']
+    #                             def tao_thu_vien_childrens(val):
+    #                                 i = val[0]
+    #                                 val = val[1]
+    #                                 val = val.strip().capitalize()
+    #                                 name_tv_con = val  # + u'|Công Việc Cha: '  + key_search_dict['name']
+    #                                 parent_id = get_or_create_object_sosanh (self,'tvcv',{'name':parent_id_name},noti_dict=noti_dict)
+    #                                 if i ==len_alist-1:
+    #                                     diem_percent_l =100- (len_alist-1)*diem_percent
+    #                                 else:
+    #                                     diem_percent_l = diem_percent
+    #                                     
+    #                                 return get_or_create_object_sosanh(self,field_attr['model'],{key_name:name_tv_con,'parent_id':parent_id.id},{'diem_percent':diem_percent_l,
+    #                                                                                                                                              #'diem':diem,
+    #                                                                                                                                              'don_vi':update_dict['don_vi'],
+    #                                                                                                                                              'cong_viec_cate_id':update_dict['cong_viec_cate_id'],
+    #                                                                                                                                              'parent_id':parent_id.id
+    #                                                                                                                                              } )
+    #                             a_object_list = map(tao_thu_vien_childrens,enumerate(alist))
+    #                             a_object_list = map(lambda x:x.id,a_object_list)
+    #                             val = [(6, False, a_object_list)]
+                            else:
+                                if 'func' in field_attr and field_attr['func']:
+                                    if val !=False or field_attr.get('use_fnc_even_cell_is_False',False):
+                                        val = field_attr['func'](val)
+                                        
+                                if field_attr.get('for_excel_readonly'):
+                                    continue
+                                if 'model' in field_attr  and field_attr['model'] and val !=False  :
+                                    key_name = field_attr.get('key_name','name')
+                                    if 'm2m' not in field_attr or not field_attr['m2m']:
+                                        if ',' in val and field_attr.get('split_first_item_if_comma',False):
+                                            val = val.split(',')[0]
+                                        any_obj = get_or_create_object_sosanh(self,field_attr['model'],{key_name:val})
+                                        val = any_obj.id
+                                    else:
+                                        unicode_m2m_list = val.split(',')
+                                        unicode_m2m_list = map(lambda i: i.strip(),unicode_m2m_list)
+                                        unicode_m2m_list = filter(check_variable_is_not_empty_string, unicode_m2m_list)
+                                        def create_or_get_one_in_m2m_value(val):
+                                            val = val.strip()
+                                            if val:
+                                                return get_or_create_object_sosanh(self,field_attr['model'],{key_name:val},noti_dict=noti_dict,model_effect_noti_dict='tvcv')
+                                        object_m2m_list = map(create_or_get_one_in_m2m_value, unicode_m2m_list)
+                                        m2m_ids = map(lambda x:x.id, object_m2m_list)
+                                        val = [(6, False, m2m_ids)]
+                            if field_attr['key']==True:
+                                key_search_dict[field] = val
+                            elif  field_attr['key']=='Both':
+                                key_search_dict[field] = val
+                                update_dict[field] = val
+                            else:
+                                update_dict[field] = val
+                        if continue_row:
+                            continue
+                        if key_search_dict:
+                                get_or_create_object_sosanh(self,model_name,key_search_dict,update_dict,is_must_update=True,noti_dict=noti_dict,not_active_include_search  =not_active_include_search)
             r.create_number = noti_dict.get('create')
             r.update_number = noti_dict.get('update')
             r.skipupdate_number = noti_dict.get('skipupdate')

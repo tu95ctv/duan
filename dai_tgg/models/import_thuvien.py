@@ -20,6 +20,7 @@ class ImportThuVien(models.Model):
                                     (u'User',u'User')
                                     #,(u'Công Ty',u'Công Ty')
                                     ,(u'Department',u'Department')
+                                    ,(u'Stock Location',u'Stock Location')
                                     ,(u'Kiểm Kê',u'Kiểm Kê'),(u'Vật Tư LTK',u'Vật Tư LTK')
                                     ,(u'x',u'x'),(u'640',u'640G 1850 ')
                                     ,(u'INVENTORY_240G',u'INVENTORY_240G')
