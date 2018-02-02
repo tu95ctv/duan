@@ -2,6 +2,24 @@
 import string
 import datetime
 from dateutil.relativedelta import relativedelta
+import pytz
+# print u'%s'%str(tuple([1]))
+a = {1:3}
+print a.get(2)
+# class A():
+#     b = 1
+#     def a(self):
+#         self.b = 2
+#         
+# a = A()
+# print A.__dict__
+# print 'ir_sequence_%03d' % 29
+# x = 4433.2
+# print '{0:,.0f}'.format(x)
+# print '{0:.2f}'.format(x)
+# print '{:06.2f}'.format(3.141592653589793)
+
+# print 3 ==3.0
 
 # from mytools import convert_utc_to_gmt_7
 # def decorator(f):
@@ -85,9 +103,9 @@ from dateutil.relativedelta import relativedelta
 # str = 'anh yeu  em'
 # array  = str.split(' ')
 # print array
-import re
-rs = re.findall('(\W+)', 'Words, words, words.')
-print rs
+# import re
+# rs = re.findall('(\W+)', 'Words, words, words.')
+# print rs
 # rs = re.split('(\W+)', 'Words, words, words.')
 # print rs
 

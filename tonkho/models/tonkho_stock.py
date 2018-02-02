@@ -7,7 +7,16 @@ from odoo.tools.float_utils import float_compare
 class PackOperation(models.Model):
     _inherit = "stock.pack.operation"
     ghi_chu = fields.Text(string=u'Ghi Chú')
-    product_uom_id_show = fields.Many2one('product.uom', 'Unit of Measure',compute='product_uom_id_show_')
+    product_uom_id_show = fields.Many2one('product.uom', 'Unit of Measure Show',compute='product_uom_id_show_')
+
+    def get_qty_done_for_report(self):
+        qty_done = self.qty_done
+        int_qty_done = int(qty_done)
+        if qty_done ==int_qty_done:
+            return int_qty_done
+        else:
+            return qty_done
+            
     @api.depends('product_uom_id')
     def product_uom_id_show_(self):
         for r in self:
@@ -20,6 +29,7 @@ class PackOperation(models.Model):
         returned_move = self.linked_move_operation_ids.mapped('move_id').mapped('origin_returned_move_id')
         picking_type = self.picking_id.picking_type_id
         only_create_pn = self.state not in ['done','cancel']
+        print '***only_create_pn***',only_create_pn
         action_ctx.update({
             'serial': self.product_id.tracking == 'serial',
             'only_create': picking_type.use_create_lots and not picking_type.use_existing_lots and not returned_move,
@@ -40,7 +50,7 @@ class PackOperation(models.Model):
             'res_id': self.ids[0],
             'context': action_ctx}
         
-        
+    split_lot = action_split_lots
         
 
 class StockLocation(models.Model):

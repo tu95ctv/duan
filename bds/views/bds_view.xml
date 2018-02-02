@@ -113,10 +113,11 @@
                     </group>
                     <group>
                         <group>
-                              <field name="lazada_url"></field>
+                         <!--  <field name="lazada_url"></field>
                             <field name="input_text"></field>
                             <field name="html_lazada_thread_gia"></field>
                             <field name="html_lazada_thread"></field>
+                             -->    
                             <field name="last_fetched_url_id" />
                             <field name="name" />
                             <field name="update_field_of_existing_recorder" />
@@ -131,8 +132,8 @@
                             <field name="create_link_number" />
                             <field name="existing_link_number" />
                             <field name="note" />
-                            <field name="invisible_or_show_html_lazada"/>
-                             <field name="html_lazada" attrs="{'invisible':[('invisible_or_show_html_lazada','=',True)]}"></field>
+                        <!--    <field name="invisible_or_show_html_lazada"/>
+                             <field name="html_lazada" attrs="{'invisible':[('invisible_or_show_html_lazada','=',True)]}"></field> --> 
                         </group>
                     </group>
                 </form>
@@ -207,7 +208,13 @@
                                 <field name="title" />
                                 <field name="link" />
                                 <field name="gia" />
+                                <field name="muc_gia" />
                                 <field name="area" />
+                                <field name="muc_dt" />
+                                <field name="don_gia" />
+                                <field name="muc_don_gia" />
+                                <field name="ti_le_don_gia" />
+                     			<field name="muc_ti_le_don_gia" />
                                 <field name="ngay_dang" />
                                 <field name="address" />
                                 <field name="quan_id" />
@@ -246,9 +253,15 @@
                     <!--<field name="thumb_view"  />
              <field name="present_image_link_show" widget="image" height="50" />   -->
                     <field name="gia" />
+                    <field name="muc_gia" />
                     <field name="area" />
-                    <field name="images_ids" />
+                     <field name="muc_dt" />
+                     <field name="don_gia" />
+                     <field name="muc_don_gia" />
+                     <field name="ti_le_don_gia" />
+                     <field name="muc_ti_le_don_gia" />
                     <field name="address" />
+                    <field name="html_show" />
                     <field name="ngay_dang" />
                     <field name="write_date" />
                     <field name="create_date" />
@@ -362,25 +375,23 @@
                 <tree decoration-danger="0" decoration-info="is_recent==True">
                     <field name="id" />
                     <field name="name" />
-                    <field name="contact_address" />
                     <field name="mycontact_id" />
                     <field name="count_chotot_post_of_poster" />
                     <field name="count_bds_post_of_poster" />
                     <field name="count_post_all_site" />
                     <field name="quanofposter_ids_show" />
                     <field name="create_date" />
-                    <field name="is_recent" />
+                    <field name="is_recent"  invisible="1"/>
                     <field name="sms_ids" />
                     <field name="write_date" />
-                    <field name="exclude_sms_ids" />
+                <!--     <field name="exclude_sms_ids" /> -->
                     <field name="cong_ty" />
-                    <field name="username_in_site_ids" />
+                    <field name="username_in_site_ids" invisible="1"/>
                     <field name="username_in_site_ids_show" />
-                    <field name="site_count_of_poster" />
-                    <field name="phone" />
-                    <field name="nha_mang" />
-                    <field name="login" />
-                    <field name="post_ids" />
+                    <field name="site_count_of_poster"  invisible = "1"/>
+                    <field name="phone" invisible="1" />
+                    <field name="nha_mang" invisible="1" />
+                    <field name="post_ids"  invisible="1"/>
                 </tree>
             </field>
         </record>
@@ -409,33 +420,40 @@
             <field name="model">bds.getphoneposter</field>
             <field name="arch" type="xml">
                 <form>
+                <sheet>
                     <group>
                         <group>
                             <field name="name" />
                             <field name="is_repost_for_poster" />
-                            <field name="filter_sms_or_filter_sql" />
+                        <!--   <field name="filter_sms_or_filter_sql" /> -->  
                             <field name="sms_id" />
                             <field name="nha_mang" />
-                            <field name="quan_ids" />
                             <field name="post_count_min" />
                             <field name="loc_gian_tiep_quan_bds_topic" />
                             <field name="gia_be_hon"  attrs="{'invisible':[('loc_gian_tiep_quan_bds_topic','!=','Qua BDS Object')]}"/>
                         </group>
                         <group>
+                           <field name="quan_ids" >
+                           	<tree>
+                           		<field name="name"></field>
+                           	</tree>
+                           </field>
                             <field name="len_poster" />
-                            <field name="danh_sach_doi_tac" />
+                            <field name="phone_list" />
                         </group>
                     </group>
-                    <group>
-                        <field name="phone_list" />
-                        <field name="len_posters_of_sms" />
-                    </group>
-                    <group>
-                        <field name="phuong_loc_ids" />
+                    <notebook>
+                    <page string = "m2m">
+                  <group>
+                    <!--   <field name="phuong_loc_ids" /> -->  
                         <field name="exclude_poster_ids" />
+                        <field name="poster_da_gui_cua_sms_nay_ids" />
                         <field name="poster_ids" />
                         <field name="bds_ids" />
-                    </group>
+                        </group>
+                        </page>
+                        </notebook>
+                	</sheet>
                 </form>
             </field>
         </record>
@@ -470,6 +488,8 @@
                             <field name="name" />
                             <field name="noi_dung" />
                             <field name="getphoneposter_ids" />
+                            <field name="len_poster_ids" />
+                            <field name="poster_ids" />
                         </group>
                     </sheet>
                 </form>
@@ -503,10 +523,12 @@
                         <group>
                             <field name="file" />
                             <field name="land_contact_saved_number" />
+                            <field name="trigger_fields" />
                         </group>
                     </sheet>
                     <footer>
                         <button name="import_contact" string="_import_contact" type="object" class="btn-primary" />
+                        <button name="trigger" string="Trigger" type="object" class="btn-primary" />
                         <button name="add_nha_mang" string="add_nha_mang" type="object" class="btn-primary" />
                         <button name="add_site_leech_tobds" string="add_site_leech_tobds" type="object" class="btn-primary" />
                         <button name="add_min_max_avg_for_user" string="add_min_max_avg_for_user" type="object" class="btn-primary" />
@@ -552,6 +574,7 @@
                         <group>
                             <group>
                                 <field name="name" />
+                                <field name="muc_gia_quan" />
                                 <field name="post_ids" />
                             </group>
                             <group />
@@ -566,6 +589,7 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="name" />
+                    <field name="muc_gia_quan" />
                     <field name="post_ids" />
                 </tree>
             </field>
@@ -641,18 +665,53 @@
             <field name="view_mode">tree,form</field>
         </record>
         <!-- !dien thoai -->
+        <!-- Cron fetch -->
+        
+        <record id="cronfetch_form" model="ir.ui.view">
+            <field name="name">cronfetch_form</field>
+            <field name="model">cronfetch</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="id" />
+                     		<field name="fetch_id" />
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="cronfetch_list" model="ir.ui.view">
+            <field name="name">cronfetch_list</field>
+            <field name="model">cronfetch</field>
+            <field name="arch" type="xml">
+                <tree>
+                     <field name="id" />
+                     <field name="fetch_id" />
+                </tree>
+            </field>
+        </record>
+        
+        <record model="ir.actions.act_window" id="cronfetch_action">
+            <field name="name">Cron fetch</field>
+            <field name="res_model">cronfetch</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        
+        <!-- end cronfetch -->
         <menuitem name="BDS" id="bds_icon" web_icon="bds,static/src/image/bds.png" />
-        <menuitem name="dien thoai" id="dienthoai_menu" parent="bds_icon" action="dienthoai_action" sequence="1" />
-        <menuitem name="bds_menu" id="bds_menu" parent="bds_icon" action="bds.action_window" />
-        <menuitem name="poster menu" id="poster_menu" parent="bds_icon" action="bds.poster_action" />
-        <menuitem name="fetch_menu" id="fetch_menu" parent="bds_icon" action="bds.fetch_action" />
-        <menuitem name="fault_menu" id="fault_menu" parent="bds_icon" action="bds.error_action" />
+    <!--     <menuitem name="dien thoai" id="dienthoai_menu" parent="bds_icon" action="dienthoai_action" sequence="1" />
+         --><menuitem name="BDS" id="bds_menu" parent="bds_icon" action="bds.action_window" />
+        <menuitem name="Poster" id="poster_menu" parent="bds_icon" action="bds.poster_action" />
+        <menuitem name="Fetch" id="fetch_menu" parent="bds_icon" action="bds.fetch_action" />
+        <menuitem name="Get Poster" id="getphoneposter__menu" parent="bds_icon" action="bds.getphoneposter_action" />
         <menuitem name="images_menu" id="images_menu" parent="bds_icon" action="bds.images_action" />
-        <menuitem name="importcontact_menu" id="importcontact_menu" parent="bds_icon" action="bds.importcontact_action" />
         <menuitem name="mycontact_menu" id="mycontact_menu" parent="bds_icon" action="bds.mycontact_action" />
-        <menuitem name="getphoneposter" id="getphoneposter__menu" parent="bds_icon" action="bds.getphoneposter_action" />
+        <menuitem name="importcontact_menu" id="importcontact_menu" parent="bds_icon" action="bds.importcontact_action" />
+        <menuitem name="fault_menu" id="fault_menu" parent="bds_icon" action="bds.error_action" />
         <menuitem name="Else" id="else_menu" parent="bds_icon" />
         <menuitem name="Quận" id="quan_menu" parent="bds.else_menu" action="bds.quan_action" />
         <menuitem name="urlbds" id="url_menu" parent="bds_icon" action="url_action" />
+        <menuitem name="Cron Fetch" id="url_menu" parent="bds_icon" action="cronfetch_action" />
     </data>
 </openerp>

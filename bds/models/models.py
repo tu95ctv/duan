@@ -101,6 +101,16 @@ class QuanHuyen(models.Model):
     name_unidecode = fields.Char()
     name_without_quan = fields.Char()
     post_ids = fields.One2many('bds.bds','quan_id')
+    muc_gia_quan = fields.Float(digit=(6,2),compute='muc_gia_quan_',store=True,string=u'Mức Đơn Giá(triệu/m2)')
+    
+    @api.depends('post_ids')
+    def muc_gia_quan_(self):
+        for r in self:
+            sql_cmd = "select AVG(don_gia),count(id) from bds_bds where  quan_id = %s and  don_gia >= 40 and don_gia <300"%r.id
+            self.env.cr.execute(sql_cmd)
+            rsul = self.env.cr.fetchall()
+            r.muc_gia_quan = rsul[0][0]
+            
 class Phuong(models.Model):
     _name = 'bds.phuong'
     name = fields.Char(compute='name_',store=True)
@@ -310,7 +320,14 @@ class SMS(models.Model):
     name=  fields.Char()
     noi_dung = fields.Text()
     getphoneposter_ids = fields.One2many('bds.getphoneposter','sms_id')
-    
+    poster_ids = fields.Many2many('bds.poster','sms_poster_relate','sms_id','poster_id',compute='poster_ids_',store=True)
+    len_poster_ids  =fields.Integer(compute='poster_ids_',store=True)
+    @api.depends('getphoneposter_ids','name','noi_dung')
+    def poster_ids_(self):
+        for r in self:
+            poster_ids = self.env['bds.poster'].search([('getphoneposter_ids','in',r.getphoneposter_ids.ids)])
+            r.poster_ids = poster_ids
+            r.len_poster_ids = len(poster_ids)
     @api.depends('getphoneposter_ids','getphoneposter_ids.poster_ids')
     def last_name_of_that_model_(self):
         for r in self:
@@ -322,30 +339,30 @@ class GetPhonePoster(models.Model):
     is_repost_for_poster = fields.Boolean()
     filter_sms_or_filter_sql = fields.Selection([('sms_ids','sms_ids'),('by_sql','by_sql')],default='sms_ids')
 #     name = fields.Char()
-    sms_id = fields.Many2one('bds.sms')
+    sms_id = fields.Many2one('bds.sms',required=True)
     nha_mang = fields.Selection([('vina','vina'),('mobi','mobi'),('viettel','viettel'),('khac','khac')],default='vina')
     post_count_min = fields.Integer(default=10)
     len_poster = fields.Integer()
     exclude_poster_ids = fields.Many2many('bds.poster')#,inverse="exclude_poster_inverse_")
-    len_posters_of_sms = fields.Integer()
+#     len_posters_of_sms = fields.Integer()
     phuong_loc_ids = fields.Many2many('bds.phuong')
 
     quan_ids = fields.Many2many('bds.quan',default = lambda self:self.default_quan())
     phone_list = fields.Text(compute='phone_list_',store=True)
-    danh_sach_doi_tac = fields.Html(compute='phone_list_',store=True)
     poster_ids = fields.Many2many('bds.poster','getphone_poster_relate','getphone_id','poster_id')#,compute='poster_ids_',store=True)
-    loc_gian_tiep_quan_bds_topic = fields.Selection([(u'Qua Thống Kê Quận Object',u'Qua Thống Kê Quận Object'),(u'Qua BDS Object',u'Qua BDS Object')],default = u'Qua Thống Kê Quận Object')
+    loc_gian_tiep_quan_bds_topic = fields.Selection([(u'Qua Thống Kê Quận Object',u'Qua Thống Kê Quận Object'),(u'Qua BDS Object',u'Qua BDS Object'),(u'Qua BDS SQL',u'Qua BDS SQL')],default = u'Qua BDS SQL')
     gia_be_hon = fields.Float(digits=(6,2))
     bds_ids = fields.Many2many('bds.bds',compute='poster_ids_',store=True)
+    poster_da_gui_cua_sms_nay_ids = fields.Many2many('bds.poster',compute='poster_ids_',store=True)
 #     @api.onchange('poster_ids')
 #     def danh_sach_doi_tac_(self):
 #         for r in self:
 #             r.danh_sach_doi_tac = '\r\n'.join(r.poster_ids.mapped('name'))
             
-   
+    @api.depends('sms_id','nha_mang')
     def name_(self):
         for r in self:
-            r.name = u'get phone,id %s'%r.id
+                r.name = u'get phone,id %s- nhà mạng %s' %(r.id,r.nha_mang)
     def default_quan(self):
         quan_10 = self.env['bds.quan'].search([('name','=',u'Quận 10')])
         return [quan_10.id]
@@ -360,10 +377,10 @@ class GetPhonePoster(models.Model):
     @api.onchange('gia_be_hon','loc_gian_tiep_quan_bds_topic','quan_ids','post_count_min','nha_mang','sms_id','exclude_poster_ids','poster_ids.exclude_sms_ids','phuong_loc_ids','is_repost_for_poster')
     def poster_ids_(self):
         
-        def filter_for_poster(l):
-            if l.id in r.exclude_poster_ids.ids:
+        def filter_for_poster(poster):
+            if poster.id in r.exclude_poster_ids.ids:
                 return False
-            if r.sms_id.id in l.exclude_sms_ids.ids:
+            if r.sms_id.id in poster.exclude_sms_ids.ids:
                 return False
             if r.is_repost_for_poster or r.filter_sms_or_filter_sql =='sms_ids':
                 return True
@@ -376,7 +393,7 @@ class GetPhonePoster(models.Model):
             on  r.getphone_id= c.id
             where  u.id = %(r_id)s
             and c.sms_id =  %(sms_id)s
-            '''%{'r_id':l.id,
+            '''%{'r_id':poster.id,
                  'sms_id':r.sms_id.id
                  }
                 self.env.cr.execute(product_category_query)
@@ -407,7 +424,32 @@ class GetPhonePoster(models.Model):
                     poster_quan10_greater_10 = poster_quan10_greater_10.filtered(filter_for_poster )
                     r.poster_ids =poster_quan10_greater_10
                     r.len_poster = len(poster_quan10_greater_10)
-            elif r.loc_gian_tiep_quan_bds_topic ==u'Qua BDS Object':
+            elif r.loc_gian_tiep_quan_bds_topic == u'Qua BDS SQL':
+                slq_cmd = '''select distinct p.id from bds_bds as b inner join bds_poster as p on b.poster_id = p.id'''
+                where_list = []
+                if r.quan_ids:
+#                     domain = expression.AND([[( 'quan_id','in',r.quan_ids.ids)],domain])
+                    where_list.append(("b.quan_id in %s"%(tuple(r.quan_ids.ids),)).replace(',)',')'))
+                if r.post_count_min:
+#                     domain = expression.AND([[('count_post_all_site','>=',r.post_count_min)],domain])
+                    where_list.append("b.count_post_all_site >= %s"%r.post_count_min)
+                if r.gia_be_hon:
+#                     domain = expression.AND([[('gia','<=',r.gia_be_hon)],domain])
+                    where_list.append("b.gia <= %s"%r.gia_be_hon)
+                if r.nha_mang:
+                    where_list.append("p.nha_mang ='%s'"%r.nha_mang)
+#                     post_ids = post_ids.filtered(lambda i: i.nha_mang == r.nha_mang)
+                where_clause = u' and '.join(where_list)
+                if where_list:
+                    slq_cmd = slq_cmd + ' where ' + where_clause
+                self.env.cr.execute(slq_cmd)
+                rsul = self.env.cr.fetchall()
+                poster_ids = map(lambda i:i[0],rsul)
+                r.poster_ids = poster_ids
+                r.len_poster = len(poster_ids)
+                
+                print '*******rsul*******',rsul
+            else:#if r.loc_gian_tiep_quan_bds_topic ==u'Qua BDS Object':
                 domain = []
                 if r.quan_ids:
                     domain = expression.AND([[( 'quan_id','in',r.quan_ids.ids)],domain])
@@ -415,13 +457,20 @@ class GetPhonePoster(models.Model):
                     domain = expression.AND([[('count_post_all_site','>=',r.post_count_min)],domain])
                 if r.gia_be_hon:
                     domain = expression.AND([[('gia','<=',r.gia_be_hon)],domain])
-                rs = self.env['bds.bds'].search(domain)
-                post_ids = rs.mapped('poster_id')
+                bds = self.env['bds.bds'].search(domain)
+                post_ids = bds.mapped('poster_id')
                 if r.nha_mang:
                     post_ids = post_ids.filtered(lambda i: i.nha_mang == r.nha_mang)
+                    
+                
+                if not r.is_repost_for_poster:
+                    post_ids_da_gui_cua_sms_nay_ids = r.sms_id.poster_ids
+                    print '***post_ids_da_gui_cua_sms_nay**',post_ids_da_gui_cua_sms_nay_ids
+                    post_ids = post_ids.filtered(lambda r: r.id not in post_ids_da_gui_cua_sms_nay_ids.ids )
+                    r.poster_da_gui_cua_sms_nay_ids = post_ids_da_gui_cua_sms_nay_ids
                 r.poster_ids = post_ids
                 r.len_poster = len(post_ids)
-                r.bds_ids = rs
+                r.bds_ids = bds
                 
                                 
 
@@ -430,6 +479,12 @@ class Importcontact(models.Model):
     _name = 'bds.importcontact'
     file = fields.Binary()
     land_contact_saved_number = fields.Integer()
+    trigger_fields = fields.Selection([('bds.bds','bds.bds')])
+    
+    @api.multi
+    def trigger(self):
+        print 'hihihihiihih trigger'
+        self.env[self.trigger_fields].search([]).write({'is_triger':True})
     @api.multi
     def import_contact(self):
         import_contact(self)
@@ -677,11 +732,10 @@ class Fetch(models.Model):
     url_id = fields.Many2one('bds.url')
     url_ids = fields.Many2many('bds.url')
     last_fetched_url_id = fields.Integer()#>0
-    name = fields.Char()
     web_last_page_number = fields.Integer()
 #     page_begin = fields.Integer()
 #     set_page_end = fields.Integer()
-    set_number_of_page_once_fetch = fields.Integer(default=1)
+    set_number_of_page_once_fetch = fields.Integer(default=5)
     link_number = fields.Integer()
     update_link_number = fields.Integer()
     create_link_number = fields.Integer()
@@ -704,7 +758,7 @@ class Fetch(models.Model):
     @api.depends('set_number_of_page_once_fetch')
     def name_(self):
         for r in self:
-            r.name = 'Fetch, id:%s-set_number_of_page_once_fetch: %s'%(r.id,r.set_number_of_page_once_fetch)
+            r.name = 'Fetch, id:%s-url_ids:%s-set_number_of_page_once_fetch: %s'%(r.id,u','.join(r.url_ids.mapped('name')),r.set_number_of_page_once_fetch)
     @api.multi
     def test_something(self):
         html = request_html(self.input_text)
@@ -773,12 +827,7 @@ class Fetch(models.Model):
     def fetch_cron(self,id_fetch):
         fetch_id2 = self.browse(id_fetch)
         fetch(fetch_id2,note=u'cập nhật lúc ' +  fields.Datetime.now(),is_fetch_in_cron = True)
-        #raise ValueError('dfdfdfd')
-    @api.depends('write_date')
-    def name_(self):
-        write_date = fields.Datetime.from_string(self.write_date)
-        write_date_str =write_date.strftime( "%d-%m-%Y")
-        self.name = write_date_str 
+    
 #     @api.depends('write_date')
 #     def bds_ids_quantity_(self):
 #         for r in self:
@@ -798,7 +847,6 @@ class Fetch(models.Model):
     
     
 
-    @api.multi
     def thread(self):
         thread_number = 5
         url_imput = self.url_id.url
@@ -812,8 +860,22 @@ class Fetch(models.Model):
                                                                             })
             w2.start()
             
-            
-
+class CronFetch(models.Model):
+    _name = 'cronfetch'
+#     id_fetch = fields.Integer()
+    fetch_id = fields.Many2one('bds.fetch',required=True)
+    def fetch_cron(self):
+        cronfetch_id =  self.search([],limit=1,order='id desc')
+        if cronfetch_id:
+#             id_fetch = self.env['bds.fetch'].browse([('id','=',cronfetch_id.id_fetch)])
+            fetch_id = cronfetch_id.fetch_id
+            if fetch_id:
+                fetch(fetch_id,  note=u'cập nhật lúc ' +  fields.Datetime.now(),is_fetch_in_cron = True)
+            else:
+                raise ValueError('khong ton tai: fetch_id')
+        else:
+            raise ValueError('khong ton tai cronfetch nao ca ')
+        
 class Mycontact(models.Model):
     _name = 'bds.mycontact'
     name = fields.Char()

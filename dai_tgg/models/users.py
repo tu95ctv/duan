@@ -11,6 +11,7 @@ class PartnerABC(models.Model):
     name_viet_tat =  fields.Char(compute='name_khong_dau_', store=True)
     @api.depends('name')
     def name_khong_dau_(self):
+        pass
         name_khong_dau_compute(self)
         
     @api.model

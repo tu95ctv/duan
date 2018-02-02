@@ -316,6 +316,42 @@
          <field name="view_mode">tree,form</field>
       </record>
       
+      <!-- Tờ Trình -->
+      
+      <record model="ir.ui.view" id="totrinh_form">
+         <field name="name">totrinh.form</field>
+         <field name="model">totrinh</field>
+         <field name="arch" type="xml">
+            <form string="Tờ Trình ">
+               <sheet>
+                  <group>
+                    <field name="name" />
+                    <field name="so_to_trinh" />
+               		<field name="ngay_to_trinh" />
+                  </group>
+               </sheet>
+            </form>
+         </field>
+      </record>
+      <record model="ir.ui.view" id="totrinh_list">
+         <field name="name">totrinh.list</field>
+         <field name="model">totrinh</field>
+         <field name="arch" type="xml">
+            <tree string="Tờ Trình">
+               <field name="name" />
+               <field name="so_to_trinh" />
+               <field name="ngay_to_trinh" />
+            </tree>
+         </field>
+      </record>
+      <record model="ir.actions.act_window" id="totrinh_action">
+         <field name="name">Tờ Trình</field>
+         <field name="res_model">totrinh</field>
+         <field name="view_mode">tree,form</field>
+      </record>
+      
+      <!-- End Tờ Trình -->
+      
       <menuitem name="Menu Khác" id="else_more_menu" parent="ctrtvcv_icon" sequence="2" />
       <menuitem name="Cấu hình" id="config_menu" parent="else_more_menu" action="ltk_config_settings_action" sequence="3" />
       <menuitem name="Users(Nhân viên)" id="users_menu" parent="else_more_menu" action="users_action" sequence="3" />
@@ -325,6 +361,7 @@
       <menuitem name="Partner(Đối tác)" id="partner_menu" parent="else_more_menu" action="partner_action" sequence="3" />
       <menuitem id="file_menu" parent="else_more_menu" action="file_action" sequence="6" />
       <menuitem id="comment_menu" parent="else_more_menu" action="comment_action" sequence="6" />
-      <menuitem id="dlcv_menu" parent="else_more_menu" action="dlcv_action" sequence="7" />
+      <menuitem id="totrinh_menu" parent="else_more_menu" action="totrinh_action" sequence="7" />
+      <menuitem id="dlcv_menu" parent="else_more_menu" action="dlcv_action" sequence="8" />
    </data>
 </openerp>

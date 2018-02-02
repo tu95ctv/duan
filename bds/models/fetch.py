@@ -18,13 +18,15 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 import smtplib
 
-def fetch(self,note=False,is_fetch_in_cron = False):
-    fetch1(self,note,is_fetch_in_cron)
+# def fetch(self,note=False,is_fetch_in_cron = False):
+#     print '**** fetch ____'
+#     fetch1(self,note,is_fetch_in_cron)
    
                 
-def fetch1(self,note=False,is_fetch_in_cron = False):
-
+def fetch(self,note=False,is_fetch_in_cron = False):
     url_ids = self.url_ids.ids
+    print 'url_ids',url_ids
+#     return 'url_ids',url_ids
 #     _logger.warning('self.url_ids %s'%self.url_ids)
 #     _logger.info('self.url_ids %s'%self.url_ids)
 #     return True
@@ -42,13 +44,16 @@ def fetch1(self,note=False,is_fetch_in_cron = False):
     
     end_page_number_in_once_fetch,page_lists, begin, so_page =  get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_once_fetch,is_fetch_in_cron) 
     number_notice_dict = {
+    'page_int':0,
+    'curent_link':u'0/0',
     'link_number' : 0,
     'update_link_number' : 0,
     'create_link_number' : 0,
     'existing_link_number' : 0,
-    'begin':begin,
+    'begin_page':begin,
     'so_page':so_page,
-    'page_lists':page_lists
+    'page_lists':page_lists,
+    'length_link_per_curent_page':0
     }
     for page_int in page_lists:
         page_handle(self, page_int, url_id, number_notice_dict)
@@ -80,7 +85,7 @@ def get_page_number_lists(self,url_id,url_id_site_leech_name,set_number_of_page_
         html = request_html(page_1_url)
         html = json.loads(html)
         total = int(html["total"])
-        last_page_from_website = math.ceil(total/20.0)
+        last_page_from_website = int(math.ceil(total/20.0))
         self.web_last_page_number = last_page_from_website
     elif url_id_site_leech_name=='lazada':
         last_page_from_website =5
@@ -110,6 +115,7 @@ def create_cho_tot_page_link(url_input,page_int):
     url = url_input +  '&page=' +str(page_int)
     return url
 def page_handle(self, page_int, url_id, number_notice_dict):
+    number_notice_dict['page_int'] = page_int
     links_per_page = []
     url_input = url_id.url
     siteleech_id = url_id.siteleech_id
@@ -140,8 +146,8 @@ def page_handle(self, page_int, url_id, number_notice_dict):
     elif siteleech_id.name =='lazada':
         url = url_input +'?page=' +int(page_int)
     number_notice_dict['curent_page'] = page_int 
-    number_notice_dict['len_per_previous_page']  = number_notice_dict.get('len_per_curent_page',0)
-    number_notice_dict['len_per_curent_page'] = len(links_per_page)
+    number_notice_dict['length_link_per_previous_page']  = number_notice_dict.get('length_link_per_curent_page',0)
+    number_notice_dict['length_link_per_curent_page'] = len(links_per_page)
     for link in links_per_page:
         topic_dict_of_page = {}
         if  siteleech_id.name =='chotot':
@@ -150,7 +156,6 @@ def page_handle(self, page_int, url_id, number_notice_dict):
         elif 'batdongsan' in siteleech_id.name:
             topic_dict_of_page = link
             link  = 'https://batdongsan.com.vn' +  link['list_id']
-        number_notice_dict["link_number"] = number_notice_dict["link_number"] + 1
         deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page=topic_dict_of_page)
 #         while (True):
 #             try:
@@ -162,17 +167,18 @@ def page_handle(self, page_int, url_id, number_notice_dict):
 #                 #print 'url','sleep....because error'
 #                 sleep(5)
 def deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page={}):
+    
     search_dict = {}
     update_dict = {}
     search_dict['link'] = link
     #print link
+    print '**link**',link
     html = request_html(link)
     siteleech_id = url_id.siteleech_id
     if siteleech_id.name =='batdongsan':
         pass
     elif siteleech_id.name =='chotot':
         html = json.loads(html)
-        
     if siteleech_id.name =='batdongsan':    
         price = get_bds_dict_in_topic(self,update_dict,html,siteleech_id,only_return_price=True)
     elif siteleech_id.name =='chotot':
@@ -213,6 +219,9 @@ def deal_a_link(self,link,number_notice_dict,url_id,topic_dict_of_page={}):
         self.env['bds.bds'].create(update_dict)
         number_notice_dict['create_link_number'] = number_notice_dict['create_link_number'] + 1    
 #     update_dict.update({'url_ids':[(4,self.id)]})
+    link_number = number_notice_dict.get("link_number",0) + 1
+    number_notice_dict["link_number"] = link_number
+    number_notice_dict["curent_link"] = u'%s/%s'%(link_number,number_notice_dict['length_link_per_curent_page']*number_notice_dict['so_page'])
     print '***number_notice_dict***',number_notice_dict
 ###get data one topic of bds site
 def get_images_for_bds_com_vn(soup):
@@ -522,7 +531,7 @@ def get_date_cho_tot(string):
 
                  
 def get_last_page_from_bdsvn_website(url_input):
-    
+    print '***url_input**',url_input
     html = request_html(url_input)
     soup = BeautifulSoup(html, 'html.parser')
     range_pages = soup.select('div.background-pager-right-controls > a')

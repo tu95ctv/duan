@@ -209,6 +209,16 @@ def ham_tao_tv_con(self_,val,field_attr,key_search_dict,update_dict,noti_dict):
     return val
 def active_function(val):
     return False if val ==u'na' else True
+
+def read_merge_cell(sheet,row,col,merge_tuple_list):
+    for crange in merge_tuple_list:
+        rlo, rhi, clo, chi = crange
+        if row>=rlo and row < rhi and col >=clo and col < chi:
+            row = rlo
+            col = clo
+            break
+    val = sheet.cell_value(row,col)
+    return val
 def importthuvien(odoo_or_self_of_wizard):
     global log_new
     log_new = u''
@@ -220,14 +230,54 @@ def importthuvien(odoo_or_self_of_wizard):
             xl_workbook = xlrd.open_workbook(file_contents = recordlist)
             begin_row_offset = 1
             not_active_include_search  =False
-            
             loop_list = ['main']
-            
-            if r.type_choose==u'Thư viện công việc':
+#             search_update_dict = {}
+            search_update_dict = {}
+            if r.type_choose =='stock.inventory.line':
+#                 sheet_names = [u'Chuyển Mạch (IMS, Di Động)']
+                sheet_names = [u'Truyền dẫn']
+                model_name = 'stock.inventory.line'
+                
+                def chon_location_id(val):
+                    location_id = xcel_data_of_a_row['location_id3'] or xcel_data_of_a_row['location_id2'] or xcel_data_of_a_row['location_id1'] or xcel_data_of_a_row['location_id_goc']
+                    return location_id
+                field_dict= (
+                    
+                         ('inventory_id', {'val':1,'key':False}),  
+                         ('location_id_goc', {'val':self.env['stock.location'].search([('name','=','LTK Dự Phòng')]).id,'key':False,'for_excel_readonly':True}),                       
+                         ('location_id1', {'model':'stock.location','func':None,'xl_title':u'Phòng','key':False,'for_excel_readonly':True, 'more_fields':[('location_id',{'func':lambda val: xcel_data_of_a_row['location_id_goc'],'key':True})]   }),    
+                         ('location_id2', {'model':'stock.location','func':None,'xl_title':u'Tủ/Kệ','key':False,'for_excel_readonly':True,'more_fields':[('location_id',{'func':lambda val: xcel_data_of_a_row['location_id1'] or xcel_data_of_a_row['location_id_goc'] ,'key':True})]}), 
+                         ('location_id3', {'model':'stock.location','func':None,'xl_title':u'Ngăn','key':False,'for_excel_readonly':True,'more_fields':[('location_id',{'func':lambda val: xcel_data_of_a_row['location_id2'] or xcel_data_of_a_row['location_id1'] or xcel_data_of_a_row['location_id_goc'],'key':True})]}), 
+                         ('location_id', {'val':'Cheat Code', 'func':chon_location_id, 'key':False}),                    
+                         ('tinh_trang', {'func':None,'xl_title':u'Tình trạng','key':False,'for_excel_readonly':True,'break_when_xl_field_empty':True}),                       
+                         ('prod_lot_id_only_read_excel', {'xl_title':u'Seri Number','for_excel_readonly':True}),
+                         ('product_id', {'func':None,'xl_title':u'TÊN VẬT TƯ','key':True,'more_fields':[('tracking',{'func':lambda val: 'serial' if xcel_data_of_a_row['prod_lot_id_only_read_excel'] !=False else 'none' }),('type',{'val':'product'})]}),
+                         ('prod_lot_id', {'func':lambda val: int(val) if isinstance(val,float) else val,'xl_title':u'Seri Number','key':True,'more_fields':[('product_id',{'func':lambda val: search_update_dict['product_id'] })]}),
+                         ('product_qty', {'func':lambda val: 1 if  (search_update_dict['prod_lot_id'] and val > 1) else val ,'xl_title':u'Tồn kho cuối kỳ','key':False }),
+                         #('name', {'func':None,'xl_title':u'Seri Number','key':True,'break_when_xl_field_empty':True }),
+                         )
+                title_rows = [4,5]
+#                 sheet_names = xl_workbook.sheet_names()
+                begin_row_offset = 3
+            if r.type_choose ==u'stock production lot':
+#                 sheet_names = xl_workbook.sheet_names()
+                sheet_names = [u'Chuyển Mạch (IMS, Di Động)']
+                model_name = 'stock.production.lot'
+                field_dict= (
+                         ('tinh_trang', {'func':None,'xl_title':u'Tình trạng','key':False,'for_excel_readonly':True,'break_when_xl_field_empty':True}),                       
+                         ('product_id', {'func':None,'xl_title':u'TÊN VẬT TƯ','key':False,'more_fields':[('tracking',{'val':'serial'}),('type',{'val':'product'})]}),
+                         ('name', {'func':None,'xl_title':u'Seri Number','key':True,'break_when_xl_field_empty':True }),
+                         )
+                title_rows = [4,5]
+#                 sheet_names = xl_workbook.sheet_names()
+                begin_row_offset = 3
+                
+                
+                         
+            elif r.type_choose==u'Thư viện công việc':
                 not_active_include_search  =True
                 sheet_names = xl_workbook.sheet_names()
                 model_name = 'tvcv'
-                
                 field_dict_goc= (
                          ('name', {'func':None,'xl_title':u'Công việc','key':'Both','break_when_xl_field_empty':True}),#'func_de_tranh_empty':lambda r:  len(r) > 2
                          ( 'code',{'func':None,'xl_title':u'Mã CV','key':False }),
@@ -431,22 +481,44 @@ def importthuvien(odoo_or_self_of_wizard):
                 title_rows = [0]
                 sheet_names = xl_workbook.sheet_names()
                 begin_row_offset = 1
+            ### Xong khai bao
+            
+            fields= self.env[model_name]._fields
+#             if len(sheet_names)>1:
+            if r.type_choose==u'Thư viện công việc':
+                field_dict = field_dict_goc
+            for field_tuple in field_dict:
+                f_name = field_tuple[0]
+                field_attr = field_tuple[1]
+                if not field_attr.get('for_excel_readonly'):
+                    field = fields[f_name]
+                    if field.comodel_name:
+                        field_attr['model'] = field.comodel_name
+                    if field.type =='many2many' or field.type == 'one2many':
+                        field_attr['m2m'] = True
+                    
+            
             
             for loop_instance in loop_list:
                 for sheet_name in sheet_names:
                     if r.type_choose==u'Thư viện công việc':
                         field_dict = deepcopy(field_dict_goc)
-                        
                     sheet = xl_workbook.sheet_by_name(sheet_name)
                     row_title_index =None
+                    merge_tuple_list =  sheet.merged_cells
+#                     return False
+                    print '**sheet.ncols**',sheet.ncols
                     for row in title_rows:
                         for col in range(0,sheet.ncols):
                             try:
                                 value = unicode(sheet.cell_value(row,col))
+                                print 'tittle value scan',value
                             except Exception as e:
                                 raise ValueError(str(e),'row',row,'col',col,sheet_name)
                            
                             for field,field_attr in field_dict:
+                                if field_attr.get('val',None) != None:
+                                    continue
                                 if field_attr['xl_title'] ==None and field_attr['col_index'] !=None:
                                     continue# cos col_index
                                 if isinstance(field_attr['xl_title'],unicode) or  isinstance(field_attr['xl_title'],str):
@@ -454,6 +526,7 @@ def importthuvien(odoo_or_self_of_wizard):
                                 else:
                                     xl_title_s =  field_attr['xl_title']
                                 for xl_title in xl_title_s:
+                                    print 'xl_title',xl_title,'value',value
                                     if xl_title == value:
                                         field_attr['col_index'] = col
                                         if row_title_index ==None or  row > row_title_index:
@@ -461,8 +534,10 @@ def importthuvien(odoo_or_self_of_wizard):
                                         break
                     
                     
-                    for row in range(row_title_index+begin_row_offset,sheet.nrows):
+                    for c,row in enumerate(range(row_title_index+begin_row_offset,sheet.nrows)):
                         #print 'row_number',row,'sh',sheet_name
+                        print 'count row',row
+                        search_update_dict = {}
                         key_search_dict = {}
                         update_dict = {}
                         xcel_data_of_a_row = {}
@@ -502,109 +577,95 @@ def importthuvien(odoo_or_self_of_wizard):
                             update_dict['file_name'] = r.type_choose
                         elif r.type_choose==u'iventory7500':
                             update_dict['file_name'] = r.type_choose
+                        
                         continue_row = False
                         for field,field_attr in field_dict:
-                            try:
-                                if field_attr['col_index'] =='skip_field_if_not_found_column_in_some_sheet':
-                                    continue
-                            except KeyError as e:
-                                raise KeyError (u'Ko co col_index của field %s'% field)
-                            #print 'row,col',row,col
-                            col = field_attr['col_index']
-                            val = sheet.cell_value(row,col)
-                            #print 'val',val
-                            xcel_data_of_a_row[field] = val
-                            if isinstance(val, unicode):
-                                val = val.strip()
-                            if not check_variable_is_not_empty_string(val):
-                                val = False
-    #                         else:
-    #                             func_for_skip_cell_f = field_attr.get('func_for_skip_cell',False)
-    #                             if func_for_skip_cell_f:
-    #                                 if func_for_skip_cell_f(val) :
-    #                                     row_log = sheet_name + u' ' +  str(row) + u' ' +  str(col)
-    #                                     log += row_log + 'xxx'  + str(len(val)) + ' ' +  str(type(val)) + str(val=='') + str(val==u'')+ '\n'
-    #                                     val = False    
-    #                         func_write_log  = field_attr.get('func_write_log',False)
-    #                         if func_write_log:
-    #                             #if func_write_log(val) :
-    #                                 row_log = sheet_name + u' ' +  str(row) + u' ' +  str(col)
-    #                                 log += row_log + 'xxx'  + str(len(val)) + ' ' +  str(type(val)) + str(val=='') + str(val==u'')+ '\n'
-    #                                 #val = False 
-                                    
-                                            
-                            if 'break_when_xl_field_empty' in field_attr and val==False:
-                                continue_row = True
-                                break
-                            dung_ham_de_tao_val_rieng = field_attr.get('dung_ham_de_tao_val_rieng',False)
-                            if dung_ham_de_tao_val_rieng and val != False:
-                                val = dung_ham_de_tao_val_rieng(self, val, field_attr, key_search_dict,update_dict,noti_dict)
-    #                             alist = val.split(',')
-    #                             alist = filter(check_variable_is_not_empty_string,alist)
-    #                             len_alist = len(alist)
-    #                             diem_percent = 100/len(alist)
-    #                             key_name = field_attr.get('key_name','name')
-    #                             parent_id_name = key_search_dict['name']
-    #                             def tao_thu_vien_childrens(val):
-    #                                 i = val[0]
-    #                                 val = val[1]
-    #                                 val = val.strip().capitalize()
-    #                                 name_tv_con = val  # + u'|Công Việc Cha: '  + key_search_dict['name']
-    #                                 parent_id = get_or_create_object_sosanh (self,'tvcv',{'name':parent_id_name},noti_dict=noti_dict)
-    #                                 if i ==len_alist-1:
-    #                                     diem_percent_l =100- (len_alist-1)*diem_percent
-    #                                 else:
-    #                                     diem_percent_l = diem_percent
-    #                                     
-    #                                 return get_or_create_object_sosanh(self,field_attr['model'],{key_name:name_tv_con,'parent_id':parent_id.id},{'diem_percent':diem_percent_l,
-    #                                                                                                                                              #'diem':diem,
-    #                                                                                                                                              'don_vi':update_dict['don_vi'],
-    #                                                                                                                                              'cong_viec_cate_id':update_dict['cong_viec_cate_id'],
-    #                                                                                                                                              'parent_id':parent_id.id
-    #                                                                                                                                              } )
-    #                             a_object_list = map(tao_thu_vien_childrens,enumerate(alist))
-    #                             a_object_list = map(lambda x:x.id,a_object_list)
-    #                             val = [(6, False, a_object_list)]
-                            else:
+                            if field_attr.get('val',None) !=None:
+                                val = field_attr.get('val',None)
                                 if 'func' in field_attr and field_attr['func']:
-                                    if val !=False or field_attr.get('use_fnc_even_cell_is_False',False):
-                                        val = field_attr['func'](val)
-                                        
-                                if field_attr.get('for_excel_readonly'):
-                                    continue
-                                if 'model' in field_attr  and field_attr['model'] and val !=False  :
-                                    key_name = field_attr.get('key_name','name')
-                                    if 'm2m' not in field_attr or not field_attr['m2m']:
-                                        if ',' in val and field_attr.get('split_first_item_if_comma',False):
-                                            val = val.split(',')[0]
-                                        any_obj = get_or_create_object_sosanh(self,field_attr['model'],{key_name:val})
-                                        val = any_obj.id
-                                    else:
-                                        unicode_m2m_list = val.split(',')
-                                        unicode_m2m_list = map(lambda i: i.strip(),unicode_m2m_list)
-                                        unicode_m2m_list = filter(check_variable_is_not_empty_string, unicode_m2m_list)
-                                        def create_or_get_one_in_m2m_value(val):
-                                            val = val.strip()
-                                            if val:
-                                                return get_or_create_object_sosanh(self,field_attr['model'],{key_name:val},noti_dict=noti_dict,model_effect_noti_dict='tvcv')
-                                        object_m2m_list = map(create_or_get_one_in_m2m_value, unicode_m2m_list)
-                                        m2m_ids = map(lambda x:x.id, object_m2m_list)
-                                        val = [(6, False, m2m_ids)]
+                                        if val !=False or field_attr.get('use_fnc_even_cell_is_False',False):
+                                            val = field_attr['func'](val)
+                            elif field_attr.get('val',None) ==None:
+                                try:
+                                    if field_attr['col_index'] =='skip_field_if_not_found_column_in_some_sheet':
+                                        continue
+                                except KeyError as e:
+                                    raise KeyError (u'Ko co col_index của field %s'% field)
+                                col = field_attr['col_index']
+    #                             val = sheet.cell_value(row,col)
+                                val = read_merge_cell(sheet,row,col,merge_tuple_list)
+                                
+                                if isinstance(val, unicode):
+                                    val = val.strip()
+                                if not check_variable_is_not_empty_string(val):
+                                    val = False
+                                if 'break_when_xl_field_empty' in field_attr and val==False:
+                                    continue_row = True
+                                    break
+                                dung_ham_de_tao_val_rieng = field_attr.get('dung_ham_de_tao_val_rieng',False)
+                                if dung_ham_de_tao_val_rieng and val != False:
+                                    val = dung_ham_de_tao_val_rieng(self, val, field_attr, key_search_dict,update_dict,noti_dict)
+                                else:
+                                    if 'func' in field_attr and field_attr['func']:
+                                        if val !=False or field_attr.get('use_fnc_even_cell_is_False',False):
+                                            val = field_attr['func'](val)
+                                    
+                                    if 'model' in field_attr  and field_attr['model'] and val !=False  :
+                                        key_name = field_attr.get('key_name','name')
+                                        if 'm2m' not in field_attr or not field_attr['m2m']:
+    #                                         if ',' in val and field_attr.get('split_first_item_if_comma',False):
+    #                                             val = val.split(',')[0]
+                                            more_dict = {}
+                                            more_fields = field_attr.get('more_fields')
+                                            if more_fields:
+                                                print '**more_fields**',more_fields
+                                                for more_field in more_fields:
+                                                    field2,field_attr2 = more_field
+                                                    val_field2 = field_attr2.get('val')
+                                                    func = field_attr2.get('func',None)
+                                                    if func:
+                                                        val_field2 = func(val_field2)
+                                                    more_dict[field2] = val_field2
+                                            any_obj = get_or_create_object_sosanh(self,field_attr['model'],{key_name:val},more_dict,is_must_update = True,model_effect_noti_dict='cheatcode')
+                                            val = any_obj.id
+                                        else:
+                                            unicode_m2m_list = val.split(',')
+                                            unicode_m2m_list = map(lambda i: i.strip(),unicode_m2m_list)
+                                            unicode_m2m_list = filter(check_variable_is_not_empty_string, unicode_m2m_list)
+                                            def create_or_get_one_in_m2m_value(val):
+                                                val = val.strip()
+                                                if val:
+                                                    return get_or_create_object_sosanh(self,field_attr['model'],{key_name:val},noti_dict=noti_dict,model_effect_noti_dict='tvcv')
+                                            object_m2m_list = map(create_or_get_one_in_m2m_value, unicode_m2m_list)
+                                            m2m_ids = map(lambda x:x.id, object_m2m_list)
+                                            val = [(6, False, m2m_ids)]
+
+                            xcel_data_of_a_row[field] = val
+                            if field_attr.get('for_excel_readonly'):
+                                        continue
                             if field_attr['key']==True:
                                 key_search_dict[field] = val
+                               
                             elif  field_attr['key']=='Both':
                                 key_search_dict[field] = val
                                 update_dict[field] = val
                             else:
                                 update_dict[field] = val
+                            search_update_dict [field] = val
                         if continue_row:
+                            noti_dict['break_when_xl_field_empty'] = noti_dict.setdefault('break_when_xl_field_empty',0) + 1
                             continue
+                        print '**search_update_dict***',search_update_dict
+                        print '**xcel_data_of_a_row***',xcel_data_of_a_row
                         if key_search_dict:
                                 get_or_create_object_sosanh(self,model_name,key_search_dict,update_dict,is_must_update=True,noti_dict=noti_dict,not_active_include_search  =not_active_include_search)
+                        else:
+                            noti_dict['not_key_search_dict'] = noti_dict.setdefault('not_key_search_dict',0) + 1
+                        
             r.create_number = noti_dict.get('create')
             r.update_number = noti_dict.get('update')
             r.skipupdate_number = noti_dict.get('skipupdate')
-            r.log= log_new
+            r.log= noti_dict
             
 
             

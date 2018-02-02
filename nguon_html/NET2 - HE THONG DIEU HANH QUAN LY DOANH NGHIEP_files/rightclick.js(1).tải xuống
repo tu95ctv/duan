@@ -1,0 +1,5 @@
+function disableRightClick()
+  {
+      return false;
+  }
+document.oncontextmenu = disableRightClick;

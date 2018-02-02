@@ -78,14 +78,16 @@
             
             <xpath expr="//field[@name='pack_lot_ids']/tree/field[@name='lot_name']" position="attributes">
                <attribute name="invisible" >not context.get('only_create_pn')</attribute>
-               <attribute name="string" >New Lot name</attribute>
+               <attribute name="required" >not context.get('only_create_pn')</attribute>
+               <attribute name="string" >Tạo mới S/N</attribute>
             </xpath>
             
             <xpath expr="//field[@name='pack_lot_ids']/tree/field[@name='lot_id']" position="attributes">
                <attribute name="invisible" >0</attribute>
                <attribute name="readonly" >not context.get('only_create_pn')</attribute>
-               <attribute name="string" >Use Exit Lot</attribute>
+               <attribute name="string" >Sử dụng S/N có sẵn</attribute>
             </xpath>
+          
             
          </field>
       </record>
