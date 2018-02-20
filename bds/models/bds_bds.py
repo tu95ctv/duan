@@ -113,7 +113,8 @@ class bds(models.Model):
     @api.depends('html')
     def html_show_(self):
         for r in self:
-            if len(r.html) > 201:
+            
+            if  r.html and len(r.html) > 201:
                 r.html_show = r.html[:200] + '...'
             else:
                 r.html_show = r.html

@@ -83,7 +83,7 @@
                      </group>
                      <group>
                      <field name="is_has_children" />
-                     <field name="children_ids" context="{'you_at_thu_vien_con':True}" attrs="{'invisible':[('co_cong_viec_cha','=',True)]}" />
+                     <field name="children_ids" context="{'you_at_thu_vien_con':True, 'default_loai_record':'Công Việc',}" attrs="{'invisible':[('co_cong_viec_cha','=',True)]}" />
                      </group>
                   </group>
                </sheet>

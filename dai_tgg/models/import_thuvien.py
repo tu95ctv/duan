@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api,exceptions,tools,_
 import re
-from tao_instance_new import importthuvien,import_strect
+from tao_instance_new import importthuvien
+from tao_instance import import_strect
+
 M = {'LTK':['LTK'],'PTR':['pas'],'TTI':['TTI'],'BDG':['BDG'],'VTU':['VTU']}
 def convert_sheetname_to_tram(sheet_name):
     if sheet_name ==False:

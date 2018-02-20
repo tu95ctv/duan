@@ -241,10 +241,12 @@
                      </page>
                   </notebook>
                </sheet>
+              <!-- 
                <div class="oe_chatter">
                     <field name="message_follower_ids" widget="mail_followers"/>
                     <field name="message_ids" widget="mail_thread"/>
                 </div>
+                 -->
             </form>
          </field>
       </record>
@@ -254,7 +256,7 @@
          <field name="model">cvi</field>
          <field name="groups_id" eval="[(4, ref('base.group_erp_manager'))]" />
          <field name="arch" type="xml">
-            <tree decoration-danger="not valid_diemtc">
+            <tree decoration-danger="not valid_diemtc" string="CVI Tree">
                <field name="id" />
                <field name="loai_record" groups="dai_tgg.group_show_loai_record" />
                <field name="name" groups="base.group_erp_manager" />
@@ -323,18 +325,18 @@
          <!--    <field name="groups_id" eval="[(4, ref('base.group_erp_manager'))]" />  -->
          <!-- không có tác dụng -->
          <field name="arch" type="xml">
-            <pivot string="dai HCM">
+            <pivot string="Something">
                <field name="department_id" type="row" />
                <field name="ngay_bat_dau" type="row" interval="month" />
                <field name="user_id" type="row" />
                <!--      <field name="ngay_bat_dau" type="row" interval="day" /> -->
-               <field name="id_for_pivot" type="row" />
+           <!--      <field name="id_for_pivot" type="row" />
                <field name="code" type="measure" />
                <field name="tvcv_id_name" type="measure" />
                <field name="noi_dung" type="measure" />
                <field name="diem_tvi" type="measure" />
                <field name="so_luong" type="measure" />
-               <field name="so_lan" type="measure" />
+               <field name="so_lan" type="measure" />-->
                <field name="diemtc" type="measure" />
                <field name="diemld" type="measure" />
             </pivot>

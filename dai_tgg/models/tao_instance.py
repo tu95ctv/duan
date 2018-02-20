@@ -177,8 +177,7 @@ def import_strect(odoo_or_self_of_wizard):
 #         return False
         
 log = u''
-def write_log(val):
-    pass
+
 def ham_tao_tv_con(self_,val,field_attr,key_search_dict,update_dict,noti_dict):
     alist = val.split(',')
     alist = filter(check_variable_is_not_empty_string,alist)
@@ -244,11 +243,14 @@ def importthuvien(odoo_or_self_of_wizard):
                 field_dict= (
                     
                          ('inventory_id', {'val':1,'key':False}),  
+                       
                          ('location_id_goc', {'val':self.env['stock.location'].search([('name','=','LTK Dự Phòng')]).id,'key':False,'for_excel_readonly':True}),                       
                          ('location_id1', {'model':'stock.location','func':None,'xl_title':u'Phòng','key':False,'for_excel_readonly':True, 'more_fields':[('location_id',{'func':lambda val: xcel_data_of_a_row['location_id_goc'],'key':True})]   }),    
                          ('location_id2', {'model':'stock.location','func':None,'xl_title':u'Tủ/Kệ','key':False,'for_excel_readonly':True,'more_fields':[('location_id',{'func':lambda val: xcel_data_of_a_row['location_id1'] or xcel_data_of_a_row['location_id_goc'] ,'key':True})]}), 
                          ('location_id3', {'model':'stock.location','func':None,'xl_title':u'Ngăn','key':False,'for_excel_readonly':True,'more_fields':[('location_id',{'func':lambda val: xcel_data_of_a_row['location_id2'] or xcel_data_of_a_row['location_id1'] or xcel_data_of_a_row['location_id_goc'],'key':True})]}), 
                          ('location_id', {'val':'Cheat Code', 'func':chon_location_id, 'key':False}),                    
+                         
+                         
                          ('tinh_trang', {'func':None,'xl_title':u'Tình trạng','key':False,'for_excel_readonly':True,'break_when_xl_field_empty':True}),                       
                          ('prod_lot_id_only_read_excel', {'xl_title':u'Seri Number','for_excel_readonly':True}),
                          ('product_id', {'func':None,'xl_title':u'TÊN VẬT TƯ','key':True,'more_fields':[('tracking',{'func':lambda val: 'serial' if xcel_data_of_a_row['prod_lot_id_only_read_excel'] !=False else 'none' }),('type',{'val':'product'})]}),
@@ -281,13 +283,12 @@ def importthuvien(odoo_or_self_of_wizard):
                 field_dict_goc= (
                          ('name', {'func':None,'xl_title':u'Công việc','key':'Both','break_when_xl_field_empty':True}),#'func_de_tranh_empty':lambda r:  len(r) > 2
                          ( 'code',{'func':None,'xl_title':u'Mã CV','key':False }),
-                         ('do_phuc_tap',{'func':None,'xl_title':u'Độ phức tạp','key':False,'func_write_log':write_log}),
+                         ('do_phuc_tap',{'func':None,'xl_title':u'Độ phức tạp','key':False}),
                          ('don_vi',{'model':'donvi','func':lambda x: unicode(x).title().strip(),'xl_title':u'Đơn vị','key':False}),
                          ('thoi_gian_hoan_thanh',{'func':None,'xl_title':u'Thời gian hoàn thành','key':False}),
                          ('dot_xuat_hay_dinh_ky',{'model':'dotxuathaydinhky','func':None,'xl_title':None,'key':False,'col_index':7}),
                          ('diem',{'func':None,'xl_title':u'Điểm','key':False}),
                          ('ghi_chu',{'func':None,'xl_title':u'Ghi chú','key':False}),
-                        # ('is_active',{'func':active_function,'xl_title':u'active','key':False,'col_index':'skip_field_if_not_found_column_in_some_sheet','use_fnc_even_cell_is_False':True}),
                          ('active',{'func':active_function,'xl_title':u'active','key':False,'col_index':'skip_field_if_not_found_column_in_some_sheet','use_fnc_even_cell_is_False':True}),
                          ('children_ids',{'model':'tvcv',
                         'xl_title':u'Các công việc con',
@@ -303,15 +304,9 @@ def importthuvien(odoo_or_self_of_wizard):
                          ('name', {'func':None,'xl_title':u'Họ và Tên','key':False,'break_when_xl_field_empty':True}),
                          ( 'login',{'func':None,'xl_title':u'Địa chỉ email','key':True ,'break_when_xl_field_empty':True}),
                          ('phone',{'func':None,'xl_title':u'Số điện thoại','key':False}),
-                         #('tram_id',{'model':'tram','func':None,'xl_title':u'Trạm','key':False}),
-                         #('parent_id',{'model':'res.users','func':None,'xl_title':u'Cấp trên','key':False,'key_name':'login','split_first_item_if_comma':True}),
                          ('cac_sep_ids',{'model':'res.users','func':None,'xl_title':u'Cấp trên','key':False,'key_name':'login','m2m':True}),
-#                         ('company_id',{'model':'congty','func':None,'xl_title':u'Bộ Phận','key':False}),
-#                         ('company_ids',{'model':'res.company','func':None,'xl_title':u'Bộ Phận','key':False,'m2m':True}),
-#                         ('company_id',{'model':'res.company','func':None,'xl_title':u'Bộ Phận','key':False}),
                         ('job_id',{'model':'hr.job','func':lambda val: u'Nhân Viên' if val==False else val,'xl_title':u'Chức vụ','key':False,'use_fnc_even_cell_is_False':True}),
                         ('department_id',{'model':'hr.department','func':None,'xl_title':u'Bộ Phận','key':False}),
-
                         )
                 title_rows = [1]
 #             elif r.type_choose ==u'Công Ty':
@@ -542,7 +537,7 @@ def importthuvien(odoo_or_self_of_wizard):
                         update_dict = {}
                         xcel_data_of_a_row = {}
                         if r.type_choose==u'Thư viện công việc':
-                            cong_viec_cate_id = get_or_create_object_sosanh(self,'tvcvcate',{'name':sheet_name},{} )
+                            cong_viec_cate_id = get_or_create_object_sosanh(self, 'tvcvcate', {'name':sheet_name}, {} )
                             update_dict['cong_viec_cate_id'] = cong_viec_cate_id.id
                             update_dict['loai_record'] = u'Công Việc'
                         elif r.type_choose==u'Department':

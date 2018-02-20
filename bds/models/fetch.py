@@ -21,7 +21,11 @@ import smtplib
 # def fetch(self,note=False,is_fetch_in_cron = False):
 #     print '**** fetch ____'
 #     fetch1(self,note,is_fetch_in_cron)
-   
+def request_html(url):
+    headers = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36' }
+    req = urllib2.Request(url, None, headers)
+    html = urllib2.urlopen(req).read()
+    return html
                 
 def fetch(self,note=False,is_fetch_in_cron = False):
     url_ids = self.url_ids.ids
@@ -466,11 +470,8 @@ def g_or_c_ss(self,class_name,search_dict,
     if create_or_write_info:
         return return_obj,create_or_write
     return return_obj
-def request_html(url):
-    headers = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36' }
-    req = urllib2.Request(url, None, headers)
-    html = urllib2.urlopen(req).read()
-    return html
+
+
 def get_ngay_dang(soup):
     select = soup.select('div.prd-more-info > div:nth-of-type(3)')#[0].contents[0]
     ngay_dang_str = select[0].contents[2]

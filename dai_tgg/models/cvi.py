@@ -116,7 +116,7 @@ class Cvi(models.Model):
     _name = 'cvi'
     _parent_name = 'gd_parent_id'
 #         _inherit = ['mail.thread']
-    _inherit = ['mail.thread','camsua','cvisuco']
+    _inherit = ['camsua','cvisuco']
     _auto = True
     _order = "id desc"
     ALLOW_WRITE_FIELDS_TIME = ['gio_ket_thuc','comment_ids','cd_children_ids','gd_children_ids','percent_diemtt']
@@ -718,63 +718,45 @@ class Cvi(models.Model):
 #         action['domain'] = domain
 #         return action
 #    
-    @api.model
-    def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
-        # TDE NOTE: WHAAAAT ??? is this because inventory_value is not stored ?
-        # TDE FIXME: why not storing the inventory_value field ? department_id is required, stored, and should not create issues
-        res = super(Cvi, self).read_group(domain, fields, groupby, offset=offset, limit=limit, orderby=orderby, lazy=lazy)
-#         print 'res...',res
-#         print 'len(res)',len(res)
-#         test_rt = []
-        is_cvi_id_in_pivot = self.env['ir.values'].get_default('ltk.config.settings', 'is_cvi_id_in_pivot')
-        for c,r in enumerate(res):
-#             print 'c %s, r %s'%(c,r)
-#             print 'r..',r
-#             print 'c',c
-#             if c in range(0,3):
-#                 test_rt.append(r)
-#                 print  'c%s/len%s...'%(c,len(res)),'r....',r
-#                 return test_rt
-            try:
-                user_id_int = r['user_id'][0]
-                user_id = self.env['res.users'].browse(user_id_int)
-                if self.env.uid not in user_id.cac_sep_ids.mapped('id') and not  self.user_has_groups('dai_tgg.cham_diem_group')  and not  self.user_has_groups('base.group_erp_manager ') :# +  user_id.cac_sep_ids.cac_sep_ids.mapped('id')):
-                    r['diemld']=0
-            except:
-                continue
-            try:
-                id_for_pivot = r['id_for_pivot']
-                cvi_obj = self.env['cvi'].browse(id_for_pivot)
-#                 tvcv_name = cvi_obj.tvcv_id.name
-                adict=[]
-                adict.append(('gio_bat_dau',{'pr':u'','func': convert_odoo_datetime_to_vn_str}))
-#                 if is_cvi_id_in_pivot:
-#                     adict.append(('id',{'pr':u'id'}))
-#                 if 0:
-#                     adict.extend([
-#                                                   ('tvcv_id',{'pr':None,'func':lambda val:val.name}),
-#                                                   ('noi_dung',{'pr':u'Nội Dung'}),
-#                                                   ])
-                name  = name_compute(cvi_obj,adict=adict
-                                     )
-#                 noi_dung  = name_compute(cvi_obj,adict= [('noi_dung',{'pr':u'Nội Dung','skip_if_False':False})] )
-                r["id_for_pivot"] = name
-                tvcv_id_name = cvi_obj.tvcv_id.name
-                r["tvcv_id_name"] =  tvcv_id_name if tvcv_id_name else u' '
-                r["noi_dung"] = cvi_obj.noi_dung if cvi_obj.noi_dung else u' ' 
-                r["code"] = cvi_obj.code if cvi_obj.code else u' ' 
-            except: 
-                continue
-           
-                 
-#             #print r
-#         if 'inventory_value' in fields:
-#             for line in res:
-#                 if '__domain' in line:
-#                     lines = self.search(line['__domain'])
-#                     inv_value = 0.0
-#                     for line2 in lines:
-#                         inv_value += line2.inventory_value
-#                     line['inventory_value'] = inv_value
-        return res  
+#     @api.model
+#     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
+#         # TDE NOTE: WHAAAAT ??? is this because inventory_value is not stored ?
+#         # TDE FIXME: why not storing the inventory_value field ? department_id is required, stored, and should not create issues
+#         res = super(Cvi, self).read_group(domain, fields, groupby, offset=offset, limit=limit, orderby=orderby, lazy=lazy)
+# #         print 'res...',res
+# #         print 'len(res)',len(res)
+# #         test_rt = []
+#         is_cvi_id_in_pivot = self.env['ir.values'].get_default('ltk.config.settings', 'is_cvi_id_in_pivot')
+#         for c,r in enumerate(res):
+# #             print 'c %s, r %s'%(c,r)
+# #             print 'r..',r
+# #             print 'c',c
+# #             if c in range(0,3):
+# #                 test_rt.append(r)
+# #                 print  'c%s/len%s...'%(c,len(res)),'r....',r
+# #                 return test_rt
+#             try:
+#                 user_id_int = r['user_id'][0]
+#                 user_id = self.env['res.users'].browse(user_id_int)
+#                 if self.env.uid not in user_id.cac_sep_ids.mapped('id') and not  self.user_has_groups('dai_tgg.cham_diem_group')  and not  self.user_has_groups('base.group_erp_manager ') :# +  user_id.cac_sep_ids.cac_sep_ids.mapped('id')):
+#                     r['diemld']=0
+#             except:
+#                 continue
+#             try:
+#                 id_for_pivot = r['id_for_pivot']
+#                 cvi_obj = self.env['cvi'].browse(id_for_pivot)
+#                 adict=[]
+#                 adict.append(('gio_bat_dau',{'pr':u'','func': convert_odoo_datetime_to_vn_str}))
+# 
+#                 name  = name_compute(cvi_obj,adict=adict
+#                                      )
+#                 r["id_for_pivot"] = name
+#                 tvcv_id_name = cvi_obj.tvcv_id.name
+#                 r["tvcv_id_name"] =  tvcv_id_name if tvcv_id_name else u' '
+#                 r["noi_dung"] = cvi_obj.noi_dung if cvi_obj.noi_dung else u' ' 
+#                 r["code"] = cvi_obj.code if cvi_obj.code else u' ' 
+#             except: 
+#                 continue
+#  
+#         return res  
     

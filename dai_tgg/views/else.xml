@@ -274,7 +274,9 @@
                   <!--    <button name="import_bd_tuan" string="Import bảo dưỡng từ file excel" type="object" class="btn-warning" /> -->
                   <!--       <button name="download_for_rnas 2G" string="download 2G" type="object" class="btn-primary" /> -->
                   <button name="download_cvi" string="download_cvi" type="object" class="btn-primary" />
+                  <button name="download_cvi_by_userlist" string="download_cvi" type="object" class="btn-primary" />
                   <button name="cvi_filter" string="cvi_filter" type="object" class="btn-primary" />
+                  
                </header>
                <sheet>
                   <group>
