@@ -104,7 +104,7 @@ class CamSua(models.Model):
     @api.multi
     def unlink(self):
         for r in self:
-            if not self.user_has_groups('dai_tgg.cho_xoa_cvi_cua_minh'):
+            if not self.user_has_groups('dai_tgg.cho_xoa_cvi_cua_minh') :
                 raise UserError(u'Không được delete CV của mình')
             if r.cam_sua_do_time:
                 raise UserError(u'Không được delete do quá thời gian qui định')

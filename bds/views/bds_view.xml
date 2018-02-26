@@ -206,6 +206,7 @@
                                  <field name="present_image_link_show" widget="image" width="310" />
                                 <!-- <field name="name" /> -->
                                 <field name="title" />
+                                <field name="quan_tam_date" />
                                 <field name="link" />
                                 <field name="gia" />
                                 <field name="muc_gia" />
@@ -260,6 +261,7 @@
                      <field name="muc_don_gia" />
                      <field name="ti_le_don_gia" />
                      <field name="muc_ti_le_don_gia" />
+					<field name="quan_tam_date" />
                     <field name="address" />
                     <field name="html_show" />
                     <field name="ngay_dang" />

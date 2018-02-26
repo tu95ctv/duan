@@ -6,6 +6,7 @@ import urllib2
 
 class bds(models.Model):
     _name = 'bds.bds'
+    quan_tam_date = fields.Datetime()
     name = fields.Char(compute = 'name_',store = True)
     title = fields.Char()
     images_ids = fields.One2many('bds.images','bds_id')
@@ -62,8 +63,11 @@ class bds(models.Model):
     @api.depends('don_gia','quan_id')
     def ti_le_don_gia_(self):
         for r in self:
-            if r.don_gia:
-                r.ti_le_don_gia = r.don_gia/r.quan_id.muc_gia_quan
+            try:
+                if r.don_gia:
+                    r.ti_le_don_gia = r.don_gia/r.quan_id.muc_gia_quan
+            except ZeroDivisionError:
+                pass
                 
     @api.depends('gia','area')
     def don_gia_(self):
