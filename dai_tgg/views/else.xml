@@ -169,7 +169,7 @@
             
              <field name="email" position="after">
             	<field name="job_id"></field>
-            	<field name="department_id"></field>
+            	<!-- <field name="department_id"></field> -->
             </field>
          </field>
       </record>
@@ -188,11 +188,9 @@
             </xpath>
             <field name="email" position="after">
             	<field name="job_id"></field>
-            	<field name="department_id"></field>
-            	
+            	<!-- <field name="department_id"></field> -->
             	<field name="name_khong_dau"></field>
             	<field name="name_viet_tat"></field>
-            	
             </field>
              
             
