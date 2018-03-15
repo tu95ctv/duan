@@ -56,42 +56,48 @@
          <field name="model">stock.pack.operation</field>
          <field name="inherit_id" ref="stock.view_pack_operation_lot_form" />
          <field name="arch" type="xml">
-            <!-- 
-            <xpath expr="//field[@name='pack_lot_ids']/tree/field[@name='qty']" position="attributes">
-               <attribute name="invisible">0</attribute>
-            </xpath>
-             -->
+           <!-- 
             <xpath expr="//field[@name='pack_lot_ids']" position="attributes">
                <attribute name="attrs">{}</attribute>
             </xpath>
-            
-            <xpath expr="//field[@name='pack_lot_ids']/tree/field[@name='qty']" position="after">
+             -->
+            <xpath expr="//field[@name='pack_lot_ids']/tree/field[@name='qty']" position="replace">
             	<field name="id"></field>
-               <field name="pn_for_create"  invisible="not context.get('only_create_pn')" attrs="{'invisible': [('lot_id','!=',False)]}"/> <!-- attrs="{'invisible': [('parent.state','in',['cancel','done'])]}" -->
-               <field name="pn"  invisible="context.get('only_create_pn')" attrs="{'invisible': [('lot_id','=',False)]}" />
-               <field name="ghi_chu_for_create" invisible="not context.get('only_create_pn')"  />
-               <field name="ghi_chu"  invisible="context.get('only_create_pn')" />
+             	<field name="pn"/>
+                <field name="pn_for_create"/> 
+                <field name="qty"/> 
+              
+              <!-- 
+               <field name="pn_for_create"  invisible="not context.get('state_not_in_done_cancel')" attrs="{'invisible': [('lot_id','!=',False)]}"/> 
+               <field name="pn"  invisible="context.get('state_not_in_done_cancel')" attrs="{'invisible': [('lot_id','=',False)]}" />
+               <field name="ghi_chu_for_create" invisible="not context.get('state_not_in_done_cancel')"  />
+               <field name="ghi_chu"  invisible="context.get('state_not_in_done_cancel')" />
+             -->
             </xpath>
+            
+            <!-- 
             <xpath expr="//footer/button[@name='save']" position="attributes">
             	<attribute name="attrs">{}</attribute>
             </xpath>
+             -->
             
+           
             <xpath expr="//field[@name='pack_lot_ids']/tree/field[@name='lot_name']" position="attributes">
-               <attribute name="invisible" >not context.get('only_create_pn')</attribute>
-               <attribute name="required" >not context.get('only_create_pn')</attribute>
+            <!--   <attribute name="invisible" >not context.get('state_not_in_done_cancel')</attribute> --> 
+            <!--    <attribute name="required" >not context.get('state_not_in_done_cancel')</attribute> -->
+            
                <attribute name="string" >Tạo mới S/N</attribute>
             </xpath>
-            
             <xpath expr="//field[@name='pack_lot_ids']/tree/field[@name='lot_id']" position="attributes">
-               <attribute name="invisible" >0</attribute>
-               <attribute name="readonly" >not context.get('only_create_pn')</attribute>
+             <!--   <attribute name="invisible" >0</attribute> -->
+             <!--   <attribute name="readonly" >not context.get('state_not_in_done_cancel')</attribute> -->
                <attribute name="string" >Sử dụng S/N có sẵn</attribute>
             </xpath>
-          
-            
+         
+         
+         
          </field>
       </record>
-      
       <record id="base.view_translation_tree" model="ir.ui.view">
             <field name="model">ir.translation</field>
         <!--  	<field name="inherit_id" ref="base.view_translation_tree" /> -->

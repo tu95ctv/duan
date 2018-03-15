@@ -27,6 +27,7 @@
         # 'security/ir.model.access.csv',
         #'views/views.xml',
         #'views/templates.xml',
+        'security/data.xml',
         'views/bds_view.xml',
         'views/bds_wizard.xml',
         'views/bds_cron.xml',

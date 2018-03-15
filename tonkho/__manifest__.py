@@ -26,6 +26,7 @@
     'data': [
         # 'security/ir.model.access.csv',
 #         'views/tonkho.xml',
+        'views/stock_quant.xml',
         'views/stock_picking.xml',
         'views/tonkho_stock.xml',
         'report/pick_operation_report.xml',

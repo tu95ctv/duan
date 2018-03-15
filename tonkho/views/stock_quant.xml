@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+   <data>
+   
+   
+   <record id="stock_quant_action_product" model="ir.actions.act_window">
+        <field name="name">Stock quant</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">stock.quant</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_type">form</field>
+        </record>
+    
+    
+   <menuitem id="menu_stock_quant_action_product" name="Số lượng" action="stock_quant_action_product"
+        parent="stock.menu_stock_inventory_control" sequence="1"/>
+   </data>
+ </odoo>
+   
