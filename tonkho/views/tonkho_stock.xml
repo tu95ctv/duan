@@ -63,8 +63,8 @@
              -->
             <xpath expr="//field[@name='pack_lot_ids']/tree/field[@name='qty']" position="replace">
             	<field name="id"></field>
-             	<field name="pn"/>
-                <field name="pn_for_create"/> 
+             	<field name="pn" invisible="context.get('only_create', False)"/>
+                <field name="pn_for_create" invisible="not context.get('only_create', False)"/> 
                 <field name="qty"/> 
               
               <!-- 
