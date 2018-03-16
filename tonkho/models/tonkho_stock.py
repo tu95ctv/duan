@@ -62,7 +62,7 @@ class PackOperationLot(models.Model):
     ghi_chu = fields.Text(related='lot_id.ghi_chu')
     ghi_chu_for_create = fields.Text(string=u'Ghi chú Cho Tạo SN')
     pn = fields.Char(related='lot_id.pn', string=u'Part Number')
-    pn_for_create = fields.Char(string=u'Part Number For Create')
+    pn_for_create = fields.Char(string=u'Part Number')
 class StockProductionLot(models.Model):
     _inherit = "stock.production.lot"
     pn = fields.Char(string=u'Part Number')

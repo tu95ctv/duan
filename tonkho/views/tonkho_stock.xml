@@ -86,7 +86,7 @@
             <!--   <attribute name="invisible" >not context.get('state_not_in_done_cancel')</attribute> --> 
             <!--    <attribute name="required" >not context.get('state_not_in_done_cancel')</attribute> -->
             
-               <attribute name="string" >Tạo mới S/N</attribute>
+               <attribute name="string" >S/N</attribute>
             </xpath>
             <xpath expr="//field[@name='pack_lot_ids']/tree/field[@name='lot_id']" position="attributes">
              <!--   <attribute name="invisible" >0</attribute> -->
