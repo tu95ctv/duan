@@ -105,7 +105,7 @@ msgstr "Bàn Giao"
 #. module: tonkho
 #: model:ir.model.fields,field_description:tonkho.field_stock_picking_ban_giao_or_nghiem_thu
 msgid "Bàn Giao Hay Nghiệm Thu"
-msgstr "Bàn Giao Hay Nghiệm Thu VN 1"
+msgstr "Bàn Giao Hay Nghiệm Thu"
 
 #. module: tonkho
 #: model:ir.model.fields,field_description:tonkho.field_stock_picking_ben_giao_giu
@@ -432,6 +432,6 @@ msgstr "Độc Lập - Tự Do
 #: model:ir.model.fields,field_description:stock.field_stock_picking_location_dest_id
 #: model:ir.ui.view,arch_db:stock.view_stock_quant_form
 msgid "Destination Location Zone"
-msgstr "Kho nhận (Destination Stock ddd)"
+msgstr "Kho nhận (Destination Stock)"
 
 

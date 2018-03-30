@@ -17,23 +17,32 @@
                 <field name="picking_type_id" position="replace" />
                 <field name="location_id" position="replace">
                     <field name="id"></field>
+                    <field name="ban_giao_or_nghiem_thu"></field>
+                    <field name="totrinh_id"></field>
                     <field name="picking_type_id" />
-                    <field name="location_id" domain="[('department_id','child_of', department_id)]" />
                     <field name="department_id"></field>
-                
+                    <field name="location_id" domain="[('department_id','child_of', department_id)]" />
+                    <field name="source_member_ids">
+                        <tree>
+                            <field name="name" />
+                        </tree>
+                    </field>
+                    <field name="ben_giao_giu"></field>
                 </field>
                 <field name="location_dest_id" position="replace"></field>
                 <field name="origin" position="attributes">
                     <attribute name="invisible">1</attribute>
                 </field>
-                <field name="min_date" position="replace">
-                	<field name="date"></field>
-                </field>
                 <field name="origin" position="before">
                     <field name="location_dest_id" />
-                    <field name="ban_giao_or_nghiem_thu"></field>
-                    <field name="totrinh_id"></field>
+                    <field name="dest_member_ids">
+                        <tree>
+                            <field name="name" />
+                        </tree>
+                    </field>
+                    <field name="so_ban_in"></field>
                     <field name="ly_do"></field>
+                    <field name="ben_nhan_giu"></field>
                 </field>
                 <xpath expr="//page[1]/field[@name='pack_operation_product_ids']" position="attributes">
                     <attribute name="attrs">{'readonly':0}</attribute>
@@ -66,38 +75,8 @@
                 <xpath expr="//page[1]/field/tree[1 ]/field[@name='product_id']" position="attributes">
                     <attribute name="context">{'default_type':'product'}</attribute>
                 </xpath>
-                
-                <xpath expr="//page[2]" position="after">
-                   <page string="thông tin thêm 1">
-                   <group>
-                   <field name="source_member_ids">
-                        <tree>
-                            <field name="name" />
-                        </tree>
-                        
-                    </field>
-                   <field name="ben_giao_giu"></field>
-                    
-                   </group>
-                   
-                   
-                   <group>
-                   <field name="dest_member_ids">
-                        <tree>
-                            <field name="name" />
-                        </tree>
-                    </field>
-                    <field name="so_ban_in"></field>
-                    <field name="ben_nhan_giu"></field>
-                   </group>
-                   
-                   
-                   </page>
-                </xpath>
             </field>
         </record>
-        
-        
         <record id="cb_vpicktree_inherit" model="ir.ui.view">
             <field name="name">stock.picking.tree_inherit</field>
             <field name="model">stock.picking</field>

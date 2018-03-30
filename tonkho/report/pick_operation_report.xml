@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
    <data>
-      <report string="In Biên Bản Bàn Giao" id="action_report_picking_dai_hcm" model="stock.picking" report_type="qweb-pdf" name="tonkho.report_picking_dai_hcm" file="stock.report_picking_operations_dai_hcm" />
+      <report string="In Biên Bản Bàn Giao" id="action_report_picking_dai_hcm" model="stock.picking" report_type="qweb-pdf" 
+      name="tonkho.report_picking_dai_hcm" file="stock.report_picking_operations_dai_hcm" />
     
     <template id="thead">
          <thead>
@@ -13,7 +14,7 @@
                <th>
                   <strong>Tên Vật Tư</strong>
                </th>
-               <th class="text-right">
+               <th>
                   <!-- class="text-right" -->
                   <strong>Số Lượng</strong>
                </th>
@@ -46,17 +47,19 @@
          	<td>
                <span t-esc="stt" />
             </td>
+            
             <td>
                <span t-field="pack_operation.product_id" />
             </td>
+            
             <td class="text-right">
-               <!-- class="text-right" -->
                <span t-esc="product_qty"  />
-             <!--  <span t-field="pack_operation.product_uom_id" groups="product.group_uom" /> --> 
             </td>
+            
              <td>
              <span t-field="pack_operation.product_uom_id"/>
              </td>
+             
             <td t-if="has_serial_number">
                   <t t-esc="pn" />
                </td>
@@ -68,16 +71,17 @@
             </td>
          </tr>
       </template>
+      
+      
       <template id="tonkho.report_picking_dai_hcm">
          <t t-call="report.html_container">
             <t t-foreach="docs" t-as="o">
-               <!--      <t t-call="report.external_layout"> -->
-               <div class="page" style="font-family: Times New Roman;font-size:14px">
-                  <!-- style="font-family: Times New Roman" -->
+               <div class="page" style="font-family:Times New Roman; font-size:14px">
                   <t t-call="tonkho.bien_ban_description" />
+                
+                
                   <t t-if="o.pack_operation_ids">
                      <table class="table table-bordered">
-                        <!-- table-condensed -->
                         <t t-set="has_barcode" t-value="any([pack_operation.product_id and pack_operation.product_id.sudo().barcode or pack_operation.package_id for pack_operation in o.pack_operation_ids])" />
                         <t t-set="has_serial_number" t-value="o.pack_operation_ids.filtered('pack_lot_ids')" groups="stock.group_production_lot" />
                         <t t-call="tonkho.thead" />
@@ -118,6 +122,8 @@
          </t>
        
       </template>
+      
+      
       <template id="ky_ten">
          <div class="row" style="margin-top:50px;">
             <div class="col-xs-4">
@@ -136,6 +142,9 @@
             </div>
          </div>
       </template>
+      
+      
+      
       <template id="bien_ban_description">
          <div class="row" style="">
             <div class="col-xs-6" style="text-align: center;">
@@ -151,17 +160,19 @@
          </div>
          <h2 style="text-align: center;font-weight:bold; margin:50px 0px 50px 0px;">BIÊN BẢN <span t-esc="o.ban_giao_or_nghiem_thu_show().upper()"></span> VẬT TƯ</h2>
          <p />
-         <p>Căn cứ vào tờ trình số: <span t-field="o.totrinh_id.so_to_trinh"></span> ,Ngày: <span t-field="o.totrinh_id.ngay_to_trinh"></span>, V/v: <span t-field="o.totrinh_id.name"></span></p>
+     <!--    <p>Căn cứ vào tờ trình số: <span t-field="o.totrinh_id.so_to_trinh"></span> ,Ngày: <span t-field="o.totrinh_id.ngay_to_trinh"></span>, V/v: <span t-field="o.totrinh_id.name"></span></p> --> 
          <p />
          <!--   <p>Hôm nay ngày .........tháng .........năm.........., tại..........</p> -->
          <p>
             Hôm nay ngày:
-            <b t-field="o.min_date" t-field-options="{&quot;format&quot;: &quot;dd/MM/YYYY&quot;}" />
+            <b t-field="o.min_date" t-field-options="{&quot;format&quot;: &quot;dd/MM/YYYY&quot;}" /> , Tại : <span t-esc="o.department_id.name_for_report"></span>
          </p>
          <p>Chúng tôi gồm:</p>
-         <p style="text-decoration: underline"><strong>Đại diện bên giao</strong></p>
-         <t t-call="tonkho.ben_giao_nhan_info">
-              <t t-set="member_ids" t-value="o.source_member_ids" />
+         <t t-if="o.source_member_ids">
+	         <p style="text-decoration: underline"><strong>Đại diện bên giao</strong></p>
+	         <t t-call="tonkho.ben_giao_nhan_info">
+	              <t t-set="member_ids" t-value="o.source_member_ids" />
+	         </t>
          </t>
          <t t-if="o.dest_member_ids">
          	<p></p>
@@ -191,7 +202,9 @@
                      </div>
                      <div class="col-xs-4" style="padding-left:40px;">
                         Đơn Vị:
-                        <span t-field="member.department_id.get_department_name_for_report" />
+                        <t t-if ="member.department_id">
+                        <span t-field="member.department_id.get_department_name_for_report_()" />
+                        </t>
                      </div>
                   </div>
                </div>

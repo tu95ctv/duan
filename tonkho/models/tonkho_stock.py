@@ -72,10 +72,14 @@ class Quant(models.Model):
     _inherit = "stock.quant"
     pn = fields.Char(related='lot_id.pn')
 
+class ThietBi(models.Model):
+    _name = 'dai_tgg.thietbi'
+    name = fields.Char()
 class PT(models.Model):
     """ Quants are the smallest unit of stock physical instances """
     _inherit = 'product.template'
     type = fields.Selection(selection_add=[],default = 'product')
+    thiet_bi_id = fields.Many2one('dai_tgg.thietbi')
     
     
 class StockMove(models.Model):
@@ -91,7 +95,16 @@ class StockMove(models.Model):
                     not (move.restrict_lot_id or (pack_operation and (pack_operation.product_id and pack_operation.pack_lot_ids)) or (pack_operation and not pack_operation.product_id)):
                 raise UserError(_('You need to provide a Lot/Serial Number for product  4%s') % move.product_id.name)
                         
-    
+class Department(models.Model):
+    _inherit = 'hr.department'
+    def get_department_name_for_report_(self):
+        for r in self:
+            names = []
+            if r.cong_ty_type.name:
+                names.append(r.cong_ty_type.name)
+            names.append(r.name)
+            return  u' '.join(names)
+            
     
 class StockLocation(models.Model):
     _inherit = 'stock.location'
